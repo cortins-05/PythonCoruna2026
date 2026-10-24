@@ -221,7 +221,7 @@ def bloque_navegacion(store, destinos: list[str]) -> dict:
     """Atajos a pantallas. Destinos válidos: fuente, comunicaciones, estancias, ocupacion y asistente."""
     cuenta = {"comunicaciones": len(_abiertas(store)), "fuente": len(comunicaciones.cola(store)),
               "estancias": sum(r["semaforo"]["color"] != "verde" for r in _estancias(store)),
-              "ocupacion": len(disponibilidad.conflictos(store.db, _hoy(store), 7))}
+              "ocupacion": 0}  # sin insignia: el número de conflictos de ocupación no se entiende sin explicación
     items = []
     for destino in destinos:
         if destino not in DESTINOS:

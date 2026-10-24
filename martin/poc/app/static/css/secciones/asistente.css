@@ -66,3 +66,6 @@
   .sec-asistente .asi__yo { width: 28px; height: 28px; }
   .sec-asistente .asi__saludo h2 { font-size: var(--t-2xl); }
 }
+
+/* Las pestañas de categoría usan un ancho que no cabe con "Comunicaciones": se ajusta al texto. */
+.sec-asistente .ui-tile { width: auto; min-width: 82px; padding-inline: var(--s-3); }

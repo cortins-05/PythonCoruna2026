@@ -71,6 +71,9 @@
 .sec-asistente-bloques .bl-com__veredicto { display: flex; align-items: center; gap: var(--s-2) var(--s-3); flex-wrap: wrap; font-size: var(--t-sm); color: var(--c-texto-2); }
 .sec-asistente-bloques .bl-com__veredicto > span { flex: 1 1 240px; min-width: 0; }
 .sec-asistente-bloques .bl-noches th, .sec-asistente-bloques .bl-noches td { padding: var(--s-2) var(--s-3); font-size: var(--t-sm); }
+@media (max-width: 480px) {
+  .sec-asistente-bloques .bl-noches th, .sec-asistente-bloques .bl-noches td { padding: var(--s-2) var(--s-2); font-size: var(--t-xs); }
+}
 .sec-asistente-bloques .bl-noches tbody th { text-align: left; font-weight: var(--p-fuerte); color: var(--c-texto); background: transparent; border-bottom: 1px solid var(--c-borde); white-space: nowrap; }
 .sec-asistente-bloques .bl-noches tbody tr:last-child th { border-bottom: 0; }
 .sec-asistente-bloques .bl-noches__libres { font-weight: var(--p-fuerte); }
