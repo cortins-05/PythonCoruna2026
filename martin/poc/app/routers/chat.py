@@ -5,7 +5,6 @@
 `bloques-muestra` no lee el almacén y siempre devuelve lo mismo, para desarrollar el pintado sin depender del resto.
 """
 import json
-import time
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -30,15 +29,8 @@ def evento(nombre: str, datos: dict) -> str:
 def stream(datos: ChatIn, store=Depends(get_store)):
     def generar():
         try:
-            r = chat.responder(store, datos.mensaje, datos.historial)
-            for bloque in r["bloques"]:
-                yield evento("bloque", bloque)
-                time.sleep(0.05)
-            texto = r["respuesta"]
-            for i in range(0, len(texto), 18):
-                yield evento("texto", {"delta": texto[i:i + 18]})
-                time.sleep(0.015)
-            yield evento("fin", {"respuesta": texto, "modo": r["modo"], "propuestas": r["propuestas"]})
+            for nombre, contenido in chat.eventos(store, datos.mensaje, datos.historial):
+                yield evento(nombre, contenido)
         except Exception:  # el stream ya está abierto: se avisa con un evento y no con un 500
             yield evento("error", {"mensaje": "No se pudo completar la respuesta"})
     return StreamingResponse(generar(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
