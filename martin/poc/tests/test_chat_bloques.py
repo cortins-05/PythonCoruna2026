@@ -139,6 +139,7 @@ def test_navegacion_con_los_cinco_destinos_e_insignias(store):
     por = {i["seccion"]: i for i in nav["items"]}
     assert por["comunicaciones"]["insignia"] == 6 and por["comunicaciones"]["icono"] == "inbox"
     assert all(i["descripcion"] and i["icono"] for i in nav["items"])
+    assert "insignia" not in por["ocupacion"]  # un número de conflictos sin explicación confunde en la tarjeta
 
 
 def test_los_seis_procesos_existen_con_pasos_y_fuente_valida():

@@ -352,14 +352,14 @@ export default {
     }
 
     async function descartarComunicacion(accion) {
-      const ok = await ctx.confirmar({ titulo: "Descartar la petición", texto: "La petición se marca como descartada y no se envía respuesta.", confirmar: "Sí, descartar", tono: "critico" });
+      const ok = await ctx.confirmar({ titulo: "Descartar la petición", texto: "La petición se marca como descartada y no se envía respuesta.", confirmar: "Sí, descartar", tono: "critico", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha descartado nada", "cancelado");
       const r = await ctx.api(`/api/comunicaciones/${encodeURIComponent(accion.id)}/descartar`, "POST", { actor: ACTOR });
       return resultado(true, "Petición descartada", "descartada", r);
     }
 
     async function aprobarPropuesta(accion) {
-      const ok = await ctx.confirmar({ titulo: "Aprobar la propuesta", texto: "Se ejecuta la propuesta tal como está escrita. Los envíos y los cierres de RoomCloud son simulados.", confirmar: "Sí, aprobar" });
+      const ok = await ctx.confirmar({ titulo: "Aprobar la propuesta", texto: "Se ejecuta la propuesta tal como está escrita. Los envíos y los cierres de RoomCloud son simulados.", confirmar: "Sí, aprobar", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha aprobado nada", "cancelado");
       const r = await ctx.api(`/api/propuestas/${encodeURIComponent(accion.id)}/aprobar`, "POST", { actor: ACTOR });
       return resultado(true, "Propuesta aprobada (simulado)", "aprobada", r);
@@ -386,7 +386,7 @@ export default {
         if (e.status !== 409 || !e.detalle?.conflicto) throw e;
         const lista = e.message;
         const forzar = await ctx.confirmar({
-          titulo: "No queda habitación libre", texto: `${lista}. Si la añades, habrá overbooking.`, confirmar: "Sí, añadir con overbooking", tono: "critico",
+          titulo: "No queda habitación libre", texto: `${lista}. Si la añades, habrá overbooking.`, confirmar: "Sí, añadir con overbooking", tono: "critico", contenido: el("span"),
         });
         if (!forzar) return resultado(false, "No se ha añadido la reserva", "cancelado", e.detalle);
         const r = await ctx.api("/api/walkin", "POST", { ...cuerpo, forzar: true });
@@ -407,7 +407,7 @@ export default {
     }
 
     async function marcarOfihotel(accion) {
-      const ok = await ctx.confirmar({ titulo: "Marcar como pasada a OfiHotel", texto: "Se anota que recepción ya ha dado de alta esta estancia en OfiHotel. Aquí no se escribe nada en OfiHotel.", confirmar: "Sí, marcar como pasada" });
+      const ok = await ctx.confirmar({ titulo: "Marcar como pasada a OfiHotel", texto: "Se anota que recepción ya ha dado de alta esta estancia en OfiHotel. Aquí no se escribe nada en OfiHotel.", confirmar: "Sí, marcar como pasada", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha marcado nada", "cancelado");
       const r = await ctx.api(`/api/expedientes/${encodeURIComponent(accion.id)}/tramites/ofihotel_alta`, "POST", { actor: ACTOR, nota: "Marcado desde el asistente" });
       return resultado(true, "Estancia marcada como pasada a OfiHotel", "pasada", r);
