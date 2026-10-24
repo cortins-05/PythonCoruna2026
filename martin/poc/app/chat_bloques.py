@@ -200,9 +200,9 @@ def bloque_conflictos(store) -> dict:
     return {"tipo": "conflictos", "titulo": "Conflictos entre fuentes", "conflictos": _lista_conflictos(store)}
 
 
-def bloque_tabla_ocupacion(store, dias: int = 7) -> dict:
+def bloque_tabla_ocupacion(store, dias: int = 7, desde: str | None = None) -> dict:
     dias = max(1, min(dias, 30))
-    mapa = disponibilidad.mapa(store.db, _hoy(store), dias)
+    mapa = disponibilidad.mapa(store.db, desde or _hoy(store), dias)
     return {"tipo": "tabla_ocupacion", "fechas": mapa["fechas"], "filas": [
         {"tipo": tipo, "capacidad": datos["capacidad"],
          "celdas": [{"fecha": c["fecha"], "ocupadas": c["ocupadas"], "libres": c["libres"], "cerrado": c["cerrado_en_roomcloud"]}

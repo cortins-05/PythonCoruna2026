@@ -11,6 +11,7 @@ import json
 import re
 import time
 import unicodedata
+from datetime import date
 
 from . import chat_bloques, comunicaciones, disponibilidad, estados, hub, llm, plantillas, prioridades
 
@@ -64,8 +65,8 @@ HERRAMIENTAS = [
         {"resaltar": {"type": "string", "enum": [n["id"] for n in prioridades.NIVELES]}}),
     _fn("cola", "Qué atender primero, ordenado por la prioridad de la fuente y la urgencia."),
     _fn("conflictos", "Desajustes entre RoomCloud, OfiHotel y la ocupación: fechas distintas, canceladas vivas, habitación doble y overbooking."),
-    _fn("ocupacion", "Ocupación por tipo de habitación en los próximos días, con el desglose por fuente.",
-        {"dias": {"type": "integer", "minimum": 1, "maximum": 14}}),
+    _fn("ocupacion", "Habitaciones libres y ocupadas por tipo y día. Para mañana, ayer o una fecha concreta pasa desde en AAAA-MM-DD (hasta 30 días antes o después de hoy) y dias con cuántos días enseñar (7 por defecto, mínimo 3 si piden un rango).",
+        {"desde": {"type": "string"}, "dias": {"type": "integer", "minimum": 1, "maximum": 14}}),
     _fn("mostrar_proceso", "Enseña paso a paso un proceso de la aplicación con una animación.",
         {"proceso": {"type": "string", "enum": list(PROCESOS_IDS)}}, ["proceso"]),
     _fn("abrir_pantalla", "Muestra accesos a una o varias pantallas de la aplicación.",
@@ -259,14 +260,21 @@ def _t_conflictos(store, args):
 
 def _t_ocupacion(store, args):
     dias = args.get("dias") if isinstance(args.get("dias"), int) and 1 <= args["dias"] <= 14 else 7
-    desde = store.ahora().date().isoformat()
+    hoy = store.ahora().date()
+    try:
+        desde_f = date.fromisoformat(str(args.get("desde")))
+    except ValueError:
+        desde_f = hoy
+    if abs((desde_f - hoy).days) > 30:
+        desde_f = hoy
+    desde = desde_f.isoformat()
     mapa = disponibilidad.mapa(store.db, desde, dias)["tipos"]
-    resultado = {"desde": desde, "dias": dias, "tipos": {}}
+    resultado = {"hoy": hoy.isoformat(), "desde": desde, "dias": dias, "tipos": {}}
     for tipo, datos in mapa.items():
-        peor = max(datos["dias"], key=lambda c: c["ocupadas"])
-        resultado["tipos"][tipo] = {"capacidad": datos["capacidad"], "hoy": {"ocupadas": datos["dias"][0]["ocupadas"], "por_fuente": datos["dias"][0]["por_fuente"]},
-                                    "noche_mas_llena": {"fecha": peor["fecha"], "ocupadas": peor["ocupadas"]}}
-    return resultado, [chat_bloques.bloque_tabla_ocupacion(store, dias)]
+        resultado["tipos"][tipo] = {"capacidad": datos["capacidad"],
+                                    "libres_por_dia": {c["fecha"]: c["libres"] for c in datos["dias"]},
+                                    "por_fuente_el_primer_dia": datos["dias"][0]["por_fuente"]}
+    return resultado, [chat_bloques.bloque_tabla_ocupacion(store, dias, desde)]
 
 
 def _t_mostrar_proceso(store, args):
