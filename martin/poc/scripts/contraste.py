@@ -9,7 +9,7 @@ from pathlib import Path
 
 CSS = Path(__file__).resolve().parents[1] / "app" / "static" / "css"
 RUTA = CSS / "tokens.css"
-TONOS = ["ok", "aviso", "critico", "info", "neutro"]
+TONOS = ["ok", "aviso", "critico", "info", "neutro", "naranja"]
 
 
 def bloque(css: str, inicio: str) -> dict:
@@ -95,6 +95,10 @@ def main() -> int:
     claro = bloque(css, ":root {")
     oscuro = dict(claro)
     oscuro.update(bloque(css, ':root[data-tema="oscuro"]'))
+    hotel = (CSS / "hotel.css").read_text(encoding="utf-8")  # el naranja del semáforo vive en hotel.css
+    claro.update(bloque(hotel, ":root {"))
+    oscuro.update(bloque(hotel, ":root {"))
+    oscuro.update(bloque(hotel, ':root[data-tema="oscuro"]'))
     temas = [("claro", claro), ("oscuro", oscuro)]
     if len(sys.argv) > 1 and sys.argv[1] in ("b", "c"):
         linea = dict(claro)

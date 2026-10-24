@@ -4,9 +4,9 @@
   El lenguaje visual (bloques, bordes, tarjetas y pestañas) sale de design/DIRECTRICES.md.
 */
 import { el, svg, vaciar, uid } from "./dom.js";
-import { icono, registrarIcono, nombresIconos } from "./icons.js";
+import { icono, registrarIcono, nombresIconos, logo } from "./icons.js";
 
-export { el, vaciar, uid, icono, registrarIcono, nombresIconos };
+export { el, vaciar, uid, icono, registrarIcono, nombresIconos, logo };
 
 const unir = (...clases) => clases.flat().filter(Boolean).join(" ");
 
@@ -38,7 +38,8 @@ export function moneda(valor, divisa = "EUR") {
 /* ------------------------------------------------------------------ botones */
 
 /**
- * variante: cta (amarillo, la acción principal de la vista, solo una), oscuro, secundario, fantasma (solo icono), peligro.
+ * variante: cta (amarillo, la acción principal de la vista, solo una), oscuro, secundario, fantasma (borde fino, vale con texto o sin él),
+ * texto (sin borde ni fondo, con texto legible: Volver, Cancelar) y peligro.
  * Un botón sin texto necesita `etiqueta` para los lectores de pantalla.
  */
 export function boton({ texto = "", icono: ic = null, variante = "secundario", tam = "md", onclick, desactivado = false,
@@ -393,11 +394,12 @@ export function confirmar({ titulo, texto = "", confirmar: etiquetaOk = "Confirm
     const dialogo = el("dialog", { class: "ui-dialogo", aria: { labelledby: idTitulo } });
     const ok = boton({ texto: etiquetaOk, variante: tono === "critico" ? "peligro" : "cta", onclick: () => dialogo.close("ok") });
     const no = boton({ texto: cancelar, variante: "secundario", onclick: () => dialogo.close("no") });
-    dialogo.append(
+    dialogo.append(...[
       el("h2", { class: "ui-dialogo__titulo", id: idTitulo }, titulo),
-      texto && el("p", { class: "ui-dialogo__texto" }, texto),
-      contenido,
-      el("div", { class: "ui-dialogo__acciones" }, no, ok));
+      texto ? el("p", { class: "ui-dialogo__texto" }, texto) : null,
+      contenido ?? null,
+      el("div", { class: "ui-dialogo__acciones" }, no, ok),
+    ].filter(Boolean));
     dialogo.addEventListener("close", () => { resolver(dialogo.returnValue === "ok"); dialogo.remove(); });
     dialogo.addEventListener("click", (e) => { if (e.target === dialogo) dialogo.close("no"); });
     document.body.append(dialogo);

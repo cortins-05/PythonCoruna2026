@@ -91,7 +91,7 @@ Todo lo de `ui.js` se usa como `ctx.ui.<función>` dentro de una sección. Todo 
 
 | Función | Cuándo usarla | Ejemplo |
 |---|---|---|
-| `boton({ texto, icono, variante, tam, onclick, desactivado, cargando, etiqueta, clase })` | Cualquier acción. Variantes `cta` (una por vista), `oscuro`, `secundario`, `fantasma` (borde fino y fondo de superficie, vale con texto o solo icono) y `peligro`. Un botón sin texto exige `etiqueta` | `ui.boton({ texto: "Volver", icono: "arrow-left", variante: "fantasma" })` |
+| `boton({ texto, icono, variante, tam, onclick, desactivado, cargando, etiqueta, clase })` | Cualquier acción. Variantes `cta` (una por vista), `oscuro`, `secundario`, `fantasma` (borde fino y fondo de superficie, vale con texto o solo icono), `texto` (sin borde ni fondo, para Volver o Cancelar) y `peligro`. Un botón sin texto exige `etiqueta` | `ui.boton({ texto: "Volver", icono: "arrow-left", variante: "texto" })` |
 | `botonDividido({ texto, icono, onclick, items })` | Acción principal con alternativas en un menú oscuro | `ui.botonDividido({ texto: "Aprobar y enviar", icono: "check", onclick, items: [{ texto: "Ver el registro", icono: "list" }] })` |
 | `chip({ texto, tono, punto, icono })` | Estado de un elemento. Tonos `neutro`, `ok`, `aviso`, `critico`, `info` | `ui.chip({ texto: "Parte enviado", tono: "ok", punto: true })` |
 | `insignia(n, { tono })` | Contador pequeño | `ui.insignia(3, { tono: "aviso" })` |
