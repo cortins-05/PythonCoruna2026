@@ -222,6 +222,7 @@ export default {
       const vacia = conversacion.length === 0;
       raiz.classList.toggle("es-vacio", vacia);
       if (vacia) bienvenida.insertBefore(caja, zonaSugerencias); else raiz.append(caja);
+      ajustarAlto();
       irAlFinal.hidden = true;
     }
 
