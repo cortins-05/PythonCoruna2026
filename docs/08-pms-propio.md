@@ -368,6 +368,8 @@ paralelo.
 
 1. Especificación técnica de SES (WSDL, XSD, operaciones, errores, sandbox).
 2. Si SES se aplica también en Cataluña y País Vasco, y el régimen de Galicia y Baleares.
+   *El hotel está en Galicia: ver `09-comparativa-enfoques.md`. Se asume SES, pendiente de
+   confirmar que Galicia no tiene un canal propio.*
 3. Qué norma fijó el 2-dic-2024 frente al 2-ene-2023 del BOE.
 4. Aplazamiento de Verifactu a 2028 en el BOE, y el texto del art. 201 bis de la LGT.
 5. Si un software propio de uso interno es "productor" a efectos de la AEAT.
