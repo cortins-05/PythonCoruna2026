@@ -507,9 +507,10 @@ async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> 
         except ErrorEntorno as e:
             ultimo_error = str(e)
             matar_arbol(proceso)
-            ocupado = re.search(r"10048|10013|address already in use|Errno 98|Errno 48", ultimo_error, re.IGNORECASE)
-            if ocupado and intento < 3:
-                trazar("el puerto se ocupó entre elegirlo y usarlo, pruebo con otro")
+            carrera = re.search(r"10048|10013|address already in use|Errno 98|Errno 48|JSONDecodeError|PermissionError|WinError 32", ultimo_error, re.IGNORECASE)
+            cayo = "se cerró al arrancar" in ultimo_error
+            if intento < 3 and (carrera or (cayo and intento < 2)):
+                trazar("el servidor cayó al arrancar por una posible carrera (puerto o data/db.json), reintento")
                 continue
             raise
         informe.servidor = {"url": base, "propio": True, "pid": proceso.pid, "hotel_db": posix(tmp / "db.json")}
