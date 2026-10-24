@@ -13,6 +13,7 @@ export const GRUPOS = [
 export const SECCIONES = [
   { id: "asistente", titulo: "Asistente", icono: "sparkles", grupo: "principal", modulo: "./secciones/asistente.js", css: ["asistente", "asistente-bloques"] },
   { id: "comunicaciones", titulo: "Comunicaciones", icono: "inbox", grupo: "operativa", modulo: "./secciones/comunicaciones.js", css: ["comunicaciones"] },
+  { id: "hoy", titulo: "Hoy", icono: "calendar", grupo: "operativa", modulo: "./secciones/hoy.js", css: ["hoy"] },
   { id: "estancias", titulo: "Estancias", icono: "key", grupo: "operativa", modulo: "./secciones/estancias.js", css: ["estancias"] },
   { id: "ocupacion", titulo: "Ocupación", icono: "bed", grupo: "operativa", modulo: "./secciones/ocupacion.js", css: ["ocupacion"] },
   { id: "fuente", titulo: "Fuente única", icono: "layers", grupo: "operativa", modulo: "./secciones/fuente.js", css: ["fuente"] },

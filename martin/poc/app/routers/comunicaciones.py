@@ -7,7 +7,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .. import comunicaciones, disponibilidad, estados, hub, prioridades
+from .. import comunicaciones, disponibilidad, estados, habitaciones, hub, prioridades
 from ..deps import get_store, http_de
 
 router = APIRouter(prefix="/api", tags=["comunicaciones"])
@@ -134,3 +134,9 @@ def insignias(store=Depends(get_store)):
     pendientes = sum(n for color, n in resumen["contadores"].items() if color != "verde")
     return {"insignias": {"comunicaciones": cuenta["pendientes"] + cuenta["en_espera"], "estancias": pendientes,
                           "fuente": len(comunicaciones.cola(store))}}
+
+
+@router.get("/habitaciones")
+def ver_habitaciones(fecha: str | None = None, store=Depends(get_store)):
+    """Quién hay en cada habitación un día (hoy por defecto), con quién llega y quién sale."""
+    return habitaciones.vista(store, fecha)

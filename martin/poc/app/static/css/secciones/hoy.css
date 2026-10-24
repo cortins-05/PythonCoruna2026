@@ -1,0 +1,18 @@
+/* Estilos de la sección Hoy. Todo bajo el prefijo .sec-hoy y usando solo tokens de tokens.css. */
+.sec-hoy { display: flex; flex-direction: column; gap: var(--s-4); }
+.sec-hoy .hoy__resumen { color: var(--c-texto-2); }
+.sec-hoy .hoy__rejilla { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); }
+.sec-hoy .hoy__hab { display: flex; flex-direction: column; gap: var(--s-2); min-height: 132px; padding: var(--s-3); background: var(--c-surface); border: 1px solid var(--c-borde-fuerte); }
+.sec-hoy .hoy__hab.is-libre { background: transparent; border-style: dashed; color: var(--c-texto-3); }
+.sec-hoy .hoy__hab header { display: flex; align-items: baseline; justify-content: space-between; }
+.sec-hoy .hoy__hab header b { font-family: var(--f-titulo); font-size: var(--t-2xl); line-height: 1; }
+.sec-hoy .hoy__hab header span { font-size: var(--t-xs); color: var(--c-texto-2); }
+.sec-hoy .hoy__persona { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sec-hoy .hoy__persona strong { font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sec-hoy .hoy__persona span { font-size: var(--t-xs); color: var(--c-texto-2); }
+.sec-hoy .hoy__persona--sale_hoy { padding-top: var(--s-2); border-top: 1px solid var(--c-borde); }
+.sec-hoy .hoy__persona--llega_hoy strong::before { content: "→ "; }
+.sec-hoy .hoy__persona--sale_hoy strong::before { content: "← "; }
+.sec-hoy .hoy__libre { font-size: var(--t-sm); }
+@media (max-width: 1100px) { .sec-hoy .hoy__rejilla { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .sec-hoy .hoy__rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
