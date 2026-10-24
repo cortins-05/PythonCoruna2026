@@ -1,0 +1,180 @@
+/*
+  Tokens del sistema de diseño. Todo el color, el radio, el espacio y la tipografía de la interfaz salen de aquí.
+  Ninguna sección escribe colores o tamaños sueltos: usa estas variables, y así el tema oscuro funciona solo.
+  Los pares de texto y fondo están calculados para cumplir 4,5:1 (texto) y 3:1 (bordes de controles y foco).
+*/
+:root {
+  color-scheme: light;
+
+  /* Superficies */
+  --c-bg: #F5F5F3;
+  --c-surface: #FFFFFF;
+  --c-surface-2: #FAFAF8;
+  --c-surface-3: #F0F0ED;
+  --c-borde: #E6E6E1;
+  --c-borde-fuerte: #D2D2CC;
+  --c-borde-control: #8A8A84;
+
+  /* Texto */
+  --c-texto: #111111;
+  --c-texto-2: #565652;
+  --c-texto-3: #6B6B67;
+
+  /* Acento: selección fuerte (tile activo, enlaces, foco) */
+  --c-acento: #2860F0;
+  --c-acento-hover: #1F52D6;
+  --c-acento-texto: #FFFFFF;
+  --c-acento-suave: #E6EEFF;
+  --c-acento-borde: #C3D4FA;
+  --c-enlace: #2250D6;
+
+  /* CTA: la acción principal de cada vista, siempre una sola */
+  --c-cta: #FFD21F;
+  --c-cta-hover: #F2C200;
+  --c-cta-texto: #1A1A1A;
+
+  /* Fuerte: chip seleccionado y botón oscuro */
+  --c-fuerte: #111111;
+  --c-fuerte-hover: #2A2A2A;
+  --c-fuerte-texto: #FFFFFF;
+
+  /* Tonos de estado: pastel con punto de color */
+  --c-ok-bg: #E8F7EF;       --c-ok-borde: #BFE6D2;       --c-ok-texto: #14693F;       --c-ok-punto: #16895A;
+  --c-aviso-bg: #FFF1C9;    --c-aviso-borde: #F2DB93;    --c-aviso-texto: #7A4B00;    --c-aviso-punto: #C26A03;
+  --c-critico-bg: #FDE7E3;  --c-critico-borde: #F4C3BB;  --c-critico-texto: #A3231A;  --c-critico-punto: #E5483A;
+  --c-info-bg: #E6EEFF;     --c-info-borde: #C3D4FA;     --c-info-texto: #1B46B8;     --c-info-punto: #2860F0;
+  --c-neutro-bg: #EFEFED;   --c-neutro-borde: #E2E2DE;   --c-neutro-texto: #3A3A38;   --c-neutro-punto: #8A8A86;
+
+  /* Tarjeta seleccionada (menta) */
+  --c-menta: #EAF8F1;
+  --c-menta-borde: #A9DEC3;
+
+  /* Menú flotante oscuro */
+  --c-menu: rgba(44, 44, 46, 0.95);
+  --c-menu-texto: #FFFFFF;
+  --c-menu-texto-2: #C9C9CC;
+  --c-menu-hover: rgba(255, 255, 255, 0.12);
+  --c-menu-borde: rgba(255, 255, 255, 0.08);
+
+  /* Radios */
+  --r-panel: 18px;
+  --r-tile: 16px;
+  --r-card: 14px;
+  --r-ctl: 10px;
+  --r-chip: 8px;
+  --r-pill: 999px;
+
+  /* Espacios */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+
+  /* Tipografía */
+  --f-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-md: 14px;
+  --t-lg: 16px;
+  --t-xl: 20px;
+  --t-2xl: 24px;
+  --t-3xl: 30px;
+  --p-normal: 400;
+  --p-medio: 500;
+  --p-fuerte: 600;
+
+  /* Sombras */
+  --sombra-1: 0 1px 2px rgba(17, 17, 17, 0.05);
+  --sombra-2: 0 8px 24px rgba(17, 17, 17, 0.08);
+  --sombra-menu: 0 16px 40px rgba(0, 0, 0, 0.28);
+
+  /* Layout */
+  --sidebar-w: 256px;
+  --sidebar-w-compacta: 76px;
+  --barra-h: 68px;
+  --contenido-max: 1280px;
+
+  /* Movimiento */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 160ms;
+
+  /* Textura de puntos de las tarjetas */
+  --textura-puntos: radial-gradient(circle at 1px 1px, rgba(17, 17, 17, 0.08) 1px, transparent 1.4px) 0 0 / 10px 10px;
+}
+
+/* Tema oscuro: automático con la preferencia del sistema, o forzado con data-tema="oscuro" */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    --c-bg: #0E0F10;
+    --c-surface: #161718;
+    --c-surface-2: #1B1C1E;
+    --c-surface-3: #252629;
+    --c-borde: #2B2C30;
+    --c-borde-fuerte: #3C3D42;
+    --c-borde-control: #7C7D82;
+    --c-texto: #F3F3F1;
+    --c-texto-2: #B6B6B0;
+    --c-texto-3: #94948E;
+    --c-acento: #3563E9;
+    --c-acento-hover: #2D58D8;
+    --c-acento-texto: #FFFFFF;
+    --c-acento-suave: #1B2A4D;
+    --c-acento-borde: #2D4378;
+    --c-enlace: #8FB0FF;
+    --c-fuerte: #F3F3F1;
+    --c-fuerte-hover: #FFFFFF;
+    --c-fuerte-texto: #111111;
+    --c-ok-bg: #12301F;       --c-ok-borde: #1E5A3A;       --c-ok-texto: #7FDDAA;       --c-ok-punto: #34C27D;
+    --c-aviso-bg: #3A2E0C;    --c-aviso-borde: #6B5415;    --c-aviso-texto: #F5CC6A;    --c-aviso-punto: #F59E0B;
+    --c-critico-bg: #3D1A16;  --c-critico-borde: #7A2E26;  --c-critico-texto: #FF9A8C;  --c-critico-punto: #FF6B5B;
+    --c-info-bg: #17254A;     --c-info-borde: #2D4378;     --c-info-texto: #9DBBFF;     --c-info-punto: #6E9BFF;
+    --c-neutro-bg: #26272A;   --c-neutro-borde: #36373B;   --c-neutro-texto: #D2D2CC;   --c-neutro-punto: #8E8E88;
+    --c-menta: #12301F;
+    --c-menta-borde: #1E5A3A;
+    --c-menu: rgba(58, 58, 62, 0.96);
+    --sombra-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sombra-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --textura-puntos: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 10px 10px;
+  }
+}
+
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+  --c-bg: #0E0F10;
+  --c-surface: #161718;
+  --c-surface-2: #1B1C1E;
+  --c-surface-3: #252629;
+  --c-borde: #2B2C30;
+  --c-borde-fuerte: #3C3D42;
+  --c-borde-control: #7C7D82;
+  --c-texto: #F3F3F1;
+  --c-texto-2: #B6B6B0;
+  --c-texto-3: #94948E;
+  --c-acento: #3563E9;
+  --c-acento-hover: #2D58D8;
+  --c-acento-texto: #FFFFFF;
+  --c-acento-suave: #1B2A4D;
+  --c-acento-borde: #2D4378;
+  --c-enlace: #8FB0FF;
+  --c-fuerte: #F3F3F1;
+  --c-fuerte-hover: #FFFFFF;
+  --c-fuerte-texto: #111111;
+  --c-ok-bg: #12301F;       --c-ok-borde: #1E5A3A;       --c-ok-texto: #7FDDAA;       --c-ok-punto: #34C27D;
+  --c-aviso-bg: #3A2E0C;    --c-aviso-borde: #6B5415;    --c-aviso-texto: #F5CC6A;    --c-aviso-punto: #F59E0B;
+  --c-critico-bg: #3D1A16;  --c-critico-borde: #7A2E26;  --c-critico-texto: #FF9A8C;  --c-critico-punto: #FF6B5B;
+  --c-info-bg: #17254A;     --c-info-borde: #2D4378;     --c-info-texto: #9DBBFF;     --c-info-punto: #6E9BFF;
+  --c-neutro-bg: #26272A;   --c-neutro-borde: #36373B;   --c-neutro-texto: #D2D2CC;   --c-neutro-punto: #8E8E88;
+  --c-menta: #12301F;
+  --c-menta-borde: #1E5A3A;
+  --c-menu: rgba(58, 58, 62, 0.96);
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sombra-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --textura-puntos: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 10px 10px;
+}

@@ -27,8 +27,8 @@ Cada agente trabaja en su rama `ui/<agente>` y solo toca los ficheros que se le 
 | `back-documentos` | `ui/back-documentos` | `app/documentos.py`, `app/routers/documentos.py`, `fixtures/hotel.json`, `tests/test_documentos.py` |
 
 **Base (no editar):** `app/main.py`, `app/hub.py`, `app/plantillas.py`, `app/lector.py`, `app/store.py`, `app/deps.py`, `app/routers/demo.py`, `requirements.txt`,
-`static/index.html`, `static/css/tokens.css`, `static/css/base.css`, `static/css/components.css`, `static/js/core.js`, `static/js/ui.js`, `static/js/icons.js`,
-`static/js/secciones.js`, `static/js/secciones/galeria.js`, `design/*`, `scripts/*`, y los tests que ya existen.
+`static/index.html`, `static/legacy.html`, `static/css/tokens.css`, `static/css/base.css`, `static/css/components.css`, `static/js/core.js`, `static/js/dom.js`, `static/js/ui.js`,
+`static/js/icons.js`, `static/js/secciones.js`, `static/js/secciones/galeria.js`, `static/css/secciones/galeria.css`, `design/*`, `scripts/*`, y los tests que ya existen.
 
 Si necesitas un componente reutilizable que no está en `ui.js`, constrúyelo dentro de tu propio fichero y descríbelo en tu informe para que el integrador decida si lo promueve.
 Si necesitas cambiar un fichero de base, no lo hagas: pídelo en `peticiones_a_base` con el cambio exacto.
@@ -52,7 +52,7 @@ export default {
 
 `ctx` ofrece, y solo esto:
 
-- `api(ruta, metodo = "GET", cuerpo)`: devuelve el JSON. Si la respuesta no es 2xx lanza `ErrorApi` con `status` y `detalle`. Tras cualquier petición que no sea GET y salga bien emite `datos-cambiaron` solo.
+- `api(ruta, metodo = "GET", cuerpo)`: devuelve el JSON. `ruta` puede ser `"/api/bandeja"` o `"/bandeja"`. Si la respuesta no es 2xx lanza `ErrorApi` con `status`, `detalle` y un `message` ya en español (junta `problemas`, `faltan`, `pendientes` o `conflicto`). Tras cualquier petición que no sea GET y salga bien emite `datos-cambiaron` solo.
 - `el(tag, atributos, ...hijos)`: crea elementos. Los hijos de tipo string son nodos de texto (nunca HTML). Atributos: `class`, `id`, `dataset`, `aria` (objeto que se vuelve `aria-*`), `on<evento>` (función), cualquier otro se pasa a `setAttribute`.
 - `ui`: las primitivas de `ui.js` (ver `DIRECTRICES.md`, catálogo).
 - `navegar(id, params)`: cambia de sección (`#/id?clave=valor`).
@@ -63,6 +63,24 @@ export default {
 - `estado`: `{ reloj, modos }` (lo mismo que `/api/estado`).
 - `barra(opciones)`: rellena la barra superior (título, subtítulo, un CTA y acciones fantasma).
 - `insignia(seccionId, n)`: pone el contador del menú lateral (lo normal es dejar que el núcleo lo haga con `/api/hoy`).
+
+### 2b. Interfaces entre dos agentes de la misma sección
+
+**Recepción** la construyen dos agentes. `recepcion-lista` posee `recepcion.js` (lista de estancias a la izquierda con filtros `hoy`, `en_casa`, `salidas` y `todos`, cabecera del detalle con `kv` y chips, y la composición de los pasos) y
+`recepcion-pasos` posee `recepcion-pasos.js`, que exporta dos funciones:
+
+```js
+export function crearPasos(exp, ctx, { recargar }) { /* ... */ }   // -> [{ id, titulo, estado, resumen, contenido }]
+export function crearRegistro(exp, ctx) { /* ... */ }              // -> HTMLElement con la línea de tiempo (exp.registro)
+```
+
+`exp` es el JSON de `GET /api/expedientes/{id}` completo. `crearPasos` devuelve cinco pasos con estos `id`, en este orden: `documento` (lectura OCR y datos del huésped), `pago` (medio de pago y datos de empresa con correo),
+`parte` (previsualización del XML y confirmación), `ofihotel` (datos para copiar y casilla de alta hecha) y `checkout` (factura, habitación liberada y cierre). `estado` es `hecho`, `actual`, `pendiente` o `bloqueado`
+(sale de `exp.tramites` y de lo que falte), `resumen` es una frase corta para el paso plegado y `contenido` es el `HTMLElement` con los controles del paso. `recargar()` vuelve a pedir la estancia y repinta.
+`recepcion.js` pinta los pasos con `ui.pasos` y muestra el `contenido` del paso `actual` (o del que pida `ctx.params.paso`) en un panel a la derecha. El check-out enlaza con Documentos (`ctx.navegar("documentos", { nuevo: exp.id })`).
+
+**Chat.** `asistente-shell` posee `asistente.js` (pantalla de bienvenida, lista de mensajes, caja de texto, historial y el despachador de acciones `ejecutar`) y `asistente-bloques` posee `asistente-bloques.js`
+(la función `renderBloque(bloque, { ejecutar, ui, el })` del apartado 5, con un pintado por cada tipo de bloque).
 
 ## 3. API existente (no cambiar su forma)
 
