@@ -2,14 +2,10 @@
   Sección "Comunicaciones": lista de peticiones por correo y WhatsApp a la izquierda y, a la derecha, la petición ya contrastada con las fuentes,
   el borrador de respuesta por el mismo canal y la confirmación de recepción. Los envíos son simulados (ver design/CONTRATO-CORE.md).
 */
-import { chipVeredicto, pastillaNivel, escalera, ICONO_FUENTE, NOMBRE_FUENTE } from "../ui-hotel.js";
+import { NOMBRE_FUENTE } from "../ui-hotel.js";
 
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 const HABITACION = { SGL: "Individual", DBL: "Doble", TPL: "Triple", FAM: "Familiar", SUI: "Suite" };
-const IDIOMA = { es: "ES", fr: "FR", en: "EN" };
-const ESTADO = { pendiente: ["info", "Pendiente"], en_espera: ["aviso", "En espera"], respondida: ["ok", "Respondida"], descartada: ["neutro", "Descartada"] };
-const TIPO = { pregunta: "una pregunta", cambio: "una petición de cambio", otro: "un mensaje de otro tipo" };
-const ID_FUENTE = Object.fromEntries(Object.entries(NOMBRE_FUENTE).map(([id, nombre]) => [nombre, id]));
 
 const EJEMPLOS = [
   { id: "doble", titulo: "Doble del 5 al 7 de noviembre", canal: "whatsapp", contacto: "34611222333", nombre: "Lucía Méndez", asunto: "",
@@ -52,7 +48,6 @@ export default {
 
     ctx.barra({
       titulo: "Comunicaciones",
-      subtitulo: "Peticiones contrastadas con todas las fuentes, listas para confirmar",
       acciones: [{ icono: "plus", texto: "Simular un mensaje", onclick: () => abrirSimulador() }],
     });
 
@@ -94,47 +89,25 @@ export default {
 
     function pintarLista() {
       zonaLista.classList.toggle("is-oculta-movil", est.movilDetalle);
-      const abiertas = (est.contadores.whatsapp ?? 0) + (est.contadores.correo ?? 0);
-      const filtros = ui.filaPastillas({
-        etiqueta: "Filtrar por canal", activo: est.canal,
-        items: [
-          { id: "todos", texto: "Todas", cuenta: abiertas },
-          { id: "correo", texto: "Correo", cuenta: est.contadores.correo ?? 0 },
-          { id: "whatsapp", texto: "WhatsApp", cuenta: est.contadores.whatsapp ?? 0 },
-        ],
-        onchange: (canal) => {
-          est.canal = canal;
-          if (!visibles().some((c) => c.id === est.id)) est.id = visibles()[0]?.id ?? null;
-          pintarLista();
-          pintarDetalle();
-        },
-      });
       const filas = visibles();
       const cuerpo = est.error ? ui.vacio({ icono: "alert", titulo: "No se pudieron cargar las comunicaciones", texto: est.error, accion: { texto: "Reintentar", variante: "secundario", onclick: () => cargar() } })
         : !est.cargado ? ui.esqueleto({ lineas: 5, alto: 56 })
-          : filas.length === 0 ? ui.vacio({ icono: "inbox", titulo: "No hay comunicaciones", texto: "Simula un mensaje para ver cómo se contrasta con las fuentes." })
+          : filas.length === 0 ? ui.vacio({ icono: "inbox", titulo: "No hay comunicaciones", texto: "Simula un mensaje." })
             : el("ul", { class: "com__filas" }, filas.map(fila));
-      zonaLista.replaceChildren(el("div", { class: "com__filtros" }, filtros.el), cuerpo);
+      zonaLista.replaceChildren(cuerpo);
     }
 
     function fila(c) {
       const cerrada = c.estado === "respondida" || c.estado === "descartada";
-      const [tono, textoEstado] = ESTADO[c.estado] ?? ESTADO.pendiente;
-      const veredicto = c.contraste?.veredicto;
       return el("li", null, el("button", {
         type: "button", class: `com__fila${c.id === est.id ? " is-seleccionada" : ""}${cerrada ? " is-atenuada" : ""}`, dataset: { id: c.id },
         aria: { current: c.id === est.id ? "true" : null }, onclick: () => seleccionar(c.id),
       },
-      el("span", { class: "com__canal", aria: { hidden: "true" } }, ctx.ui.icono(ICONO_FUENTE[c.canal] ?? "message", { tam: 18 })),
-      el("span", { class: "com__fila-texto" },
-        el("span", { class: "com__fila-cabecera" },
-          el("strong", { class: "u-trunc" }, c.de.nombre),
-          c.alerta && el("span", { class: "com__alerta-punto", title: "Trae una alerta" }, el("span", { class: "u-ocultar-visual" }, "Con alerta")),
-          el("span", { class: "com__hora u-tabular" }, c.hora)),
-        el("span", { class: "com__extracto" }, extracto(c)),
-        el("span", { class: "com__fila-chips" },
-          pastillaNivel(c.prioridad, { compacta: true }),
-          cerrada ? ui.chip({ texto: textoEstado, tono, punto: true }) : veredicto ? chipVeredicto(veredicto) : ui.chip({ texto: "Sin contraste", tono: "neutro" })))));
+      el("span", { class: "com__fila-cabecera" },
+        el("strong", { class: "u-trunc" }, c.de.nombre),
+        c.alerta && el("span", { class: "com__alerta-punto", title: "Trae una alerta" }, el("span", { class: "u-ocultar-visual" }, "Con alerta")),
+        el("span", { class: "com__hora u-tabular" }, c.hora)),
+      el("span", { class: "com__extracto" }, extracto(c))));
     }
 
     /* ---------------------------------------------------------- detalle */
@@ -143,7 +116,7 @@ export default {
       zonaDetalle.classList.toggle("is-oculta-movil", !est.movilDetalle);
       const c = actual();
       if (!c) {
-        zonaDetalle.replaceChildren(ui.panel({ hijos: [ui.vacio({ icono: "inbox", titulo: "Elige una comunicación", texto: "Aquí aparece el mensaje con el contraste de las fuentes." })] }));
+        zonaDetalle.replaceChildren(ui.vacio({ icono: "inbox", titulo: "Elige una comunicación" }));
         return;
       }
       const hijos = [];
@@ -152,94 +125,64 @@ export default {
         hijos.push(el("div", { class: "com__banner", role: "alert" }, ui.icono("alert", { tam: 20 }),
           el("div", null, el("strong", null, `Alerta de las ${c.alerta.hora}`), el("p", null, c.alerta.texto))));
       }
-      hijos.push(cabecera(c), bloqueMensaje(c), bloqueEntendido(c));
+      hijos.push(cabecera(c), bloqueMensaje(c));
+      const entendido = bloqueEntendido(c);
+      if (entendido) hijos.push(entendido);
       if (c.contraste) hijos.push(bloqueContraste(c));
       hijos.push(bloqueRespuesta(c));
       zonaDetalle.replaceChildren(el("div", { class: "com__detalle-pila" }, hijos));
     }
 
     function cabecera(c) {
-      const [tono, texto] = ESTADO[c.estado] ?? ESTADO.pendiente;
-      return ui.panel({ hijos: [el("header", { class: "com__cab" },
+      const estado = c.estado === "respondida" ? " · respondida" : c.estado === "descartada" ? " · descartada" : "";
+      return el("header", { class: "com__cab" },
         ui.avatar(c.de.nombre),
         el("div", { class: "com__cab-texto" },
           el("h2", { class: "com__nombre" }, c.de.nombre),
-          el("p", { class: "com__contacto" }, `${nombreCanal(c.canal) === "correo" ? "Correo" : "WhatsApp"} · ${c.de.contacto} · ${c.hora}`)),
-        el("div", { class: "com__cab-chips" },
-          ui.chip({ texto: IDIOMA[c.idioma] ?? String(c.idioma).toUpperCase(), tono: "neutro" }),
-          pastillaNivel(c.prioridad),
-          ui.chip({ texto, tono, punto: true })))] });
+          el("p", { class: "com__contacto" }, `${nombreCanal(c.canal) === "correo" ? "Correo" : "WhatsApp"} · ${c.de.contacto} · ${c.hora}${estado}`)));
     }
 
     function bloqueMensaje(c) {
-      return ui.panel({ titulo: "Mensaje recibido", hijos: [el("blockquote", { class: "com__cita" },
+      return el("blockquote", { class: "com__cita" },
         c.asunto && c.canal === "correo" && el("strong", { class: "com__asunto" }, c.asunto),
-        el("p", null, c.texto))] });
+        el("p", null, c.texto));
     }
 
     function bloqueEntendido(c) {
       const p = c.peticion;
-      if (c.tipo !== "peticion_habitacion" || !p) {
-        return ui.panel({ titulo: "Lo que hemos entendido", hijos: [el("p", { class: "com__nota" },
-          `Es ${TIPO[c.tipo] ?? "un mensaje"}, así que no hace falta contrastarlo con las fuentes. Basta con revisar la respuesta.`)] });
-      }
-      return ui.panel({ titulo: "Lo que hemos entendido", hijos: [ui.kv([
-        { etiqueta: "Habitación", valor: habitacion(p.tipo_habitacion) },
-        { etiqueta: "Fechas", valor: rango(p.desde, p.hasta) },
-        { etiqueta: "Noches", valor: String(p.noches) },
-        { etiqueta: "Personas", valor: String(p.personas) },
-        { etiqueta: "Habitaciones", valor: String(p.habitaciones) },
-      ], { columnas: 3 })] });
+      if (c.tipo !== "peticion_habitacion" || !p) return null;
+      const n = (x, uno, varios) => `${x} ${Number(x) === 1 ? uno : varios}`;
+      return el("p", { class: "com__entendido" },
+        `${habitacion(p.tipo_habitacion)}, del ${rango(p.desde, p.hasta)}, ${n(p.noches, "noche", "noches")}, ${n(p.personas, "persona", "personas")}, ${n(p.habitaciones, "habitación", "habitaciones")}.`);
     }
 
     function bloqueContraste(c) {
       const k = c.contraste;
       const hijos = [];
       if (k.noches?.length) hijos.push(tablaNoches(k.noches));
-      hijos.push(el("div", { class: "com__veredicto" }, el("span", { class: "com__veredicto-chip" }, chipVeredicto(k.veredicto)), el("p", { class: "com__motivo" }, k.motivo)));
-      if (k.bloqueada_por?.length) {
-        hijos.push(el("section", { class: "com__sub", aria: { label: "Lo ocupan" } }, el("h3", null, "Lo ocupan"),
-          el("ul", { class: "com__lista-simple" }, k.bloqueada_por.map((b) => el("li", null,
-            pastillaNivel({ nivel: b.nivel, fuente: b.fuente, id: b.id, tipo: "firme" }),
-            el("span", null, `${b.ocupantes.join(", ")} (${b.cantidad})`))))));
-      }
-      if (k.retenida_por?.length) {
-        hijos.push(el("section", { class: "com__sub", aria: { label: "Tiene prioridad" } }, el("h3", null, "Tiene prioridad"),
-          el("ul", { class: "com__lista-simple" }, k.retenida_por.map((r) => el("li", null,
-            pastillaNivel({ nivel: r.nivel, fuente: r.fuente, id: ID_FUENTE[r.fuente] ?? r.fuente, tipo: "peticion" }),
-            el("span", null, `${r.de}, por ${r.canal === "whatsapp" ? "WhatsApp" : "correo"}, a las ${r.hora}`))))));
-      }
-      if (k.alternativa) {
-        hijos.push(el("div", { class: "com__alternativa" }, ui.icono("calendar", { tam: 18 }),
-          el("p", null, el("strong", null, "Alternativa que se propone al cliente: "), rango(k.alternativa.desde, k.alternativa.hasta))));
-      }
-      if (est.prioridades?.niveles) {
-        const gana = k.bloqueada_por?.[0]?.id ?? ID_FUENTE[k.retenida_por?.[0]?.fuente] ?? c.prioridad.id;
-        hijos.push(el("section", { class: "com__sub", aria: { label: "Por qué gana" } }, el("h3", null, "Por qué gana"),
-          escalera(est.prioridades, { resaltar: gana, compacta: true, reglas: false })));
-      }
-      return ui.panel({ titulo: "Contraste con las fuentes", hijos });
+      const critico = k.veredicto === "no_disponible";
+      const gana = k.bloqueada_por?.[0] ? { fuente: k.bloqueada_por[0].fuente, nivel: k.bloqueada_por[0].nivel }
+        : k.retenida_por?.[0] ? { fuente: k.retenida_por[0].fuente, nivel: k.retenida_por[0].nivel } : null;
+      hijos.push(el("p", { class: `com__veredicto${critico ? " com__veredicto--critico" : ""}` }, k.motivo));
+      if (gana) hijos.push(el("p", { class: "com__gana" }, `Gana ${gana.fuente}, prioridad ${gana.nivel}.`));
+      if (k.alternativa) hijos.push(el("p", { class: "com__gana" }, `Alternativa para el cliente: ${rango(k.alternativa.desde, k.alternativa.hasta)}.`));
+      return el("section", { class: "com__contraste", aria: { label: "Contraste con las fuentes" } }, hijos);
     }
 
     function tablaNoches(noches) {
-      const celda = (n, fuente) => {
-        const cantidad = n.por_fuente?.[fuente] ?? 0;
-        const nombres = n.ocupantes?.[fuente] ?? [];
-        return el("td", { class: "u-derecha" }, String(cantidad), nombres.length > 0 && el("span", { class: "com__nombres" }, nombres.join(", ")));
-      };
-      const prioritarias = (n) => n.retenidas ?? 0;
+      const firmes = (n) => Object.values(n.por_fuente ?? {}).reduce((a, b) => a + (Number(b) || 0), 0);
       return el("div", { class: "ui-tabla-caja" }, el("table", { class: "ui-tabla com__tabla" },
-        el("caption", { class: "u-ocultar-visual" }, "Habitaciones por noche y fuente para esta petición"),
-        el("thead", null, el("tr", null, ["Noche", "Capacidad", "RoomCloud", "OfiHotel", "Recepción", "Peticiones con más prioridad", "Libres para esta petición"]
+        el("caption", { class: "u-ocultar-visual" }, "Habitaciones por noche para esta petición"),
+        el("thead", null, el("tr", null, ["Noche", "Capacidad", "Firmes", "Retenidas", "Libres"]
           .map((t, i) => el("th", { scope: "col", class: i > 0 ? "u-derecha" : null }, t)))),
         el("tbody", null, noches.map((n) => {
-          const sinHueco = (n.libres_para_esta ?? 0) <= 0;
-          return el("tr", { class: sinHueco ? "is-sin-hueco" : null },
+          const libres = n.libres_para_esta ?? 0;
+          return el("tr", null,
             el("th", { scope: "row" }, ui.fechaCorta(n.fecha)),
-            el("td", { class: "u-derecha" }, String(n.capacidad)),
-            celda(n, "roomcloud"), celda(n, "ofihotel"), celda(n, "recepcion"),
-            el("td", { class: "u-derecha" }, String(prioritarias(n))),
-            el("td", { class: "u-derecha com__libres" }, String(n.libres_para_esta ?? 0), sinHueco && el("span", { class: "com__sin-hueco" }, "Sin hueco")));
+            el("td", { class: "u-derecha u-tabular" }, String(n.capacidad)),
+            el("td", { class: "u-derecha u-tabular" }, String(firmes(n))),
+            el("td", { class: "u-derecha u-tabular" }, String(n.retenidas ?? 0)),
+            el("td", { class: `u-derecha u-tabular com__libres${libres <= 0 ? " is-sin-hueco" : ""}` }, String(libres)));
         }))));
     }
 
@@ -248,17 +191,13 @@ export default {
     function bloqueRespuesta(c) {
       const r = c.respuesta;
       const titulo = `Respuesta ${porCanal(c.canal)}`;
-      if (!r) return ui.panel({ titulo, hijos: [el("p", { class: "com__nota" }, "Todavía no hay borrador de respuesta.")] });
+      if (!r) return el("section", { class: "com__respuesta" }, el("h3", null, titulo), el("p", { class: "com__nota" }, "Sin borrador."));
       const cerrada = c.estado === "respondida" || c.estado === "descartada";
       const area = el("textarea", {
         class: "ui-entrada com__texto", rows: 6, disabled: cerrada, id: `com-texto-${c.id}`,
         aria: { label: `Texto de la respuesta ${porCanal(c.canal)}` },
       });
       area.value = r.texto ?? "";
-      const contador = el("span", { class: "com__contador u-tabular", aria: { live: "off" } });
-      const contar = () => { contador.textContent = `${area.value.length} caracteres`; };
-      contar();
-      area.addEventListener("input", contar);
       area.addEventListener("change", async () => {
         if (area.value === r.texto) return;
         try {
@@ -271,28 +210,25 @@ export default {
         ? el("div", { class: "com__correo-cab" },
           el("p", null, el("span", null, "Para: "), r.destinatario),
           el("p", null, el("span", null, "Asunto: "), r.asunto))
-        : el("p", { class: "com__wa-cab" }, ui.icono("message", { tam: 14 }), `Para ${c.de.nombre}, ${r.destinatario}`);
-      const burbuja = el("div", { class: `com__burbuja com__burbuja--${c.canal}` }, cabeceraMsg, area, el("div", { class: "com__burbuja-pie" }, contador));
-
-      const hijos = [burbuja];
+        : el("p", { class: "com__wa-cab" }, `Para ${r.destinatario}`);
+      const hijos = [cabeceraMsg, area];
       if (cerrada || c.resultado) hijos.push(resultado(c));
       if (!cerrada) {
-        const etiqueta = `Confirmar y enviar ${porCanal(c.canal)}`;
         hijos.push(el("div", { class: "com__acciones" },
-          ui.boton({ texto: etiqueta, icono: "send", variante: "cta", onclick: () => confirmar(c, area) }),
-          ui.boton({ texto: "Descartar", icono: "x", variante: "secundario", onclick: () => descartar(c) })));
+          ui.boton({ texto: `Enviar ${porCanal(c.canal)}`, icono: "send", variante: "cta", onclick: () => confirmar(c, area) }),
+          ui.boton({ texto: "Descartar", variante: "fantasma", onclick: () => descartar(c) })));
       }
-      return ui.panel({ titulo, hijos });
+      return el("section", { class: "com__respuesta" }, el("h3", null, titulo), hijos);
     }
 
     function resultado(c) {
       const r = c.resultado;
-      if (!r) return el("p", { class: "com__nota" }, c.estado === "descartada" ? "Descartada sin enviar respuesta." : "Respondida.");
+      if (!r) return el("p", { class: "com__nota" }, c.estado === "descartada" ? "Descartada sin respuesta." : "Respondida.");
       const lineas = [];
-      if (r.accion === "descartada") lineas.push("Descartada sin enviar respuesta.");
-      else lineas.push(`Enviado ${r.canal === "whatsapp" ? "por WhatsApp" : "por correo"} a ${r.destinatario}${r.simulado ? " (simulado)" : ""} a las ${r.hora}.`);
+      if (r.accion === "descartada") lineas.push("Descartada sin respuesta.");
+      else lineas.push(`Enviado ${r.canal === "whatsapp" ? "por WhatsApp" : "por correo"} a ${r.destinatario} a las ${r.hora}.`);
       if (r.accion === "reservada") lineas.push("Reserva creada con prioridad 3, Recepción.");
-      return el("div", { class: "com__resultado", role: "status" }, ui.icono("check", { tam: 18 }),
+      return el("div", { class: "com__resultado", role: "status" },
         el("div", null, lineas.map((l) => el("p", null, l)),
           r.accion === "reservada" && (r.reserva_id || c.expediente_id) && el("a", {
             class: "com__enlace", href: "#/estancias", onclick: (e) => { e.preventDefault(); ctx.navegar("estancias", { id: r.reserva_id ?? c.expediente_id }); },
@@ -308,9 +244,9 @@ export default {
           c.canal === "correo" && el("div", null, el("dt", null, "Asunto"), el("dd", null, c.respuesta.asunto))),
         el("p", { class: "com__previa-texto" }, texto));
       const ok = await ctx.confirmar({
-        titulo: `Confirmar y enviar ${porCanal(c.canal)}`,
-        texto: "El envío es simulado: la respuesta no sale a ningún cliente real.",
-        confirmar: `Confirmar y enviar ${porCanal(c.canal)}`, contenido: aviso,
+        titulo: `Enviar ${porCanal(c.canal)}`,
+        texto: "El envío es simulado y no sale a ningún cliente.",
+        confirmar: `Enviar ${porCanal(c.canal)}`, contenido: aviso,
       });
       if (!ok) { area.focus(); return; }
       try {
@@ -377,8 +313,7 @@ export default {
       }
       dialogo.append(
         el("h2", { class: "ui-dialogo__titulo", id: "com-sim-titulo" }, "Simular un mensaje"),
-        el("p", { class: "ui-dialogo__texto" }, "Entra como si lo hubiera enviado un cliente y se contrasta con las fuentes."),
-        el("p", { class: "com__ejemplos-titulo" }, "Ejemplos de un clic"), ejemplos,
+        ejemplos,
         el("form", { class: "com__form", novalidate: true, onsubmit: (e) => { e.preventDefault(); enviar(null); } },
           canal.el, contacto.el, nombre.el, asunto.el, texto.el, global,
           el("div", { class: "ui-dialogo__acciones" },
