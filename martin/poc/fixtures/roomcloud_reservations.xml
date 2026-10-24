@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RECONSTRUIDO para la demo a partir de docs/02-investigacion.md. No es una respuesta real de RoomCloud.
+     Los números de tarjeta son ficticios y existen solo para comprobar que el parser los descarta. -->
+<Response>
+  <reservations hotelId="3284">
+    <reservation id="BK-4471920" portalId="1" dlm="2026-10-22 18:40:12" status="4"
+                 checkin="2026-10-24" checkout="2026-10-26" creation_date="2026-10-20"
+                 firstName="Ana" lastName="Pereira Lage" country="ES"
+                 telephone="+34600111222" email="ana.pereira@example.com"
+                 price="212.00" prepaid="0" currencycode="EUR" paymentType="4"
+                 notes="Viaja por trabajo. Factura a nombre de la empresa.">
+      <room roomId="DBL-STD" rateId="BAR" adults="1" children="0"/>
+      <ccData number="4111111111111111" cvc="123" expiry="12/28" holder="ANA PEREIRA"/>
+    </reservation>
+    <reservation id="WEB-90112" portalId="0" dlm="2026-10-23 09:05:00" status="4"
+                 checkin="2026-10-24" checkout="2026-10-25" creation_date="2026-10-23"
+                 firstName="Marcos" lastName="Vilas" country="ES"
+                 telephone="+34611222333" email="marcos.vilas@example.com"
+                 price="96.00" prepaid="96.00" currencycode="EUR" paymentType="1" notes="">
+      <room roomId="SGL-STD" rateId="WEB" adults="1" children="0"/>
+    </reservation>
+    <reservation id="EX-7730021" portalId="2" dlm="2026-10-23 21:15:40" status="4"
+                 checkin="2026-10-24" checkout="2026-10-27" creation_date="2026-10-18"
+                 firstName="Claire" lastName="Dubois" country="FR"
+                 telephone="+33612345678" email="claire.dubois@example.com"
+                 price="318.00" prepaid="0" currencycode="EUR" paymentType="4" notes="">
+      <room roomId="DBL-STD" rateId="BAR" adults="2" children="0"/>
+      <ccData number="5555555555554444" cvc="456" expiry="03/27" holder="CLAIRE DUBOIS"/>
+    </reservation>
+    <reservation id="BK-4488003" portalId="1" dlm="2026-10-23 22:00:00" status="7"
+                 checkin="2026-10-24" checkout="2026-10-25" creation_date="2026-10-19"
+                 firstName="Luis" lastName="Otero" country="ES"
+                 telephone="" email="luis.otero@example.com"
+                 price="96.00" prepaid="0" currencycode="EUR" paymentType="4" notes="">
+      <room roomId="SGL-STD" rateId="BAR" adults="1" children="0"/>
+    </reservation>
+  </reservations>
+</Response>
