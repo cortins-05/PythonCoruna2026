@@ -197,7 +197,7 @@ def revisar_ocupacion(store) -> list[dict]:
     return nuevas
 
 
-# ---------------------------------------------------------------- ejecución de propuestas aprobadas
+# ================================================================ ejecución de propuestas aprobadas
 
 def _ejecutar_whatsapp(store, prop: dict, actor: str):
     return registrar_evento(store, "whatsapp", "mensaje_saliente_simulado", remitente=prop["destinatario"], contenido=prop["texto"],

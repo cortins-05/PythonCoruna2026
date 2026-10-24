@@ -115,7 +115,7 @@ def test_cada_motivo_de_revision_se_explica_en_castellano():
         plantillas.renderizar("revision_humana", {"motivo": "borrar_todo"})
 
 
-# ---------------------------------------------------------------- lector
+# ================================================================ lector
 
 @pytest.mark.parametrize("texto, intencion", [
     ("Hola, ¿me pueden enviar la factura de mi estancia?", "solicita_factura"),

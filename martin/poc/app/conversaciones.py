@@ -31,19 +31,29 @@ def id_de(canal: str, contacto: str) -> str:
 
 
 def canal_y_contacto(conv_id: str) -> tuple[str, str] | None:
+    """Canal y contacto normalizados de un id de conversación: el teléfono solo con cifras y el correo en minúsculas."""
     if isinstance(conv_id, str) and conv_id.startswith("wa:") and len(conv_id) > 3:
-        return "whatsapp", conv_id[3:]
+        return "whatsapp", re.sub(r"\D", "", conv_id[3:]) or conv_id[3:].strip()
     if isinstance(conv_id, str) and conv_id.startswith("mail:") and len(conv_id) > 5:
-        return "correo", conv_id[5:].lower()
+        return "correo", conv_id[5:].strip().lower()
     return None
 
 
+def normalizar_id(conv_id: str) -> str | None:
+    clave = canal_y_contacto(conv_id)
+    return id_de(*clave) if clave else None
+
+
 def _hilos(store) -> dict[str, list[dict]]:
+    """Eventos de cada conversación en el orden en que llegaron; el orden de las claves es el del último mensaje de cada una."""
     hilos: dict[str, list[dict]] = {}
     for ev in store.db["eventos"]:
         clave = _contacto_de(ev)
         if clave:
-            hilos.setdefault(id_de(*clave), []).append(ev)
+            conv_id = id_de(*clave)
+            eventos = hilos.pop(conv_id, [])
+            eventos.append(ev)
+            hilos[conv_id] = eventos  # al reinsertarla pasa al final del diccionario: la conversación más reciente queda la última
     return hilos
 
 
@@ -104,8 +114,7 @@ def listar(store, canal: str = "todos") -> list[dict]:
     """Conversaciones del canal pedido, la que tiene el mensaje más reciente primero."""
     hilos = [(conv_id, eventos) for conv_id, eventos in _hilos(store).items()
              if canal == "todos" or canal_y_contacto(conv_id)[0] == canal]
-    hilos.sort(key=lambda h: (h[1][-1]["ts"], h[1][-1]["id"]), reverse=True)
-    return [_resumen(store, conv_id, eventos) for conv_id, eventos in hilos]
+    return [_resumen(store, conv_id, eventos) for conv_id, eventos in reversed(hilos)]
 
 
 def _mensaje(ev: dict, canal: str) -> dict:
@@ -120,7 +129,8 @@ def _mensaje(ev: dict, canal: str) -> dict:
 
 def detalle(store, conv_id: str) -> dict | None:
     """La conversación con todos sus mensajes y sus propuestas pendientes, o None si no existe."""
-    eventos = _hilos(store).get(conv_id)
+    conv_id = normalizar_id(conv_id)
+    eventos = _hilos(store).get(conv_id) if conv_id else None
     if not eventos:
         return None
     return {"conversacion": _resumen(store, conv_id, eventos),

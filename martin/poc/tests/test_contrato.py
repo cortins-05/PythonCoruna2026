@@ -18,7 +18,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app import chat_bloques, hub, main  # noqa: E402
+from app import hub, main  # noqa: E402
 from app.adapters import roomcloud  # noqa: E402
 from app.store import Store  # noqa: E402
 
@@ -29,7 +29,7 @@ TONO = {"neutro", "ok", "aviso", "critico"}
 TONO_BLOQUE = {"neutro", "ok", "aviso", "critico", "info"}
 
 
-# ---------------------------------------------------------------- validación de formas
+# ================================================================ validación de formas
 
 def validar(forma, valor, ruta="$") -> list[str]:
     """Devuelve la lista de diferencias entre el valor y la forma (vacía si encajan)."""
@@ -77,7 +77,7 @@ def test_la_funcion_de_formas_detecta_lo_que_debe():
     assert validar(forma, {"a": 1, "c": ["no"], "d": None, "e": "x"})  # tipos equivocados
 
 
-# ---------------------------------------------------------------- formas del contrato
+# ================================================================ formas del contrato
 
 RESUMEN_EXPEDIENTE = {"id": str, "huesped": str, "estado": str, "checkin": str, "checkout": str, "pendientes": [str], "parte": str,
                       "parte_restante_h": (float, None), "viaja_por_trabajo": bool}
@@ -152,17 +152,29 @@ CAMPOS_ACCION = {"preguntar": {"texto"}, "abrir_seccion": {"seccion", "params"},
                  "enviar_documento": {"id", "destinatario"}}
 
 
+ACCIONES = set(CAMPOS_ACCION)  # la lista cerrada del contrato: once tipos de acción
+
+
+def acciones_de(bloque: dict) -> list[dict]:
+    """Todas las acciones que lleva un bloque, estén donde estén (acciones, acción, envío, pasos y filas de mensajes)."""
+    encontradas = []
+    for clave in ("acciones", "accion", "envio"):
+        valor = bloque.get(clave)
+        encontradas += valor if isinstance(valor, list) else [valor] if isinstance(valor, dict) else []
+    return encontradas + [paso["accion"] for paso in bloque.get("pasos", [])] + [fila["accion"] for fila in bloque.get("mensajes", [])]
+
+
 def comprobar_bloque(bloque: dict):
     assert bloque["tipo"] in BLOQUES, f"tipo de bloque desconocido: {bloque['tipo']}"
     exigir(BLOQUES[bloque["tipo"]], bloque)
-    for accion in chat_bloques.acciones_de(bloque):
-        assert accion["tipo"] in chat_bloques.ACCIONES, f"acción fuera de la lista cerrada: {accion['tipo']}"
+    for accion in acciones_de(bloque):
+        assert accion["tipo"] in ACCIONES, f"acción fuera de la lista cerrada: {accion['tipo']}"
         permitidos = {c.lstrip("?") for c in CAMPOS_ACCION[accion["tipo"]]} | {"tipo", "etiqueta"}
         obligatorios = {c for c in CAMPOS_ACCION[accion["tipo"]] if not c.startswith("?")} | {"tipo", "etiqueta"}
         assert obligatorios <= set(accion) <= permitidos, f"campos de la acción {accion['tipo']}: {sorted(accion)}"
 
 
-# ---------------------------------------------------------------- fixtures
+# ================================================================ fixtures
 
 @pytest.fixture()
 def cliente(tmp_path, monkeypatch):
@@ -179,7 +191,7 @@ def ver(c, ruta, **params):
     return r.json()
 
 
-# ---------------------------------------------------------------- formas de cada endpoint
+# ================================================================ formas de cada endpoint
 
 def test_hoy_tiene_la_forma_del_contrato_y_cuadra_con_el_almacen(cliente):
     datos = ver(cliente, "/api/hoy")
@@ -337,19 +349,49 @@ def test_la_muestra_de_bloques_trae_un_bloque_de_cada_tipo_con_sus_campos(client
     assert {b["estado"] for b in bloques if b["tipo"] == "documento"} == {"emitido", "borrador"}
 
 
-def test_la_muestra_no_depende_del_almacen_y_coincide_con_lo_que_construye_el_servidor_sobre_la_semilla(cliente, tmp_path, monkeypatch):
+def test_la_muestra_no_depende_del_almacen(cliente, tmp_path, monkeypatch):
     muestra = ver(cliente, "/api/chat/bloques-muestra")["bloques"]
-    s, ana, claire = main.store, main.store.db["expedientes"][ANA], main.store.db["expedientes"][CLAIRE]
-    propuesta = next(p for p in s.db["propuestas"] if p["plantilla"] == "info_llegada")
-    reales = [chat_bloques.bloque_resumen_kpi(s), chat_bloques.bloque_tarjeta_reserva(ana), chat_bloques.bloque_tabla_ocupacion(s, 3),
-              chat_bloques.bloque_flujo(s, ana), chat_bloques.bloque_propuesta(propuesta), chat_bloques.bloque_lista_mensajes(s),
-              chat_bloques.bloque_formulario_walkin(s), chat_bloques.bloque_documento(s, s.db["documentos"]["doc-0011"]),
-              chat_bloques.bloque_documento(s, s.db["documentos"]["doc-0013"]),
-              chat_bloques._por_tema(s, "documentos", "factura de claire", claire)[0],
-              chat_bloques.bloque_sugerencias(chat_bloques.sugerencias_de("llegadas", None, ""))]
-    assert muestra == reales, "la muestra ya no coincide con la semilla: regenera chat_bloques._MUESTRA"
     monkeypatch.setattr(main, "store", Store(tmp_path / "vacio.json"))  # con el almacén vacío devuelve exactamente lo mismo
     assert ver(TestClient(main.app), "/api/chat/bloques-muestra")["bloques"] == muestra
+
+
+def test_la_muestra_es_coherente_con_la_semilla_completa(cliente):
+    """Cada referencia de la muestra (ids, nombres, números, importes) existe en la semilla y dice lo mismo que la API."""
+    muestra: dict[str, list[dict]] = {}
+    for bloque in ver(cliente, "/api/chat/bloques-muestra")["bloques"]:
+        muestra.setdefault(bloque["tipo"], []).append(bloque)
+    kpi = {k["id"]: k for k in ver(cliente, "/api/hoy")["kpis"]}
+    items = {i["etiqueta"]: i for i in muestra["resumen_kpi"][0]["items"]}
+    assert items["Llegadas"]["valor"] == str(kpi["llegadas"]["valor"]) and items["En casa"]["valor"] == str(kpi["en_casa"]["valor"])
+    tarjeta, flujo = muestra["tarjeta_reserva"][0], muestra["flujo"][0]
+    exp = ver(cliente, f"/api/expedientes/{tarjeta['id']}")
+    assert tarjeta["titulo"] == f"{exp['reserva']['nombre']} {exp['reserva']['apellidos']}" and tarjeta["titulo"] in flujo["titulo"]
+    assert {p["accion"]["id"] for p in flujo["pasos"]} == {tarjeta["id"]}
+    assert {p["id"] for p in flujo["pasos"] if p["estado"] == "hecho"} == {t for t, v in exp["tramites"].items() if v["estado"] == "hecho"}
+    mapa = ver(cliente, "/api/disponibilidad")["mapa"]["tipos"]
+    assert [f["tipo"] for f in muestra["tabla_ocupacion"][0]["filas"]] == list(mapa)
+    for fila in muestra["tabla_ocupacion"][0]["filas"]:
+        assert fila["capacidad"] == mapa[fila["tipo"]]["capacidad"]
+        for celda in fila["celdas"]:
+            real = next(d for d in mapa[fila["tipo"]]["dias"] if d["fecha"] == celda["fecha"])
+            assert (celda["ocupadas"], celda["libres"], celda["cerrado"]) == (real["ocupadas"], real["libres"], real["cerrado_en_roomcloud"])
+    propuesta = muestra["propuesta"][0]
+    real = next(p for p in ver(cliente, "/api/propuestas") if p["id"] == propuesta["id"])
+    assert all(propuesta[c] == real[c] for c in ("texto", "plantilla", "destino", "destinatario", "estado"))
+    conversaciones = {c["id"]: c for c in ver(cliente, "/api/mensajes/conversaciones")["conversaciones"]}
+    for fila in muestra["lista_mensajes"][0]["mensajes"]:
+        conv = conversaciones[fila["accion"]["id"]]
+        assert (fila["canal"], fila["texto"], fila["intencion"]) == (conv["canal"], conv["ultimo"]["texto"], conv["intencion"])
+    for bloque in muestra["documento"]:
+        doc = ver(cliente, f"/api/documentos/{bloque['id']}")
+        assert (bloque["documento"], bloque["estado"], bloque["numero"], bloque["receptor"], bloque["aviso"], bloque["fiscal"]) == (
+            doc["tipo"], doc["estado"], doc["numero"], doc["receptor"]["nombre"], doc["aviso_fiscal"], doc["fiscal"])
+        if doc["totales"]["total"]:
+            assert bloque["total"] == f"{doc['totales']['total']:.2f} EUR".replace(".", ",")
+    tipos = next(c for c in muestra["formulario"][0]["campos"] if c["nombre"] == "tipo")["opciones"]
+    assert tipos == list(mapa)
+    aviso = muestra["aviso"][0]
+    assert ver(cliente, "/api/documentos", expediente=CLAIRE)["documentos"] == [] and "Claire Dubois" in aviso["texto"]
 
 
 def test_el_chat_devuelve_bloques_reales_con_la_forma_del_contrato(cliente):
@@ -378,8 +420,8 @@ def test_todas_las_acciones_usan_solo_tipos_de_la_lista_cerrada(cliente):
                           "¿Qué propuestas hay pendientes de aprobar?", "Quiero añadir una reserva física", "factura de Claire",
                           "Quiero hacer el check-in de Marcos", "¿Qué documentos hay por enviar?", "hola"]:
         bloques += cliente.post("/api/chat", json={"mensaje": tema_pregunta}).json()["bloques"]
-    acciones = [a for b in bloques for a in chat_bloques.acciones_de(b)]
-    assert acciones and {a["tipo"] for a in acciones} <= chat_bloques.ACCIONES
+    acciones = [a for b in bloques for a in acciones_de(b)]
+    assert acciones and {a["tipo"] for a in acciones} <= ACCIONES
     # el contrato lista once tipos de acción: la muestra y las respuestas cubren casi todos (preguntar y sincronizar los pinta el front)
     assert {"abrir_expediente", "abrir_documento", "abrir_conversacion", "aprobar_propuesta", "rechazar_propuesta", "enviar_formulario",
             "emitir_documento", "enviar_documento", "abrir_seccion"} <= {a["tipo"] for a in acciones}
@@ -391,7 +433,7 @@ def test_cada_respuesta_del_chat_pinta_texto_plano_sin_html(cliente):
         assert "<script>" not in json.dumps(datos["bloques"]) and "<b>" not in json.dumps(datos["bloques"])
 
 
-# ---------------------------------------------------------------- reglas de seguridad del contrato
+# ================================================================ reglas de seguridad del contrato
 
 def test_enviar_documento_a_un_destinatario_desconocido_no_crea_propuesta(cliente):
     s = main.store
@@ -474,3 +516,47 @@ def test_ninguna_respuesta_de_la_api_contiene_los_numeros_de_tarjeta(cliente):
         assert not any(t in cliente.post("/api/chat", json={"mensaje": pregunta}).text for t in TARJETAS)
     guardado = main.store.ruta.read_text(encoding="utf-8")
     assert not any(t in guardado for t in TARJETAS) and "ccData" not in guardado
+
+
+# ================================================================ casos límite de la base
+
+def test_con_el_almacen_vacio_todo_responde_con_su_forma(tmp_path, monkeypatch):
+    monkeypatch.setattr(main, "store", Store(tmp_path / "vacio.json"))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    c = TestClient(main.app)
+    hoy = ver(c, "/api/hoy")
+    exigir(HOY, hoy)
+    kpi = {k["id"]: k for k in hoy["kpis"]}
+    assert all(kpi[i]["valor"] == 0 for i in ("llegadas", "en_casa", "salidas", "partes", "pendientes", "sin_responder", "documentos"))
+    assert kpi["ocupacion"]["valor"] == "0 %" and kpi["partes"]["tono"] == "ok" and hoy["alertas"] == [] and hoy["proximas_acciones"] == []
+    exigir(CONVERSACIONES, ver(c, "/api/mensajes/conversaciones"))
+    exigir(DOCUMENTOS, ver(c, "/api/documentos"))
+    exigir(INTEGRACIONES, ver(c, "/api/integraciones"))
+    for pregunta in ["¿Qué llegadas hay hoy?", "¿Cómo está la ocupación?", "¿Qué partes están pendientes?", "¿Qué mensajes han llegado?",
+                     "¿Qué propuestas hay pendientes de aprobar?", "Quiero añadir una reserva física", "¿Qué documentos hay por enviar?",
+                     "Prepara la factura de Ana", "Quiero hacer el check-in de Ana", "hola"]:
+        datos = c.post("/api/chat", json={"mensaje": pregunta}).json()
+        exigir({"respuesta": str, "modo": str, "propuestas": [str], "bloques": [dict]}, datos)
+        assert datos["respuesta"] and datos["bloques"][-1]["tipo"] == "sugerencias", pregunta
+        for bloque in datos["bloques"]:
+            comprobar_bloque(bloque)
+
+
+def test_el_id_de_una_conversacion_se_normaliza(cliente):
+    from app import conversaciones
+    assert conversaciones.normalizar_id("mail: Claire.Dubois@Example.com ") == "mail:claire.dubois@example.com"
+    assert conversaciones.normalizar_id("wa:+34 600-111-222") == "wa:34600111222"
+    assert conversaciones.normalizar_id("sms:123") is None and conversaciones.normalizar_id("wa:") is None and conversaciones.normalizar_id(None) is None
+    assert ver(cliente, "/api/mensajes/conversaciones/mail:Claire.Dubois@Example.com")["conversacion"]["id"] == "mail:claire.dubois@example.com"
+    assert conversaciones.detalle(main.store, "wa:+34 600 111 222")["conversacion"]["id"] == "wa:34600111222"
+    assert cliente.get("/api/mensajes/conversaciones/sms:123").status_code == 404
+
+
+def test_las_conversaciones_se_ordenan_por_el_ultimo_mensaje_aunque_los_ids_cambien_de_longitud(tmp_path, monkeypatch):
+    monkeypatch.setattr(main, "store", Store(tmp_path / "orden.json"))
+    s = main.store
+    for ident, wa in (("ev-9998", "34600000001"), ("ev-9999", "34600000002"), ("ev-10000", "34600000003"), ("ev-10001", "34600000001")):
+        s.db["eventos"].append({"id": ident, "ts": "2026-10-24T09:00", "fuente": "whatsapp", "tipo": "mensaje_entrante", "remitente": ident,
+                                "contenido": "hola", "expediente_id": None, "datos": {"wa_id": wa}, "estado": "nuevo"})
+    ids = [c["id"] for c in TestClient(main.app).get("/api/mensajes/conversaciones").json()["conversaciones"]]
+    assert ids == ["wa:34600000001", "wa:34600000003", "wa:34600000002"]

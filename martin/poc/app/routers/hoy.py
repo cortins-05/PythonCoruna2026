@@ -1,7 +1,7 @@
 """Hoy: el resumen del día para recepción.
 
-Versión de la base con cuentas simples hechas sobre el almacén. El agente back-hoy puede afinar los criterios sin cambiar la
-forma de la respuesta. Las insignias del menú salen de los mismos números que los KPI, para que nunca se contradigan.
+Versión de la base con cuentas simples hechas sobre el almacén, así que el agente back-hoy puede afinar los criterios sin
+cambiar la forma de la respuesta, y las insignias del menú salen de los mismos números que los KPI para que nunca se contradigan.
 """
 import math
 

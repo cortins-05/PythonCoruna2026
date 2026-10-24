@@ -24,7 +24,7 @@ def cliente(tmp_path, monkeypatch):
     return TestClient(main.app)
 
 
-# ---------------------------------------------------------------- almacén
+# ================================================================ almacén
 
 def test_la_ruta_del_json_sale_de_hotel_db_y_si_no_es_la_de_siempre(tmp_path, monkeypatch):
     monkeypatch.setenv("HOTEL_DB", str(tmp_path / "otra" / "mia.json"))
@@ -82,7 +82,7 @@ def test_guardar_y_volver_a_cargar_conserva_los_documentos(tmp_path, cliente):
     assert recargado.db["documentos"]["doc-0011"]["numero"] == "DEMO-F-0001" and recargado.db["series"]["factura"] == 1
 
 
-# ---------------------------------------------------------------- semilla
+# ================================================================ semilla
 
 def test_la_semilla_vacia_deja_todo_a_cero_con_el_reloj_en_su_sitio(cliente):
     cliente.post("/api/demo/semilla")

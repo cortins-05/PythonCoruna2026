@@ -2,8 +2,8 @@
 
 Seguridad (obligatoria). Los bloques y sus acciones salen de lo que hay en el almacén y nunca del texto que escribe el modelo:
 el modelo solo elige herramientas, y aquí se decide qué se pinta. Todos los textos son texto plano, sin HTML, y las acciones
-usan únicamente los tipos de la lista cerrada del contrato (`ACCIONES`). Esta versión es la mínima de la base: reconoce el
-tema por palabras clave. El agente back-chat puede sustituirla sin cambiar la forma de los bloques.
+usan únicamente los tipos de la lista cerrada del contrato (`ACCIONES`). Esta versión es la mínima de la base y reconoce el
+tema por palabras clave, así que el agente back-chat puede sustituirla sin cambiar la forma de los bloques.
 """
 import copy
 import re
@@ -37,7 +37,7 @@ TEMAS = [
 _TEMAS = [(tema, re.compile(patron)) for tema, patron in TEMAS]
 
 
-# ---------------------------------------------------------------- utilidades
+# ================================================================ utilidades
 
 def _sin_tildes(texto: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", texto) if unicodedata.category(c) != "Mn")
@@ -90,7 +90,7 @@ def tema_de(store, mensaje: str) -> tuple[str, dict | None]:
     return "ayuda", exp
 
 
-# ---------------------------------------------------------------- constructores de bloques
+# ================================================================ constructores de bloques
 
 def bloque_resumen_kpi(store) -> dict:
     exps = [e for e in store.db["expedientes"].values() if e["estado"] != "cancelada"]
@@ -247,7 +247,7 @@ def bloque_sugerencias(items: list[str]) -> dict:
     return {"tipo": "sugerencias", "items": items[:3]}
 
 
-# ---------------------------------------------------------------- del mensaje a los bloques
+# ================================================================ del mensaje a los bloques
 
 def _por_tema(store, tema: str, mensaje: str, exp: dict | None) -> list[dict]:
     bajo = mensaje.lower()
@@ -342,7 +342,7 @@ def acciones_de(bloque: dict) -> list[dict]:
     return encontradas
 
 
-# ---------------------------------------------------------------- bloques de muestra
+# ================================================================ bloques de muestra
 # Un bloque de cada tipo con datos de la semilla `completa` (Ana, su factura DEMO-F-0001, su albarán en borrador, la propuesta
 # pr-0008 y la conversación de Claire). `/api/chat/bloques-muestra` los devuelve tal cual, sin leer el almacén, para poder
 # desarrollar el pintado sin depender del resto. Un test comprueba que coinciden con lo que construye el servidor sobre esa
@@ -499,7 +499,7 @@ def bloques_muestra() -> list[dict]:
     return copy.deepcopy(_MUESTRA)
 
 
-# ---------------------------------------------------------------- sugerencias de bienvenida
+# ================================================================ sugerencias de bienvenida
 
 def sugerencias_bienvenida() -> dict:
     """Pantalla de bienvenida del asistente: cuatro categorías con tres preguntas y cuatro flujos."""

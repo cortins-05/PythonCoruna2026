@@ -37,7 +37,7 @@ LIMITES_RECEPTOR = {"nombre": 120, "nif": 20, "direccion": 200, "email": 254}
 _CONTROL = re.compile(r"[\x00-\x1f\x7f  ]")
 
 
-# ---------------------------------------------------------------- dinero y formato
+# ================================================================ dinero y formato
 
 def _dec(valor) -> Decimal:
     return Decimal(str(valor))
@@ -107,7 +107,7 @@ def estado_texto(doc: dict) -> str:
             "anulado": "anulada" if femenino else "anulado"}.get(doc["estado"], doc["estado"])
 
 
-# ---------------------------------------------------------------- validación
+# ================================================================ validación
 
 def _numero(valor) -> bool:
     return isinstance(valor, (int, float)) and not isinstance(valor, bool) and math.isfinite(valor)
@@ -180,7 +180,7 @@ def validar_receptor(receptor, actual: dict) -> dict:
     return {**actual, **limpios}
 
 
-# ---------------------------------------------------------------- creación y consulta
+# ================================================================ creación y consulta
 
 def _hoy(store) -> str:
     return store.ahora().date().isoformat()
@@ -278,7 +278,7 @@ def resumen(doc: dict) -> dict:
             "enviado": bool(doc["envios"]), "fiscal": doc["fiscal"], "origen": doc["origen"]}
 
 
-# ---------------------------------------------------------------- cambios de estado
+# ================================================================ cambios de estado
 
 def editar(store, doc_id: str, lineas=None, receptor=None, actor: str = "Recepción") -> dict:
     doc = obtener(store, doc_id)
@@ -370,7 +370,7 @@ def enviar(store, doc_id: str, actor: str = "Recepción", destinatario: str | No
     return doc
 
 
-# ---------------------------------------------------------------- ejecución de propuestas aprobadas
+# ================================================================ ejecución de propuestas aprobadas
 
 def _documento_vigente(store, expediente_id: str, tipo: str) -> dict | None:
     """El documento más reciente de ese tipo para la estancia que no esté anulado."""
@@ -399,7 +399,7 @@ def ejecutar(store, propuesta: dict, actor: str):
     raise hub.ErrorNegocio(f"Documentos no sabe ejecutar la plantilla «{plantilla}»", 422)
 
 
-# ---------------------------------------------------------------- HTML imprimible
+# ================================================================ HTML imprimible
 
 _ESTILOS = """
   :root { color-scheme: light; }

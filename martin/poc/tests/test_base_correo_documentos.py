@@ -44,7 +44,7 @@ def tras_el_checkin_de(c, exp_id: str, email: str = "huesped@example.com") -> No
     assert c.put(f"/api/expedientes/{exp_id}/huesped", json={**lectura, "telefono": "+34600000000", "email": email}).status_code == 200
 
 
-# ---------------------------------------------------------------- correo con la forma de Gmail
+# ================================================================ correo con la forma de Gmail
 
 def test_el_mensaje_tiene_la_forma_del_recurso_de_la_api_de_gmail():
     m = correo.construir_mensaje_gmail("claire.dubois@example.com", "Claire Dubois", "Factura de mi estancia", "Hola, ¿me envían la factura?", AHORA)
@@ -121,7 +121,7 @@ def test_enviar_simulado_deja_un_evento_y_una_entrada_en_la_bandeja_de_salida(cl
     assert len(s.db["outbox"]) == 1
 
 
-# ---------------------------------------------------------------- importes
+# ================================================================ importes
 
 def test_la_factura_por_defecto_suma_exactamente_el_importe_de_la_reserva(cliente):
     s = main.store
@@ -175,7 +175,7 @@ def test_un_albaran_admite_lineas_sin_precio_y_normaliza_las_que_si_lo_llevan():
                        {"concepto": "Parking", "cantidad": 1.5, "precio_unitario": 12.0, "iva_pct": 10}]
 
 
-# ---------------------------------------------------------------- ciclo de vida y numeración
+# ================================================================ ciclo de vida y numeración
 
 def test_la_numeracion_no_tiene_saltos_y_cada_tipo_lleva_su_serie(cliente):
     s = main.store
@@ -240,7 +240,7 @@ def test_el_receptor_es_la_empresa_si_la_hay_y_si_no_el_huesped(completa):
     assert claire["receptor"]["nombre"] == "Claire Dubois" and claire["receptor"]["email"] == "claire.dubois@example.com"
 
 
-# ---------------------------------------------------------------- envío por correo y regla del destinatario conocido
+# ================================================================ envío por correo y regla del destinatario conocido
 
 def test_enviar_a_un_correo_desconocido_pide_confirmacion_y_la_deja_en_el_registro(completa):
     s = main.store
@@ -316,7 +316,7 @@ def test_la_empresa_guarda_su_correo_y_es_un_destinatario_valido(cliente):
     assert hub.contexto_valido(main.store, "enviar_documento", {"documento": doc["id"], "destinatario": "facturas@atlantico.example"})
 
 
-# ---------------------------------------------------------------- HTML
+# ================================================================ HTML
 
 def test_el_html_escapa_todo_y_lleva_el_aviso(cliente):
     s = main.store
@@ -336,7 +336,7 @@ def test_el_html_de_un_albaran_sin_precios_no_lleva_columnas_de_importes(complet
     assert "Documento de demostración sin validez fiscal" in pagina
 
 
-# ---------------------------------------------------------------- API de documentos
+# ================================================================ API de documentos
 
 def test_crear_editar_emitir_y_enviar_por_la_api(cliente):
     r = cliente.post("/api/documentos/borrador", json={"tipo": "factura", "expediente_id": CLAIRE})
@@ -366,7 +366,22 @@ def test_crear_editar_emitir_y_enviar_por_la_api(cliente):
     assert r.json()["registro"][-1]["actor"] == "Flor  Bcc: x"
 
 
-# ---------------------------------------------------------------- ejecución de propuestas aprobadas
+def test_un_cuerpo_mal_formado_responde_con_la_lista_de_problemas_de_siempre(cliente):
+    doc = cliente.post("/api/documentos/borrador", json={"tipo": "factura", "expediente_id": CLAIRE}).json()
+    for cuerpo in ({"lineas": "texto"}, {"lineas": ["no es un objeto"]}, {"lineas": 5}, {"receptor": "texto"}, {"receptor": ["a"]}):
+        r = cliente.put(f"/api/documentos/{doc['id']}", json=cuerpo)
+        assert r.status_code == 422 and "problemas" in r.json()["detail"], cuerpo
+    assert cliente.post("/api/documentos/borrador", json={"tipo": "factura", "expediente_id": CLAIRE, "lineas": "texto"}).status_code == 422
+    r = cliente.post("/api/mensajes/conversaciones/mail:claire.dubois@example.com/proponer", json={"plantilla": "correo_info_llegada", "slots": ["Claire"]})
+    assert r.status_code == 404  # esa conversación aún no existe: antes hay que recibir un correo
+    cliente.post("/api/correo/simular", json={"de": "claire.dubois@example.com", "nombre": "Claire", "asunto": "Hola", "cuerpo": "Hola"})
+    r = cliente.post("/api/mensajes/conversaciones/mail:claire.dubois@example.com/proponer", json={"plantilla": "correo_info_llegada", "slots": ["Claire"]})
+    assert r.status_code == 422 and r.json()["detail"]["problemas"] == ["Las variables deben ser un objeto"]
+    r = cliente.post("/api/correo/simular", json={"de": "claire.dubois@example.com", "asunto": "Largo", "cuerpo": "x" * (correo.CUERPO_MAX + 1)})
+    assert r.status_code == 422 and "supera" in r.json()["detail"]["problemas"][0]
+
+
+# ================================================================ ejecución de propuestas aprobadas
 
 def test_aprobar_emitir_factura_la_crea_y_la_emite_una_sola_vez(completa):
     s = main.store
@@ -422,7 +437,7 @@ def test_una_ejecucion_que_falla_deja_la_propuesta_pendiente(completa):
     assert next(p for p in s.db["propuestas"] if p["id"] == propuesta["id"])["estado"] == "pendiente"
 
 
-# ---------------------------------------------------------------- enrutado de mensajes
+# ================================================================ enrutado de mensajes
 
 def evento_con(intencion: str, texto: str = "x") -> dict:
     return {"id": "ev-9999", "datos": {"interpretacion": {"intencion": intencion, "confianza": 0.6, "modo": "reglas"}}, "contenido": texto}

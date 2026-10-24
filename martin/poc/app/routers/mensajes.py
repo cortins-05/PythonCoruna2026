@@ -1,8 +1,10 @@
 """Mensajes: conversaciones de WhatsApp y de correo, propuestas desde una conversación y correo simulado.
 
-Versión de la base con lógica mínima pero real: las conversaciones salen de `db["eventos"]` (ver `conversaciones.py`).
-El agente back-mensajes puede sustituir lo que haga falta sin cambiar la forma de las respuestas.
+Versión de la base con lógica mínima pero real, en la que las conversaciones salen de `db["eventos"]` (ver `conversaciones.py`),
+así que el agente back-mensajes puede sustituir lo que haga falta sin cambiar la forma de las respuestas.
 """
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -31,7 +33,7 @@ def detalle_conversacion(conv_id: str, store=Depends(get_store)):
 
 class ProponerIn(BaseModel):
     plantilla: str
-    slots: dict = {}
+    slots: Any = {}  # Any a propósito: un cuerpo mal formado responde con la lista de problemas habitual
 
 
 @router.post("/mensajes/conversaciones/{conv_id}/proponer")
@@ -48,6 +50,8 @@ def proponer(conv_id: str, datos: ProponerIn, store=Depends(get_store)):
     definicion = plantillas.PLANTILLAS.get(datos.plantilla)
     if not definicion:
         raise HTTPException(422, {"problemas": [f"Plantilla desconocida: {datos.plantilla}"]})
+    if not isinstance(datos.slots, dict):
+        raise HTTPException(422, {"problemas": ["Las variables deben ser un objeto"]})
     destino = definicion["destino"]
     if destino == "roomcloud" or (destino == "whatsapp" and conv["canal"] != "whatsapp"):
         raise HTTPException(422, {"problemas": [f"La plantilla {datos.plantilla} no se puede proponer desde una conversación de {conv['canal']}"]})

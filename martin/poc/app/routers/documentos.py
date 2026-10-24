@@ -1,10 +1,11 @@
 """Documentos: facturas y albaranes.
 
-Versión de la base con lógica mínima pero real (ver `documentos.py`). El agente back-documentos añade el PDF y la subida de
-facturas ya emitidas, que aquí responden 501, sin cambiar la forma de las respuestas.
-
-Aviso fiscal: en la demo toda factura es un borrador no fiscal con numeración de demostración.
+Versión de la base con lógica mínima pero real (ver `documentos.py`), a la que el agente back-documentos añade el PDF y la subida
+de facturas ya emitidas, que aquí responden 501, sin cambiar la forma de las respuestas. Aviso fiscal: en la demo toda factura es
+un borrador no fiscal con numeración de demostración.
 """
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -18,15 +19,17 @@ router = APIRouter(prefix="/api/documentos", tags=["documentos"])
 CABECERAS_HTML = {"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'", "X-Content-Type-Options": "nosniff"}
 
 
+# `lineas` y `receptor` se declaran como Any a propósito: así un cuerpo mal formado llega a la validación propia del módulo y
+# responde con la misma lista de problemas que el resto de errores, en lugar del formato por defecto de pydantic.
 class BorradorIn(BaseModel):
     tipo: str
     expediente_id: str
-    lineas: list[dict] | None = None
+    lineas: Any = None
 
 
 class EditarIn(BaseModel):
-    lineas: list[dict] | None = None
-    receptor: dict | None = None
+    lineas: Any = None
+    receptor: Any = None
 
 
 class EmitirIn(BaseModel):

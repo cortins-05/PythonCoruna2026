@@ -1,7 +1,7 @@
 """Integraciones: qué está conectado, qué es simulado y qué límites tiene cada pieza.
 
-Versión de la base. El agente back-hoy puede afinar los textos y los estados sin cambiar la forma de la respuesta. El modo de
-cada integración sale de `hub.MODOS` y de la variable `ANTHROPIC_API_KEY`, igual que en `/api/estado`.
+Versión de la base en la que el modo de cada integración sale de `hub.MODOS` y de la variable `ANTHROPIC_API_KEY`, igual que en
+`/api/estado`, y en la que el agente back-hoy puede afinar los textos y los estados sin cambiar la forma de la respuesta.
 """
 import os
 
