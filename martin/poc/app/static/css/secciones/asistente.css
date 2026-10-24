@@ -1,5 +1,11 @@
 /* Estilos de la sección Asistente. Todo bajo el prefijo .sec-asistente y usando solo tokens de tokens.css. */
-.sec-asistente { display: flex; flex-direction: column; gap: var(--s-6); max-width: 940px; margin: 0 auto; padding-bottom: var(--s-4); }
+/* Pantalla completa: el contenido pierde su ancho máximo y la conversación ocupa todo el alto, con la caja abajo */
+.app.es-asistente .contenido { max-width: none; padding-bottom: 0; display: flex; flex-direction: column; }
+.sec-asistente { --lectura: 820px; display: flex; flex-direction: column; gap: var(--s-6); flex: 1; width: 100%; }
+.sec-asistente .asi__log { flex: 1; }
+.sec-asistente .asi__log, .sec-asistente:not(.es-vacio) .asi__caja { padding-inline: max(0px, calc((100% - var(--lectura)) / 2)); }
+.sec-asistente .asi__panel-bienvenida { width: 100%; max-width: 1000px; margin-inline: auto; }
+.sec-asistente .asi__asistente:not(:last-child) [data-bloque="sugerencias"] { display: none; }
 
 /* Bienvenida */
 .sec-asistente.es-vacio .asi__log { display: none; }
@@ -7,7 +13,12 @@
 .sec-asistente .asi__bienvenida { display: flex; flex-direction: column; gap: var(--s-5); }
 .sec-asistente .asi__saludo h2 { font-family: var(--f-titulo); font-size: var(--t-3xl); font-weight: var(--p-fuerte); letter-spacing: -0.02em; line-height: 1.15; }
 .sec-asistente .asi__saludo p { margin-top: var(--s-2); color: var(--c-texto-2); max-width: 62ch; font-size: var(--t-lg); }
-.sec-asistente .asi__sugerencias, .sec-asistente .asi__flujos { display: flex; flex-direction: column; gap: var(--s-4); }
+.sec-asistente .asi__sugerencias { display: flex; flex-direction: column; gap: var(--s-4); }
+.sec-asistente .asi__grupos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5) var(--s-6); }
+.sec-asistente .asi__grupo { display: flex; flex-direction: column; gap: var(--s-2); }
+.sec-asistente .asi__subtitulo { display: flex; align-items: center; gap: var(--s-2); }
+.sec-asistente .asi__preguntas { flex-direction: column; align-items: flex-start; }
+@media (max-width: 760px) { .sec-asistente .asi__grupos { grid-template-columns: minmax(0, 1fr); } }
 .sec-asistente .asi__preguntas { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .sec-asistente .asi__subtitulo { font-size: var(--t-md); font-weight: var(--p-fuerte); color: var(--c-texto-2); }
 
@@ -26,11 +37,10 @@
 .sec-asistente .asi__entrada::placeholder { color: var(--c-texto-3); }
 .sec-asistente .asi__caja .ui-btn { flex-shrink: 0; }
 .sec-asistente.es-vacio .asi__entrada { min-height: 84px; }
-.sec-asistente .asi__ayuda { font-size: var(--t-sm); padding-inline: var(--s-4); }
 .sec-asistente:not(.es-vacio) .asi__caja {
-  position: sticky; bottom: var(--s-4); z-index: 5; padding-top: var(--s-2); background: linear-gradient(to top, var(--c-bg) 70%, transparent);
+  position: sticky; bottom: 0; z-index: 5; padding: var(--s-2) 0 var(--s-4); background: linear-gradient(to top, var(--c-bg) 80%, transparent);
 }
-.sec-asistente .asi__ir-final { position: absolute; right: 0; top: calc(-1 * var(--s-7)); box-shadow: var(--sombra-2); }
+.sec-asistente .asi__ir-final { position: absolute; right: var(--s-2); top: calc(-1 * var(--s-7)); box-shadow: var(--sombra-2); }
 .sec-asistente .asi__ir-final[hidden], .sec-asistente .asi__detener[hidden], .sec-asistente .asi__enviar[hidden] { display: none; }
 
 /* Conversación */

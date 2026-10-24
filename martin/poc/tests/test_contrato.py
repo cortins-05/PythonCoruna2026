@@ -366,15 +366,15 @@ def test_el_html_del_documento_lleva_el_aviso_fiscal_y_el_pdf_y_la_subida_respon
     assert subida.status_code == 501 and "no está disponible" in subida.json()["detail"]
 
 
-def test_sugerencias_tiene_cinco_categorias_de_tres_preguntas_y_seis_tarjetas_de_procesos(cliente):
+def test_sugerencias_tiene_cuatro_grupos_de_tres_atajos_y_diez_tarjetas_de_procesos(cliente):
     datos = ver(cliente, "/api/chat/sugerencias")
     exigir(SUGERENCIAS, datos)
-    assert len(datos["categorias"]) == 5 and all(len(c["preguntas"]) == 3 for c in datos["categorias"])
-    assert [c["id"] for c in datos["categorias"]] == ["hoy", "comunicaciones", "estancias", "ocupacion", "procesos"]
-    assert len(datos["flujos"]) == 6
+    assert len(datos["categorias"]) == 4 and all(len(c["preguntas"]) == 3 for c in datos["categorias"])
+    assert [c["id"] for c in datos["categorias"]] == ["hoy", "comunicaciones", "estancias", "procesos"]
+    assert len(datos["flujos"]) == 10
     assert [f["id"] for f in datos["flujos"]] == list(chat_procesos.PROCESOS)
     assert set(chat_procesos.PROCESOS) == {"peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica",
-                                          "prioridades"}
+                                          "prioridades", "walkin_alta", "cambio_cancelacion", "parte_vencido", "booking_desplaza"}
 
 
 def test_la_muestra_de_bloques_trae_un_bloque_de_cada_tipo_con_sus_campos(cliente):

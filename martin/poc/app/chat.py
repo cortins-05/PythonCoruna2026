@@ -17,7 +17,8 @@ from . import chat_bloques, comunicaciones, disponibilidad, estados, hub, llm, p
 MAX_MENSAJE = 2000
 MAX_RONDAS = 4
 MAX_FILAS = 8
-PROCESOS_IDS = ("peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica", "prioridades")
+PROCESOS_IDS = ("peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica", "prioridades",
+                "walkin_alta", "cambio_cancelacion", "parte_vencido", "booking_desplaza")
 PANTALLAS = ("fuente", "comunicaciones", "estancias", "ocupacion", "asistente")
 PLANTILLAS_PERMITIDAS = ("confirmar_reserva", "pedir_documentos", "info_llegada", "correo_info_llegada", "cerrar_disponibilidad", "revision_humana")
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
@@ -339,6 +340,7 @@ def ejecutar(store, nombre: str, args: dict) -> dict:
 # ================================================================ modo simulado: las mismas herramientas elegidas por palabras clave
 
 PROCESOS_POR_PALABRA = [
+    (r"desplaz", "booking_desplaza"), (r"venc", "parte_vencido"), (r"cambia|cancela", "cambio_cancelacion"), (r"walk-?in", "walkin_alta"),
     (r"booking|expedia|canal|roomcloud", "reserva_canal"), (r"check-?in|parte|viajeros|ses\b|llega el huesped", "checkin_parte"),
     (r"overbooking|cierre|cerrar", "overbooking_cierre"), (r"prioridad|gana|compite|competen", "prioridades"),
     (r"fuente|unific|bebe|sistemas", "fuente_unica"), (r"whatsapp|correo|peticion|mensaje|solicitud", "peticion_mensaje"),
@@ -355,7 +357,7 @@ def _ruta_simulada(store, mensaje: str) -> list[tuple[str, dict]]:
         for palabra in re.split(r"\W+", _sin_tildes(estados.nombre_de(exp))):
             if len(palabra) >= 4 and re.search(r"\b" + re.escape(palabra) + r"\b", n):
                 return [("estancia", {"consulta": exp["id"]})]
-    if re.search(r"explica|como (entra|funciona|se hace|es|va)|paso a paso|proceso|que pasa cuando|(ensena|muestra)\w*( me)? como", n):
+    if re.search(r"explica|como (entra|funciona|se hace|se da|es|va)|paso a paso|proceso|que pasa cuando|(ensena|muestra)\w*( me)? como", n):
         for patron, proceso in PROCESOS_POR_PALABRA:
             if re.search(patron, n):
                 return [("mostrar_proceso", {"proceso": proceso})]

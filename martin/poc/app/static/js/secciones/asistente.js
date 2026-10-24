@@ -98,8 +98,7 @@ export default {
     const botonEnviar = ui.boton({ icono: "send", variante: "oscuro", etiqueta: "Enviar mensaje", clase: "asi__enviar", onclick: () => enviarDesdeCaja() });
     const botonDetener = ui.boton({ texto: "Detener", icono: "x", variante: "secundario", clase: "asi__detener", onclick: () => detener() });
     botonDetener.hidden = true;
-    const caja = el("div", { class: "asi__caja" }, irAlFinal, el("div", { class: "asi__caja-interior" }, entrada, botonDetener, botonEnviar),
-      el("p", { class: "asi__ayuda u-texto-3" }, "Intro envía, Mayús e Intro añade una línea."));
+    const caja = el("div", { class: "asi__caja" }, irAlFinal, el("div", { class: "asi__caja-interior" }, entrada, botonDetener, botonEnviar));
 
     /* ---------- scroll */
     const distanciaAlFinal = () => document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
@@ -189,9 +188,6 @@ export default {
           herramientas.forEach((l) => l.remove());
           nodo.removeAttribute("aria-busy");
           nodo.querySelector(".asi__pie")?.remove();
-          if (modo) {
-            cuerpo.append(el("div", { class: "asi__pie" }, ui.chip({ texto: modo === "real" ? "Modo real" : "Modo simulado", tono: modo === "real" ? "ok" : "neutro", icono: modo === "real" ? "zap" : "info" })));
-          }
         },
         aviso(texto, tono = "aviso") {
           cuerpo.append(el("div", { class: "asi__aviso" }, ui.chip({ texto, tono, icono: "info" })));
@@ -203,7 +199,6 @@ export default {
             else if (p.texto) { parrafo = null; pintarTexto(p.texto); parrafo = null; }
           }
           if (modelo.interrumpida) this.aviso("Respuesta interrumpida", "neutro");
-          if (modelo.modo && modelo === ultimoAsistente()) this.cerrar(modelo.modo);
         },
       };
     }
@@ -221,7 +216,7 @@ export default {
     function actualizarVista() {
       const vacia = conversacion.length === 0;
       raiz.classList.toggle("es-vacio", vacia);
-      if (vacia) bienvenida.insertBefore(caja, zonaSugerencias); else raiz.append(caja);
+      if (vacia) bienvenida.append(caja); else raiz.append(caja);
       ajustarAlto();
       irAlFinal.hidden = true;
     }
@@ -317,7 +312,19 @@ export default {
     }
 
     /* ---------- acciones de los bloques (apartado 4.2) */
-    const resultado = (ok, mensaje, estado, detalle = null) => ({ ok, mensaje, estado, detalle });
+    const resultado = (ok, mensaje, estado, detalle = null, tarjeta = null) => ({ ok, mensaje, estado, detalle, tarjeta });
+    const sigue = (...pares) => pares.map(([etiqueta, texto]) => ({ tipo: "preguntar", etiqueta, texto }));
+
+    /** Añade un mensaje del asistente ya cerrado, con el resumen de lo que acaba de pasar y la siguiente pregunta dentro. */
+    function mensajeResumen(texto, preguntas) {
+      const modelo = { rol: "asistente", partes: [{ tipo: "texto", texto }, { tipo: "bloque", bloque: { tipo: "sugerencias", items: preguntas } }], modo: null };
+      conversacion.push(modelo);
+      const msg = mensajeAsistente(modelo);
+      msg.pintarModelo();
+      log.append(msg.nodo);
+      guardarSesion();
+      bajar(true);
+    }
     const fallo = (e) => resultado(false, e?.message || "No se pudo completar la operación", "error", e?.detalle ?? null);
 
     function contenidoComunicacion(com) {
@@ -348,24 +355,40 @@ export default {
       const nombreCanal = medio === "whatsapp" ? "WhatsApp" : "correo";
       const dest = res.destinatario ?? com.respuesta?.destinatario ?? "";
       const extra = res.accion === "reservada" ? " y habitación reservada" : res.accion === "en_espera" ? " y petición en espera" : res.accion === "sin_hueco" ? " sin hueco disponible" : "";
-      return resultado(true, `Enviado por ${nombreCanal} a ${dest} (simulado)${extra}`, res.accion ?? "respondida", r);
+      const siguiente = res.accion === "reservada" ? "¿Qué estancias tienen algo pendiente?" : "¿Qué peticiones hay por confirmar?";
+      const que = res.accion === "reservada" ? "Respuesta enviada y habitación reservada" : res.accion === "en_espera" ? "Respuesta enviada, petición en espera" : res.accion === "sin_hueco" ? "Respuesta enviada, sin hueco disponible" : "Respuesta enviada";
+      mensajeResumen(`He enviado la respuesta por ${nombreCanal} a ${dest}${extra}. El envío es simulado y no ha salido ningún mensaje real.`, [siguiente, "¿Cómo está la ocupación?"]);
+      return resultado(true, `Enviado por ${nombreCanal} a ${dest} (simulado)${extra}`, res.accion ?? "respondida", r, {
+        titulo: que, filas: [{ etiqueta: "Canal", valor: nombreCanal }, { etiqueta: "A", valor: dest }, { etiqueta: "Quién", valor: ACTOR }, { etiqueta: "Resultado", valor: que }],
+        acciones: [{ tipo: "abrir_seccion", etiqueta: "Ver comunicaciones", seccion: "comunicaciones" }, ...sigue(["Ver lo siguiente", siguiente])],
+      });
     }
 
     async function descartarComunicacion(accion) {
       const ok = await ctx.confirmar({ titulo: "Descartar la petición", texto: "La petición se marca como descartada y no se envía respuesta.", confirmar: "Sí, descartar", tono: "critico", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha descartado nada", "cancelado");
       const r = await ctx.api(`/api/comunicaciones/${encodeURIComponent(accion.id)}/descartar`, "POST", { actor: ACTOR });
-      return resultado(true, "Petición descartada", "descartada", r);
+      mensajeResumen("He descartado la petición y no se ha enviado ninguna respuesta.", ["¿Qué peticiones hay por confirmar?", "¿Qué atender primero?"]);
+      return resultado(true, "Petición descartada", "descartada", r, {
+        titulo: "Petición descartada", tono: "neutro", simulado: false, filas: [{ etiqueta: "Respuesta", valor: "Ninguna" }, { etiqueta: "Quién", valor: ACTOR }],
+        acciones: [{ tipo: "abrir_seccion", etiqueta: "Ver comunicaciones", seccion: "comunicaciones" }],
+      });
     }
 
     async function aprobarPropuesta(accion) {
       const ok = await ctx.confirmar({ titulo: "Aprobar la propuesta", texto: "Se ejecuta la propuesta tal como está escrita. Los envíos y los cierres de RoomCloud son simulados.", confirmar: "Sí, aprobar", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha aprobado nada", "cancelado");
       const r = await ctx.api(`/api/propuestas/${encodeURIComponent(accion.id)}/aprobar`, "POST", { actor: ACTOR });
-      return resultado(true, "Propuesta aprobada (simulado)", "aprobada", r);
+      mensajeResumen("He aprobado la propuesta. El cierre en RoomCloud es simulado y no se ha escrito nada fuera de la aplicación.", ["¿Cómo está la ocupación?", "¿Qué propuestas hay pendientes de aprobar?"]);
+      return resultado(true, "Propuesta aprobada (simulado)", "aprobada", r, {
+        titulo: "Cierre aprobado", filas: [{ etiqueta: "Sistema", valor: "RoomCloud" }, { etiqueta: "Quién", valor: ACTOR }, { etiqueta: "Resultado", valor: "Venta cerrada en la simulación" }],
+        acciones: [{ tipo: "abrir_seccion", etiqueta: "Ver la ocupación", seccion: "ocupacion" }],
+      });
     }
 
     async function rechazarPropuesta(accion) {
+      const ok = await ctx.confirmar({ titulo: "Rechazar la propuesta", texto: "La propuesta se marca como rechazada y no se ejecuta nada.", confirmar: "Sí, rechazar", tono: "critico", contenido: el("span") });
+      if (!ok) return resultado(false, "No se ha rechazado nada", "cancelado");
       const r = await ctx.api(`/api/propuestas/${encodeURIComponent(accion.id)}/rechazar`, "POST", { actor: ACTOR });
       return resultado(true, "Propuesta rechazada", "rechazada", r);
     }
@@ -402,6 +425,8 @@ export default {
     }
 
     async function simularRoomcloud(accion) {
+      const ok = await ctx.confirmar({ titulo: "Simular una reserva de Booking", texto: "Entra una reserva de prueba por RoomCloud y la aplicación recalcula la ocupación. Es simulado.", confirmar: "Sí, simular la reserva", contenido: el("span") });
+      if (!ok) return resultado(false, "No se ha simulado nada", "cancelado");
       const r = await ctx.api("/api/demo/reserva-roomcloud", "POST", { tipo: accion.tipo || "SGL-STD" });
       return resultado(true, "Entró una reserva de Booking (simulado)", "simulada", r);
     }
@@ -410,7 +435,11 @@ export default {
       const ok = await ctx.confirmar({ titulo: "Marcar como pasada a OfiHotel", texto: "Se anota que recepción ya ha dado de alta esta estancia en OfiHotel. Aquí no se escribe nada en OfiHotel.", confirmar: "Sí, marcar como pasada", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha marcado nada", "cancelado");
       const r = await ctx.api(`/api/expedientes/${encodeURIComponent(accion.id)}/tramites/ofihotel_alta`, "POST", { actor: ACTOR, nota: "Marcado desde el asistente" });
-      return resultado(true, "Estancia marcada como pasada a OfiHotel", "pasada", r);
+      mensajeResumen("He marcado la estancia como pasada a OfiHotel. La lectura de mañana la confirmará.", ["¿Qué estancias tienen algo pendiente?", "¿Qué conflictos hay?"]);
+      return resultado(true, "Estancia marcada como pasada a OfiHotel", "pasada", r, {
+        titulo: "Estancia pasada a OfiHotel", simulado: false, filas: [{ etiqueta: "Quién", valor: ACTOR }, { etiqueta: "Confirmación", valor: "En la próxima lectura de OfiHotel" }],
+        acciones: [{ tipo: "abrir_estancia", etiqueta: "Abrir la estancia", id: accion.id }],
+      });
     }
 
     /** Ejecuta una acción de un bloque. Nunca lanza: los errores vuelven como ok:false con su mensaje. */
@@ -442,29 +471,9 @@ export default {
 
     /* ---------- bienvenida */
     function pintarBienvenida(datos) {
-      const categorias = datos?.categorias ?? [];
-      const flujos = datos?.flujos ?? [];
-      const preguntas = el("div", { class: "asi__preguntas" });
-      const pintarPreguntas = (id) => {
-        const cat = categorias.find((c) => c.id === id);
-        preguntas.replaceChildren(...(cat?.preguntas ?? []).map((p) => ui.pastilla({ texto: p, onclick: () => enviar(p) })));
-      };
-      const partes = [];
-      if (categorias.length) {
-        const tiles = ui.tileTabs({
-          items: categorias.map((c) => ({ id: c.id, texto: c.titulo, icono: c.icono })), activo: categorias[0].id, onchange: pintarPreguntas, etiqueta: "Qué quieres hacer",
-        });
-        pintarPreguntas(categorias[0].id);
-        partes.push(tiles.el, preguntas);
-      }
-      if (flujos.length) {
-        partes.push(el("div", { class: "asi__flujos" },
-          el("h3", { class: "asi__subtitulo" }, "Procesos que te enseño paso a paso"),
-          ui.carrusel({ ancho: 250, etiqueta: "Procesos guiados", items: flujos.map((f) => ui.tarjeta({
-            icono: f.icono, titulo: f.titulo, subtitulo: f.descripcion, onclick: () => enviar(f.pregunta),
-          })) })));
-      }
-      return partes;
+      return [el("div", { class: "asi__grupos" }, (datos?.categorias ?? []).map((c) => el("section", { class: "asi__grupo" },
+        el("h3", { class: "asi__subtitulo" }, ui.icono(c.icono, { tam: 16 }), c.titulo),
+        el("div", { class: "asi__preguntas" }, (c.preguntas ?? []).map((p) => ui.pastilla({ texto: p, onclick: () => enviar(p) }))))))];
     }
 
     const zonaSugerencias = el("div", { class: "asi__sugerencias" }, ui.esqueleto({ lineas: 3, alto: 16 }));
@@ -486,7 +495,7 @@ export default {
     bienvenida.append(
       el("div", { class: "asi__saludo" },
         el("h2", null, "Hola, Flor"),
-        el("p", null, "Puedes pedirme cualquier cosa del hotel, y te enseño cómo funciona cada proceso mientras lo ejecuto.")),
+        el("p", null, "Elige un atajo o escribe lo que necesites.")),
       zonaSugerencias);
     const panelBienvenida = ui.panel({ variante: "punteada", clase: "asi__panel-bienvenida", hijos: [bienvenida] });
     raiz.append(panelBienvenida, log);
@@ -507,6 +516,8 @@ export default {
       acciones: [{ icono: "plus", texto: "Nueva conversación", onclick: nuevaConversacion }],
     });
 
+    const app = contenedor.closest(".app");
+    app?.classList.add("es-asistente");
     contenedor.append(raiz);
     pintarConversacion();
     actualizarVista();
@@ -520,6 +531,7 @@ export default {
     return {
       destruir() {
         destruido = true;
+        app?.classList.remove("es-asistente");
         window.removeEventListener("scroll", alScroll);
         const habiaStream = !!controlador;
         controlador?.abort();

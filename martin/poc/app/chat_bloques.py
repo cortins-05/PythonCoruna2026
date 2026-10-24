@@ -292,6 +292,10 @@ TEMAS = [
 ]
 _TEMAS = [(tema, re.compile(patron)) for tema, patron in TEMAS]
 _PROCESO_POR_PALABRA = [
+    ("booking_desplaza", r"desplaz"),
+    ("parte_vencido", r"venc"),
+    ("cambio_cancelacion", r"cambia|cancela"),
+    ("walkin_alta", r"walk-?in"),
     ("overbooking_cierre", r"overbooking|cierre|cerrar la venta"),
     ("reserva_canal", r"booking|reserva de canal|reserva del canal|expedia"),
     ("checkin_parte", r"check-?in|\bpartes?\b|\bses\b|hospedajes|llegada del hu[eé]sped|viajeros"),
@@ -336,7 +340,7 @@ def _por_tema(store, tema: str, mensaje: str, exp: dict | None) -> list[dict]:
     if tema == "proceso":
         proceso_id = _proceso_de(mensaje)
         return [bloque_proceso(proceso_id)] if proceso_id else [bloque_aviso(
-            "info", "Procesos que puedo enseñar", "Dime cuál quieres ver: la petición por WhatsApp, la reserva de Booking, el check-in y el parte, "
+            "info", "Procesos que puedo enseñar", "Dime cuál quieres ver: el alta de un walk-in, un cambio por mensaje, el parte vencido, la reserva de Booking, "
             "el overbooking, la fuente única o las prioridades.")]
     if tema == "reserva_fisica":
         return [bloque_formulario_walkin()]
@@ -950,18 +954,16 @@ def bloques_muestra() -> list[dict]:
 # ================================================================ sugerencias de bienvenida
 
 def sugerencias_bienvenida() -> dict:
-    """Pantalla de bienvenida del asistente: cinco categorías con tres preguntas y una tarjeta por proceso."""
+    """Pantalla de bienvenida del asistente: cuatro grupos con tres atajos y una tarjeta por proceso."""
     tarjetas = chat_procesos.TARJETAS
     return {"categorias": [
         {"id": "hoy", "titulo": "Hoy", "icono": "sun",
-         "preguntas": ["¿Qué llegadas hay hoy?", "¿Qué atender primero?", "¿Qué conflictos hay?"]},
+         "preguntas": ["¿Qué llegadas hay hoy?", "¿Qué atender primero?", "¿Cómo está la ocupación?"]},
         {"id": "comunicaciones", "titulo": "Comunicaciones", "icono": "inbox",
-         "preguntas": ["¿Qué peticiones hay por confirmar?", "¿Qué mensajes han llegado por WhatsApp?", "¿Qué prioridad tiene cada fuente?"]},
+         "preguntas": ["¿Qué peticiones hay por confirmar?", tarjetas["peticion_mensaje"][0], tarjetas["cambio_cancelacion"][0]]},
         {"id": "estancias", "titulo": "Estancias", "icono": "key",
-         "preguntas": ["¿Qué estancias tienen algo pendiente?", "¿Quién está en casa ahora mismo?", "¿Qué salidas hay hoy?"]},
-        {"id": "ocupacion", "titulo": "Ocupación", "icono": "bed",
-         "preguntas": ["¿Cómo está la ocupación?", "¿Qué propuestas hay pendientes de aprobar?", "Quiero añadir un walk-in"]},
+         "preguntas": ["¿Quién está en casa ahora mismo?", "¿Qué partes de viajeros hay pendientes?", "¿Qué conflictos hay?"]},
         {"id": "procesos", "titulo": "Procesos", "icono": "layers",
-         "preguntas": [tarjetas["peticion_mensaje"][0], tarjetas["checkin_parte"][0], tarjetas["fuente_unica"][0]]}],
+         "preguntas": [tarjetas["walkin_alta"][0], tarjetas["parte_vencido"][0], tarjetas["booking_desplaza"][0]]}],
         "flujos": [{"id": pid, "titulo": chat_procesos.proceso(pid)["titulo"], "icono": tarjetas[pid][1], "pregunta": tarjetas[pid][0],
                     "descripcion": tarjetas[pid][2]} for pid in PROCESOS]}

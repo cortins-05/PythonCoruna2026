@@ -142,11 +142,12 @@ def test_navegacion_con_los_cinco_destinos_e_insignias(store):
     assert "insignia" not in por["ocupacion"]  # un número de conflictos sin explicación confunde en la tarjeta
 
 
-def test_los_seis_procesos_existen_con_pasos_y_fuente_valida():
-    assert set(b.PROCESOS) == {"peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica", "prioridades"}
+def test_los_diez_procesos_existen_con_pasos_y_fuente_valida():
+    assert set(b.PROCESOS) == {"peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica", "prioridades",
+                             "walkin_alta", "cambio_cancelacion", "parte_vencido", "booking_desplaza"}
     for pid in b.PROCESOS:
         p = b.bloque_proceso(pid)
-        assert p["id"] == pid and 5 <= len(p["pasos"]) <= 8 and p["acciones"]
+        assert p["id"] == pid and 4 <= len(p["pasos"]) <= 8 and p["acciones"]
         assert len({s["id"] for s in p["pasos"]}) == len(p["pasos"])
         for paso in p["pasos"]:
             assert paso["fuente"] in FUENTES_VALIDAS and paso["titulo"] and paso["detalle"]
@@ -218,10 +219,15 @@ def test_una_frase_sin_sentido_recibe_la_respuesta_por_defecto_con_sugerencias(s
     assert bloques[1]["items"] and len(bloques[1]["items"]) <= 3
 
 
-def test_sugerencias_de_bienvenida_tienen_cinco_categorias_y_seis_procesos():
+def test_sugerencias_de_bienvenida_tienen_cuatro_grupos_de_tres_atajos():
     s = b.sugerencias_bienvenida()
-    assert [c["titulo"] for c in s["categorias"]] == ["Hoy", "Comunicaciones", "Estancias", "Ocupación", "Procesos"]
+    assert [c["titulo"] for c in s["categorias"]] == ["Hoy", "Comunicaciones", "Estancias", "Procesos"]
     assert all(len(c["preguntas"]) == 3 and c["icono"] for c in s["categorias"])
     assert [f["id"] for f in s["flujos"]] == b.PROCESOS
-    assert "Enséñame cómo entra una petición por WhatsApp" in {f["pregunta"] for f in s["flujos"]}
     assert all({"id", "titulo", "icono", "pregunta", "descripcion"} <= f.keys() for f in s["flujos"])
+
+
+def test_cada_atajo_de_bienvenida_con_proceso_abre_el_proceso_que_dice(store):
+    s = b.sugerencias_bienvenida()
+    for f in s["flujos"]:
+        assert b.para_mensaje(store, f["pregunta"])[0]["id"] == f["id"], f["pregunta"]
