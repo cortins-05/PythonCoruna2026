@@ -1,7 +1,7 @@
 """Cliente mínimo de OpenAI (chat completions) con streaming y herramientas, sin dependencias.
 
 La clave sale solo de la variable de entorno OPENAI_API_KEY: nunca se escribe en disco, no se registra y no viaja a ningún otro sitio.
-Modelo de conversación: gpt-5.4-mini sin razonamiento (hace falta `reasoning_effort: none` para usar herramientas en este endpoint), con
+Modelo de conversación: gpt-5.5 sin razonamiento (hace falta `reasoning_effort: none` para usar herramientas en este endpoint), con
 gpt-4.1-mini de respaldo. Para clasificar mensajes sueltos se usa gpt-5.4-nano.
 """
 import json
@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 
 URL = "https://api.openai.com/v1/chat/completions"
-MODELO_CHAT = os.environ.get("OPENAI_MODELO_CHAT", "gpt-5.4-mini")
+MODELO_CHAT = os.environ.get("OPENAI_MODELO_CHAT", "gpt-5.5")
 MODELO_RAPIDO = os.environ.get("OPENAI_MODELO_RAPIDO", "gpt-5.4-nano")
 MODELO_RESPALDO = "gpt-4.1-mini"
 TIMEOUT_S = 45

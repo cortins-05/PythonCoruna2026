@@ -198,7 +198,8 @@ def _t_resumen_dia(store, args):
     resultado = {"hoy": hoy, "llegadas_hoy": sum(1 for x in e["estancias"] if x["checkin"] == hoy and x["estado"] != "cancelada"),
                  "en_casa": sum(1 for x in e["estancias"] if x["estado"] == "en_curso"),
                  "llegan_hoy": [f"{x['huesped']} ({x['tipo']}, {x['origen']})" for x in e["estancias"] if x["checkin"] == hoy and x["estado"] != "cancelada"],
-                 "peticiones_por_confirmar": sum(1 for c in cuenta if c["estado"] in comunicaciones.ABIERTAS),
+                 "comunicaciones_pendientes": sum(1 for c in cuenta if c["estado"] in comunicaciones.ABIERTAS),
+                 "peticiones_de_habitacion_pendientes": sum(1 for c in cuenta if c["estado"] in comunicaciones.ABIERTAS and c["tipo"] == "peticion_habitacion"),
                  "conflictos": len(e["conflictos"]), "partes_pendientes": e["contadores"].get("naranja", 0) + e["contadores"].get("rojo", 0),
                  "por_color": e["contadores"], "datos_ofihotel_hasta": e["datos_ofihotel"].get("datos_hasta")}
     return resultado, [chat_bloques.bloque_resumen_kpi(store)]
@@ -235,8 +236,12 @@ def _t_comunicaciones(store, args):
     estado = args.get("estado") if args.get("estado") in ("pendientes", "todas", "respondidas") else "pendientes"
     canal = args.get("canal") if args.get("canal") in ("todos", "whatsapp", "correo") else "todos"
     lista = comunicaciones.listar(store, None if estado == "todas" else ("respondida" if estado == "respondidas" else "pendientes"), canal)
-    return ({"estado": estado, "canal": canal, "total": len(lista), "comunicaciones": [_fila_comunicacion(c) for c in lista[:MAX_FILAS]],
-             "instruccion": "Recepción confirma cada una desde su tarjeta: la respuesta sale por el mismo canal por el que llegó."},
+    filas = [_fila_comunicacion(c) for c in lista]
+    peticiones = [f for f in filas if f["tipo"] == "peticion_habitacion"]
+    otras = [f for f in filas if f["tipo"] != "peticion_habitacion"]
+    return ({"estado": estado, "canal": canal, "total_comunicaciones": len(filas), "total_peticiones_de_habitacion": len(peticiones),
+             "total_otras_consultas": len(otras), "peticiones_de_habitacion": peticiones[:MAX_FILAS * 2], "otras_consultas_sin_peticion_de_habitacion": otras[:MAX_FILAS * 2],
+             "instruccion": "Una petición de habitación es solo la que trae fechas y tipo de habitación; las otras son preguntas, cambios o cancelaciones. Recepción confirma cada una desde su tarjeta y la respuesta sale por el mismo canal por el que llegó."},
             [chat_bloques.bloque_lista_comunicaciones(store, estado, canal)])
 
 
@@ -532,7 +537,7 @@ def _texto_simulado(ejecutadas: list[tuple[str, dict]]) -> str:
     if "error" in r:
         return r["error"]
     if nombre == "resumen_dia":
-        return (f"Hoy hay {r['llegadas_hoy']} llegadas, {r['en_casa']} estancias en casa, {r['peticiones_por_confirmar']} peticiones por confirmar "
+        return (f"Hoy hay {r['llegadas_hoy']} llegadas, {r['en_casa']} estancias en casa, {r['peticiones_de_habitacion_pendientes']} peticiones por confirmar "
                 f"y {r['conflictos']} conflictos entre fuentes.")
     if nombre == "estancias":
         colores = ", ".join(f"{n} {c}" for c, n in r["contadores"].items() if n)
@@ -541,8 +546,7 @@ def _texto_simulado(ejecutadas: list[tuple[str, dict]]) -> str:
         e = r["estancia"]
         return f"{e['huesped']} está en {e['color']} porque {e['motivo'][0].lower() + e['motivo'][1:]}." if e["motivo"] else f"{e['huesped']}: todo cuadrado."
     if nombre == "comunicaciones":
-        peticiones = sum(1 for c in r["comunicaciones"] if c["tipo"] == "peticion_habitacion")
-        return (f"Hay {r['total']} comunicaciones, {peticiones} peticiones de habitación, ya contrastadas con las fuentes. "
+        return (f"Hay {r['total_comunicaciones']} comunicaciones, {r['total_peticiones_de_habitacion']} peticiones de habitación, ya contrastadas con las fuentes. "
                 "Confirma en la tarjeta y la respuesta sale por el mismo canal por el que llegó.")
     if nombre == "comunicacion":
         return f"{r['de']}: {(r['motivo'] or 'no pide habitación').rstrip('.')}. Revisa el borrador y confirma en la tarjeta."
