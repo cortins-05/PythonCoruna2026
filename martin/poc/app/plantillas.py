@@ -19,6 +19,7 @@ EMAIL = re.compile(
     r"(?:[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+"   # etiquetas del dominio
     r"[A-Za-z]{2,24}")                                          # extensión
 EMAIL_MAX = 254
+TEXTO_LIBRE = re.compile(r"[^\x00-\x1f\x22<>{}]+")  # texto libre de un mensaje: una sola línea, sin comillas dobles, etiquetas, llaves ni caracteres de control
 DOCUMENTO = re.compile(r"doc-\d{4,6}")
 EXPEDIENTE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]{0,39}")
 
@@ -54,6 +55,8 @@ PLANTILLAS = {
     "enviar_documento": {"destino": "correo", "slots": {"documento": "documento", "destinatario": "email"},
                          "asunto": "Documento de su estancia",
                          "texto": "Enviar por correo el documento {documento} a {destinatario}"},
+    "mensaje_correo": {"destino": "correo", "slots": {"destinatario": "email", "texto": "texto"}, "asunto": "Sobre su estancia", "texto": "{texto}"},
+    "mensaje_whatsapp": {"destino": "whatsapp", "slots": {"texto": "texto"}, "texto": "{texto}"},
     "revision_humana": {"destino": "interno", "slots": {"motivo": "motivo"}, "texto": "Revisar a mano: {motivo}"},
 }
 
@@ -85,6 +88,8 @@ def _valido(formato: str, valor) -> bool:
         return valor in MOTIVOS
     if formato == "email":
         return email_valido(valor)
+    if formato == "texto":
+        return 1 <= len(valor) <= 700 and valor == valor.strip() and TEXTO_LIBRE.fullmatch(valor) is not None and "http" not in valor.lower() and "www." not in valor.lower()
     if formato == "documento":
         return DOCUMENTO.fullmatch(valor) is not None
     if formato == "expediente":

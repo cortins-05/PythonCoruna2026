@@ -19,9 +19,11 @@ CATALOGO = {
     "emitir_albaran": ("documentos", {"expediente"}),
     "enviar_documento": ("correo", {"documento", "destinatario"}),
     "revision_humana": ("interno", {"motivo"}),
+    "mensaje_correo": ("correo", {"destinatario", "texto"}),
+    "mensaje_whatsapp": ("whatsapp", {"texto"}),
 }
 VALIDOS = {"nombre": "Ana María", "fecha": "2026-10-24", "tipo": "DBL-STD", "motivo": "cancelacion", "email": "ana.pereira@example.com",
-           "documento": "doc-0003", "expediente": "1-BK-4471920"}
+           "documento": "doc-0003", "expediente": "1-BK-4471920", "texto": "Hola Claire, revisa las fechas de tu reserva, por favor."}
 # Valores que no pueden pasar en ningún formato de texto libre
 HOSTILES = ["", " ", "\n", "x\ny", "http://malo.example", "<b>x</b>", '"comillas"', "{nombre}", "a@b.com\nBcc: x@y.com", "a@b.com\r\nBcc: x@y.com",
             "a@b.com\n", "a@b.com ", " a@b.com", "x" * 5000, None, 5, 5.5, True, ["a@b.com"], {"a": "b"}]
