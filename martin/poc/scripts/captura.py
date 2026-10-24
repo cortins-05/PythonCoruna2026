@@ -1116,7 +1116,8 @@ for (const e of document.querySelectorAll('body *')) {
   if (extraY <= 1 && extraX <= 1) continue;
   const cs = getComputedStyle(e);
   if (extraY > 1 && (cs.overflowY === 'auto' || cs.overflowY === 'scroll')) interno = Math.max(interno, extraY);
-  if (extraX > internoX && (cs.overflowX === 'auto' || cs.overflowX === 'scroll')) {
+  const carrusel = cs.scrollSnapType && cs.scrollSnapType !== 'none';  // un carrusel con snap se desplaza a propósito
+  if (extraX > internoX && !carrusel && (cs.overflowX === 'auto' || cs.overflowX === 'scroll')) {
     internoX = extraX;
     elementoX = descr(e).replace(/ «.*»$/, '') + ' (contenido de ' + e.scrollWidth + ' px en una caja de ' + e.clientWidth + ' px)';
   }
