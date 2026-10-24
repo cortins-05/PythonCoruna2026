@@ -413,7 +413,7 @@ def _texto_simulado(ejecutadas: list[tuple[str, dict]]) -> str:
         return (f"Hay {r['total']} comunicaciones, {peticiones} peticiones de habitación, ya contrastadas con las fuentes. "
                 "Confirma en la tarjeta y la respuesta sale por el mismo canal por el que llegó.")
     if nombre == "comunicacion":
-        return f"{r['de']}: {r['motivo'] or 'no pide habitación'}. Revisa el borrador y confirma en la tarjeta."
+        return f"{r['de']}: {(r['motivo'] or 'no pide habitación').rstrip('.')}. Revisa el borrador y confirma en la tarjeta."
     if nombre == "fuentes":
         return "La aplicación bebe de cinco fuentes. Cuando dos compiten por la misma habitación gana la de mayor prioridad."
     if nombre == "prioridades":
