@@ -483,6 +483,32 @@ async def esperar_estado(base: str, proceso: subprocess.Popen | None, registro: 
         await asyncio.sleep(0.2)
 
 
+def apartar_db_corrupta() -> str | None:
+    """Si data/db.json quedó a medias por un corte, el servidor fallaría en cada arranque hasta que alguien lo borre, así que se aparta con otro nombre y el siguiente arranque empieza limpio."""
+    ruta = RAIZ_POC / "data" / "db.json"
+    for _ in range(2):
+        try:
+            json.loads(ruta.read_text(encoding="utf-8"))
+            return None  # se lee bien, así que el fallo fue una carrera con otra ejecución que escribía en ese instante
+        except FileNotFoundError:
+            return None
+        except (ValueError, OSError):
+            time.sleep(0.5)  # puede que otra ejecución esté escribiéndolo justo ahora
+    destino = ruta.with_name(f"db.corrupto-{int(time.time())}.json")
+    try:
+        ruta.replace(destino)
+        return destino.name
+    except OSError:
+        return None
+
+
+def store_lee_hotel_db() -> bool:
+    try:
+        return "HOTEL_DB" in (RAIZ_POC / "app" / "store.py").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return True
+
+
 async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> str:
     """Lanza uvicorn desde martin/poc en un puerto libre con HOTEL_DB apuntando a un JSON temporal propio, y reintenta si otro proceso le roba el puerto."""
     entorno = dict(os.environ)
@@ -490,6 +516,7 @@ async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> 
     entorno.update({"HOTEL_DB": str(tmp / "db.json"), "DEMO_START": FECHA_DEMO, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8",
                     "PYTHONUNBUFFERED": "1"})
     registro = tmp / "servidor.log"
+    lee_hotel_db = store_lee_hotel_db()
     ultimo_error = ""
     for intento in range(1, 4):
         puerto = puerto_libre()
@@ -507,6 +534,11 @@ async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> 
         except ErrorEntorno as e:
             ultimo_error = str(e)
             matar_arbol(proceso)
+            if "JSONDecodeError" in ultimo_error and not lee_hotel_db and intento < 3:
+                apartado = await asyncio.to_thread(apartar_db_corrupta)
+                if apartado:
+                    informe.aviso(f"data/db.json estaba corrupto, probablemente por un corte a mitad de escritura, y lo aparté como data/{apartado}.")
+                    continue
             carrera = re.search(r"10048|10013|address already in use|Errno 98|Errno 48|JSONDecodeError|PermissionError|WinError 32", ultimo_error, re.IGNORECASE)
             cayo = "se cerró al arrancar" in ultimo_error
             if intento < 3 and (carrera or (cayo and intento < 2)):
@@ -514,10 +546,6 @@ async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> 
                 continue
             raise
         informe.servidor = {"url": base, "propio": True, "pid": proceso.pid, "hotel_db": posix(tmp / "db.json")}
-        try:
-            lee_hotel_db = "HOTEL_DB" in (RAIZ_POC / "app" / "store.py").read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            lee_hotel_db = True
         if not lee_hotel_db:
             informe.aviso("app/store.py todavía no lee HOTEL_DB, así que el servidor usa data/db.json y dos ejecuciones simultáneas en este mismo árbol comparten ese fichero.")
         return base

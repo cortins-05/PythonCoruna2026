@@ -10,7 +10,9 @@ Al terminar mata a Chrome y a uvicorn, borra sus carpetas temporales e imprime u
 
 ## Ocho ejemplos
 
-Lánzalos desde `martin/poc`, en PowerShell o en Git Bash. El script expande `%TEMP%` y `~` dentro de las rutas, así que las capturas caen fuera del repositorio, y las ves abriendo con Read las rutas que devuelve `capturas`. Los ejemplos con `legacy` funcionan hoy porque esa interfaz ya existe, y para tu sección cambias la ruta y los selectores.
+Lánzalos desde `martin/poc`, en PowerShell o en Git Bash. El script expande `%TEMP%` y `~` dentro de las rutas, así que las capturas quedan fuera del repositorio, y las ves abriendo con Read las rutas que devuelve `capturas`. Los ejemplos con `legacy` funcionan hoy porque esa interfaz ya existe, y para tu sección cambias la ruta y los selectores.
+
+Mientras la base no incluya `app/routers/hoy.py`, el shell nuevo pide `GET /api/hoy` en cada carga y recibe un 404, así que cualquier ruta del shell termina con código 1 hasta que añadas `--permitir-404 /api/hoy` al comando.
 
 ### 1. Captura simple
 
@@ -75,9 +77,9 @@ Sin capturas, sirve para mirar solo `consola`, `excepciones` y `peticiones_falli
 - `captura:RUTA.png` y `captura-elemento:SEL=RUTA.png` guardan una imagen, y con `--pagina-completa` la captura incluye también el contenido de los contenedores con scroll propio. `--salida` hace una última captura cuando acaban los pasos.
 - `texto:SEL`, `existe:SEL` y `js:EXPRESION` guardan su resultado en `textos`, `existe` y `resultados_js`.
 
-Los selectores son CSS y admiten el filtro final `:texto('...')` para elegir por el texto visible, por ejemplo `button:texto('Aprobar')`. Tras cada interacción el script espera a que terminen la red, las fuentes y las animaciones finitas, así que casi nunca hace falta `esperar`. Cuando las comillas del shell se complican, `--pasos-json FICHERO` lee los pasos de una lista JSON de cadenas, una por paso y con la misma sintaxis.
+Los selectores son CSS y admiten el filtro final `:texto('...')` para elegir por el texto visible, por ejemplo `button:texto('Aprobar')`. Tras cada interacción el script espera a que terminen la red, las fuentes y las animaciones finitas, así que casi nunca hace falta `esperar`. Cuando las comillas del shell dan problemas, `--pasos-json FICHERO` lee los pasos de una lista JSON de cadenas, una por paso y con la misma sintaxis.
 
-Las demás opciones salen con `--ayuda`: `--movimiento-reducido`, `--esperar-ms`, `--servidor URL` para reutilizar un servidor ya arrancado, `--sin-servidor` con `--url` para páginas externas, `--continuar-tras-fallo` y `--permitir-404 /api/ruta` para perdonar un 404 esperado.
+Las demás opciones salen con `--ayuda`: `--movimiento-reducido`, `--esperar-ms`, `--servidor URL` para reutilizar un servidor ya arrancado, `--sin-servidor` con `--url` para páginas externas, `--continuar-tras-fallo` y `--permitir-404 /api/ruta` para permitir un 404 esperado.
 
 ## Cómo leer el informe
 
@@ -92,11 +94,11 @@ Las demás opciones salen con `--ayuda`: `--movimiento-reducido`, `--esperar-ms`
 
 ## Límites
 
-- No ve el navegador real del usuario: es un Chrome nuevo con perfil vacío, sin extensiones, sesión ni zoom, y no prueba Firefox ni Safari.
+- Usa un Chrome nuevo con perfil vacío, sin extensiones, sesión ni zoom, así que no ve lo que ve el navegador real del usuario y tampoco prueba Firefox ni Safari.
 - El reloj de la demo es fijo en 2026-10-24T09:00 (`DEMO_START`), pero el navegador usa la fecha real, así que todo lo que el front lea de `Date.now()` no coincide con la demo.
 - El servidor arranca sin `ANTHROPIC_API_KEY`, así que el chat y el OCR responden en modo simulado, sin coste y siempre igual.
 - El móvil es una ventana estrecha con ratón, sin emulación táctil, y los desplegables nativos (`select` y selector de fecha) no salen en las capturas.
-- Mientras `app/store.py` no lea `HOTEL_DB`, el servidor usa `data/db.json` y dos ejecuciones simultáneas en el mismo árbol comparten ese fichero.
+- Mientras `app/store.py` no lea `HOTEL_DB`, el servidor usa `data/db.json`, dos ejecuciones simultáneas en el mismo árbol comparten ese fichero y, si un corte lo deja a medias, el script lo aparta como `data/db.corrupto-*.json` y reintenta.
 - Con `--servidor` la semilla por defecto reinicia los datos de ese servidor, así que usa `--semilla ninguna` para no tocarlos.
 - Git Bash convierte los argumentos que empiezan por barra, incluso `"#/hoy"`, en rutas de Windows, y el script lo deshace en `--ruta`, `--permitir-404` y `--paso`.
 - La salida es UTF-8, así que para leerla desde otro script de Python en Windows usa `python -X utf8`.
