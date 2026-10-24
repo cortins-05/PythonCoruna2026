@@ -113,7 +113,7 @@ function construirLateral() {
   const lateral = $("#lateral");
   vaciar(lateral);
   lateral.append(el("div", { class: "lateral__marca" },
-    el("span", { class: "lateral__logo" }, ui.icono("key", { tam: 20 })),
+    el("span", { class: "lateral__logo" }, ui.logo({ tam: 24 })),
     el("div", { class: "lateral__nombre" }, el("strong", null, "Uniroom"), el("span", null, "Hotel de demostración"))));
   const nav = el("nav", { class: "lateral__nav", aria: { label: "Secciones" } });
   for (const grupo of GRUPOS) {

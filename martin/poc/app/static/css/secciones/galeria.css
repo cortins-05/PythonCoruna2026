@@ -6,3 +6,19 @@
 .sec-galeria .galeria__iconos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s-2); }
 .sec-galeria .galeria__icono { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: var(--s-3) var(--s-2); border: 1px solid var(--c-borde); border-radius: var(--r-ctl); font-size: var(--t-xs); color: var(--c-texto-2); }
 .sec-galeria .galeria__pila > * + * { margin-top: var(--s-6); }
+
+.sec-galeria .galeria__indice { display: flex; flex-wrap: wrap; gap: var(--s-2); position: sticky; top: var(--barra-h); z-index: 10; padding: var(--s-2) 0; background: var(--c-bg); }
+.sec-galeria .galeria__sub { font-size: var(--t-sm); font-weight: var(--p-fuerte); color: var(--c-texto-2); margin-bottom: var(--s-2); }
+.sec-galeria .galeria__escaleras { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: var(--s-5); }
+.sec-galeria .galeria__pila-chica { display: grid; gap: var(--s-3); }
+.sec-galeria .galeria__fuente { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); color: var(--c-texto-2); }
+.sec-galeria .galeria__dato { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--s-1); padding: 2px var(--s-2); border: 1px solid var(--c-borde); border-radius: var(--r-chip); background: var(--c-surface-2); font-size: var(--t-xs); color: var(--c-texto-2); }
+.sec-galeria .galeria__repetir { margin-top: var(--s-3); }
+.sec-galeria .galeria__burbujas { display: grid; gap: var(--s-3); max-width: 520px; }
+.sec-galeria .gal-burbuja { display: grid; gap: var(--s-1); padding: var(--s-3) var(--s-4); border: 1px solid var(--c-borde); border-radius: var(--r-card); background: var(--c-surface); }
+.sec-galeria .gal-burbuja--whatsapp { background: var(--c-menta); border-color: var(--c-menta-borde); }
+.sec-galeria .gal-burbuja--correo { background: var(--c-info-bg); border-color: var(--c-info-borde); margin-left: var(--s-6); }
+.sec-galeria .gal-burbuja__cab { display: flex; align-items: center; gap: 6px; font-size: var(--t-xs); font-weight: var(--p-fuerte); color: var(--c-texto-2); }
+.sec-galeria .gal-burbuja--correo .gal-burbuja__cab { color: var(--c-info-texto); }
+.sec-galeria .gal-burbuja__texto { font-size: var(--t-md); overflow-wrap: anywhere; }
+@media (max-width: 760px) { .sec-galeria .galeria__indice { position: static; } }

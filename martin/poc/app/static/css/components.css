@@ -27,6 +27,8 @@
 .ui-btn--oscuro:hover:not(:disabled) { background: var(--c-fuerte-hover); }
 .ui-btn--fantasma { background: var(--c-surface); border-color: var(--c-borde); color: var(--c-texto); border-radius: 12px; }
 .ui-btn--fantasma:hover:not(:disabled) { background: var(--c-surface-3); border-color: var(--c-borde-fuerte); }
+.ui-btn--texto { background: transparent; border-color: transparent; color: var(--c-texto); }
+.ui-btn--texto:hover:not(:disabled) { background: var(--c-surface-3); }
 .ui-btn--peligro { background: var(--c-critico-bg); border-color: var(--c-critico-borde); color: var(--c-critico-texto); }
 .ui-btn--peligro:hover:not(:disabled) { border-color: var(--c-critico-punto); }
 

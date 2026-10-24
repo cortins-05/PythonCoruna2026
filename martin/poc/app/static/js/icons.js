@@ -91,6 +91,14 @@ function trazo(item) {
   return svg("path", { d: "" });
 }
 
+/** Logotipo de Uniroom: una U que abre como una puerta y un punto encima. Hereda el color, así que cada línea visual lo tiñe con --lat-logo-texto. */
+export function logo({ tam = 24 } = {}) {
+  const nodo = svg("svg", { viewBox: "0 0 24 24", width: tam, height: tam, fill: "none", stroke: "currentColor", "stroke-width": 2.4,
+    "stroke-linecap": "round", "stroke-linejoin": "round", class: "ui-logo", role: "img", "aria-label": "Uniroom" });
+  nodo.append(svg("path", { d: "M6.5 4.5v9a5.5 5.5 0 0 0 11 0v-9" }), svg("circle", { cx: 12, cy: 8.5, r: 1.2, fill: "currentColor", stroke: "none" }));
+  return nodo;
+}
+
 /** Devuelve un SVG. Si pasas titulo, el icono se anuncia a los lectores de pantalla, y si no, queda oculto como decoración. */
 export function icono(nombre, { tam = 18, clase = "", titulo = "" } = {}) {
   const trazos = ICONOS[nombre] ?? ICONOS.dot;
