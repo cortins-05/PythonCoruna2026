@@ -1,9 +1,0 @@
-{
-  "_nota": "SUPUESTO de lectura solo: no sabemos cómo se leerá OfiHotel (SQL en solo lectura, exportación o pantalla). Datos inventados. La fila con ref_externa duplica una reserva que ya está en RoomCloud y sirve para probar que no se cuenta dos veces.",
-  "leido_el": "2026-10-24T09:00",
-  "ocupaciones": [
-    {"habitacion": "204", "tipo": "DBL-STD", "desde": "2026-10-24", "hasta": "2026-10-25", "huesped": "García", "ref_externa": ""},
-    {"habitacion": "105", "tipo": "DBL-STD", "desde": "2026-10-24", "hasta": "2026-10-27", "huesped": "Dubois", "ref_externa": "2-EX-7730021"},
-    {"habitacion": "201", "tipo": "DBL-STD", "desde": "2026-10-26", "hasta": "2026-10-28", "huesped": "Rey", "ref_externa": ""}
-  ]
-}
