@@ -115,6 +115,14 @@ def test_al_confirmar_a_pablo_la_peticion_de_marta_pasa_a_no_disponible(cliente)
     assert "lo sentimos" in despues["respuesta"]["texto"]
 
 
+def test_recepcion_puede_dar_la_habitacion_a_la_peticion_en_competencia_si_lo_fuerza(cliente):
+    marta = por_remitente(cliente, "Marta Souto")
+    assert cliente.post(f"/api/comunicaciones/{marta['id']}/confirmar", json={"actor": "Flor"}).json()["estado"] == "en_espera"
+    r = cliente.post(f"/api/comunicaciones/{marta['id']}/confirmar", json={"actor": "Flor", "forzar": True}).json()
+    assert r["estado"] == "respondida" and r["resultado"]["accion"] == "reservada"
+    assert por_remitente(cliente, "Pablo Rey")["contraste"]["veredicto"] == "no_disponible"
+
+
 def test_simular_un_mensaje_en_directo_lo_entiende_y_lo_contrasta(cliente):
     r = cliente.post("/api/comunicaciones/simular", json={"canal": "whatsapp", "nombre": "Iria", "contacto": "+34 677 000 111",
                                                           "texto": "¡Hola! ¿Os queda una doble del 5 al 7 de noviembre? Somos dos"})

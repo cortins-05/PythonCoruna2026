@@ -24,6 +24,7 @@ class SimularIn(BaseModel):
 class ConfirmarIn(BaseModel):
     actor: str = "Recepción"
     texto: str | None = None
+    forzar: bool = False
 
 
 class TextoIn(BaseModel):
@@ -85,7 +86,7 @@ def editar(com_id: str, datos: TextoIn, store=Depends(get_store)):
 @router.post("/comunicaciones/{com_id}/confirmar")
 def confirmar(com_id: str, datos: ConfirmarIn, store=Depends(get_store)):
     try:
-        resultado = comunicaciones.confirmar(store, com_id, datos.actor, datos.texto)
+        resultado = comunicaciones.confirmar(store, com_id, datos.actor, datos.texto, datos.forzar)
         store.guardar()
         return resultado
     except hub.ErrorNegocio as error:

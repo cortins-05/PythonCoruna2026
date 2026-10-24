@@ -172,6 +172,8 @@ def bloque_comunicacion(store, com_id: str) -> dict:
         por = "WhatsApp" if com["canal"] == "whatsapp" else "correo"
         acciones += [{"tipo": "confirmar_comunicacion", "etiqueta": f"Confirmar y enviar por {por}", "id": com["id"]},
                      {"tipo": "descartar_comunicacion", "etiqueta": "Descartar", "id": com["id"]}]
+        if (com.get("contraste") or {}).get("veredicto") == "en_competencia":
+            acciones.insert(1, {"tipo": "confirmar_comunicacion", "etiqueta": "Dársela igualmente", "id": com["id"], "forzar": True})
     acciones.append({"tipo": "abrir_comunicacion", "etiqueta": "Abrir", "id": com["id"]})
     return {"tipo": "comunicacion", "comunicacion": com, "acciones": acciones}
 

@@ -181,7 +181,7 @@ function pintarComunicacion(b, ctx) {
   const marco = raiz(ctx, "comunicacion", cuerpo);
 
   const pintar = (mensajeLocal = null) => {
-    const pendiente = c.estado === "pendiente";
+    const pendiente = c.estado === "pendiente" || c.estado === "en_espera";
     const principales = (b.acciones ?? []).filter((x) => x.tipo === "confirmar_comunicacion" || x.tipo === "descartar_comunicacion");
     const a = pendiente ? acciones(ctx, principales, { alTerminar: (res) => {
       if (res.ok === false) return;

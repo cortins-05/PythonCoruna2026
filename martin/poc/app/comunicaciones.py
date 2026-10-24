@@ -457,7 +457,7 @@ def _enviar(store, com: dict, respuesta: dict, texto: str, actor: str, exp_id: s
                                expediente_id=exp_id or com["expediente_id"], datos={"comunicacion": com["id"], "aprobado_por": actor})
 
 
-def confirmar(store, com_id: str, actor: str = "Recepción", texto: str | None = None) -> dict:
+def confirmar(store, com_id: str, actor: str = "Recepción", texto: str | None = None, forzar: bool = False) -> dict:
     """Envía el borrador (editado o no) por el mismo canal. Si hay hueco, además reserva la habitación; si compite, deja la petición en espera."""
     com = obtener(store, com_id)
     if com["estado"] not in ABIERTAS:
@@ -472,6 +472,8 @@ def confirmar(store, com_id: str, actor: str = "Recepción", texto: str | None =
     exp_id, accion = None, "respondida"
     if veredicto in ("disponible", "ajustado"):
         exp_id, accion = _crear_reserva(store, com, com["peticion"])["id"], "reservada"
+    elif veredicto == "en_competencia" and forzar:
+        exp_id, accion = _crear_reserva(store, com, com["peticion"])["id"], "reservada"  # recepción decide saltarse la prioridad
     elif veredicto == "en_competencia":
         accion = "en_espera"
     elif veredicto == "no_disponible":

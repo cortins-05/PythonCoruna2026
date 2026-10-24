@@ -394,6 +394,7 @@ export default {
       if (!ok) return resultado(false, "No se ha enviado nada", "cancelado");
       const body = { actor: ACTOR };
       if (accion.texto) body.texto = accion.texto;
+      if (accion.forzar) body.forzar = true;
       const r = await ctx.api(`/api/comunicaciones/${encodeURIComponent(accion.id)}/confirmar`, "POST", body);
       const res = r?.resultado ?? {};
       const medio = res.canal ?? canal;
