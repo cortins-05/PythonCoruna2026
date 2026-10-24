@@ -178,13 +178,9 @@ def interfaz_antigua():
 
 @app.get("/api/estado")
 def estado():
-    con_clave = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    modo_claude = "real" if con_clave else "simulado"
     return {"reloj": store.ahora().isoformat(timespec="minutes"),
-            "ocr": "en vivo" if con_clave else "simulado",
-            "ses": "simulado", "roomcloud": "XML grabado", "ofihotel": "copia asistida",
-            # Añadido por la interfaz nueva: el modo de cada integración, con los mismos ids que /api/integraciones.
-            "modos": {**hub.MODOS, "ocr": modo_claude, "lector": modo_claude, "chat": modo_claude}}
+            "ocr": "en vivo" if os.environ.get("ANTHROPIC_API_KEY") else "simulado",
+            "ses": "simulado", "roomcloud": "XML grabado", "ofihotel": "copia asistida"}
 
 
 @app.post("/api/reiniciar")

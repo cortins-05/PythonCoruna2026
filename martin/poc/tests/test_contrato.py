@@ -116,8 +116,7 @@ DOCUMENTOS = {"documentos": [{"id": str, "tipo": {"factura", "albaran"}, "estado
                               "enviado": bool, "fiscal": bool, "origen": {"generado", "subido"}}]}
 SUGERENCIAS = {"categorias": [{"id": str, "titulo": str, "icono": str, "preguntas": [str]}],
                "flujos": [{"id": str, "titulo": str, "descripcion": str, "icono": str, "pregunta": str}]}
-ESTADO = {"reloj": str, "ocr": str, "ses": str, "roomcloud": str, "ofihotel": str,
-          "modos": {"roomcloud": str, "ofihotel": str, "whatsapp": str, "correo": str, "ses": str, "ocr": str, "lector": str, "chat": str}}
+ESTADO = {"reloj": str, "ocr": str, "ses": str, "roomcloud": str, "ofihotel": str}  # la forma de siempre: el núcleo del front la guarda entera
 
 ACCION_BASE = {"tipo": str, "etiqueta": str}
 CHIP = {"texto": str, "tono": TONO_BLOQUE}
@@ -226,7 +225,7 @@ def test_integraciones_con_clave_marca_ocr_lector_y_chat_como_reales(cliente, mo
     monkeypatch.setenv("ANTHROPIC_API_KEY", "clave-de-prueba")
     por_id = {i["id"]: i for i in ver(cliente, "/api/integraciones")["integraciones"]}
     assert {por_id[i]["modo"] for i in ("ocr", "lector", "chat")} == {"real"}
-    assert ver(cliente, "/api/estado")["modos"]["ocr"] == "real"
+    assert ver(cliente, "/api/estado")["ocr"] == "en vivo"
 
 
 def test_integraciones_sin_datos_avisa_de_que_no_se_ha_leido_nada(tmp_path, monkeypatch):
@@ -237,7 +236,7 @@ def test_integraciones_sin_datos_avisa_de_que_no_se_ha_leido_nada(tmp_path, monk
     assert por_id["roomcloud"]["estado"] == "aviso" and por_id["roomcloud"]["ultima_sync"] is None
 
 
-def test_estado_conserva_sus_claves_y_anade_los_modos(cliente):
+def test_estado_conserva_su_forma_de_siempre(cliente):
     exigir(ESTADO, ver(cliente, "/api/estado"))
 
 
