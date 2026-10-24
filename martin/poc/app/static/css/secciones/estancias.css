@@ -1,1 +1,108 @@
 /* Estilos de la sección Estancias. Todo bajo el prefijo .sec-estancias y usando solo tokens de tokens.css. */
+
+.sec-estancias { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+
+/* Tonos del semáforo: cada clase fija las variables que usan la fila y el semáforo grande */
+.sec-estancias .tono-critico { --t-bg: var(--c-critico-bg); --t-borde: var(--c-critico-borde); --t-texto: var(--c-critico-texto); --t-punto: var(--c-critico-punto); }
+.sec-estancias .tono-naranja { --t-bg: var(--c-naranja-bg); --t-borde: var(--c-naranja-borde); --t-texto: var(--c-naranja-texto); --t-punto: var(--c-naranja-punto); }
+.sec-estancias .tono-aviso { --t-bg: var(--c-aviso-bg); --t-borde: var(--c-aviso-borde); --t-texto: var(--c-aviso-texto); --t-punto: var(--c-aviso-punto); }
+.sec-estancias .tono-info { --t-bg: var(--c-info-bg); --t-borde: var(--c-info-borde); --t-texto: var(--c-info-texto); --t-punto: var(--c-info-punto); }
+.sec-estancias .tono-neutro { --t-bg: var(--c-neutro-bg); --t-borde: var(--c-neutro-borde); --t-texto: var(--c-neutro-texto); --t-punto: var(--c-neutro-punto); }
+.sec-estancias .tono-ok { --t-bg: var(--c-ok-bg); --t-borde: var(--c-ok-borde); --t-texto: var(--c-ok-texto); --t-punto: var(--c-ok-punto); }
+
+/* Banner de OfiHotel */
+.sec-estancias__banner { display: flex; align-items: center; gap: var(--s-2); font-size: var(--t-sm); color: var(--c-texto-2); }
+.sec-estancias__banner:empty { display: none; }
+
+/* Fila de pastillas del semáforo */
+.sec-estancias__semaforo { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.sec-estancias__color {
+  display: inline-flex; align-items: center; gap: var(--s-2); min-height: 40px; padding: 0 var(--s-3) 0 var(--s-2);
+  background: var(--c-surface); border: 1px solid var(--c-borde-control); border-radius: var(--r-pill); color: var(--c-texto);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.sec-estancias__color:hover { background: var(--c-surface-3); }
+.sec-estancias__color.is-activo { border-color: var(--c-fuerte); box-shadow: 0 0 0 1px var(--c-fuerte); background: var(--c-surface-3); }
+.sec-estancias__cuenta { font-size: var(--t-md); min-width: 1ch; }
+
+/* Leyenda plegable */
+.sec-estancias__leyenda summary { cursor: pointer; font-size: var(--t-sm); color: var(--c-enlace); font-weight: var(--p-medio); width: fit-content; padding: var(--s-1) 0; }
+.sec-estancias__leyenda-lista { list-style: none; margin: var(--s-2) 0 0; padding: var(--s-3); display: grid; gap: var(--s-2); background: var(--c-surface); border: 1px solid var(--c-borde); border-radius: var(--r-card); }
+.sec-estancias__leyenda-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); font-size: var(--t-sm); color: var(--c-texto-2); }
+
+/* Panel crítico */
+.sec-estancias__panel-critico { border-color: var(--c-critico-borde); background: var(--c-critico-bg); }
+.sec-estancias__conflictos { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.sec-estancias__conflictos li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); color: var(--c-critico-texto); font-weight: var(--p-medio); }
+.sec-estancias__conflictos li > span { flex: 1 1 240px; }
+
+/* Cuerpo: lista y detalle */
+.sec-estancias__cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+.sec-estancias.con-detalle .sec-estancias__cuerpo { grid-template-columns: minmax(0, 1fr) minmax(380px, 460px); }
+.sec-estancias__filas { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+
+.sec-estancias__fila {
+  display: grid; gap: var(--s-2); width: 100%; text-align: left; padding: var(--s-4); background: var(--c-surface);
+  border: 1px solid var(--c-borde); border-left: 4px solid var(--t-punto); border-radius: var(--r-card); color: var(--c-texto);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.sec-estancias__fila:hover { box-shadow: var(--sombra-1, 0 2px 8px rgba(0, 0, 0, 0.08)); border-color: var(--c-borde-fuerte); border-left-color: var(--t-punto); }
+.sec-estancias__fila.is-seleccionada { background: var(--c-menta); border-color: var(--c-menta-borde); border-left-color: var(--t-punto); }
+.sec-estancias__fila-cabeza { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.sec-estancias__nombre { font-size: var(--t-lg); }
+.sec-estancias__fila-semaforo { margin-left: auto; }
+.sec-estancias__fila-datos { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-4); font-size: var(--t-sm); color: var(--c-texto-2); }
+.sec-estancias__motivo { font-size: var(--t-sm); color: var(--c-texto); }
+.sec-estancias__motivo.is-conflicto { display: flex; gap: var(--s-2); align-items: center; color: var(--c-critico-texto); }
+
+/* Detalle */
+.sec-estancias__detalle {
+  display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-5); background: var(--c-surface); border: 1px solid var(--c-borde);
+  border-radius: var(--r-panel); position: sticky; top: var(--s-4); max-height: calc(100vh - var(--s-8)); overflow: auto;
+}
+.sec-estancias__detalle[hidden] { display: none; }
+.sec-estancias__detalle:focus-visible { outline: 2px solid var(--c-enlace); outline-offset: 2px; }
+.sec-estancias__det-cabecera { display: grid; gap: var(--s-4); }
+.sec-estancias__det-nombre { margin: 0; font-size: var(--t-2xl); }
+.sec-estancias__volver { justify-self: start; }
+.sec-estancias__origen { display: inline-flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.sec-estancias__seccion { display: grid; gap: var(--s-3); }
+.sec-estancias__seccion h3 { margin: 0; font-size: var(--t-lg); }
+
+.sec-estancias__grande { display: grid; gap: var(--s-2); padding: var(--s-4); background: var(--t-bg); border: 1px solid var(--t-borde); border-radius: var(--r-card); color: var(--t-texto); }
+.sec-estancias__grande .ui-chip { justify-self: start; }
+.sec-estancias__grande p { margin: 0; }
+.sec-estancias__grande-motivo { font-size: var(--t-lg); font-weight: var(--p-fuerte); }
+.sec-estancias__grande-accion { display: flex; gap: var(--s-2); align-items: center; font-size: var(--t-md); }
+
+.sec-estancias__sistemas { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.sec-estancias__sistema { display: grid; gap: var(--s-2); align-content: start; padding: var(--s-3); border: 1px solid var(--c-borde); border-radius: var(--r-card); background: var(--c-surface-2); }
+.sec-estancias__sistema h4 { margin: 0; overflow-wrap: anywhere; min-width: 0; display: flex; align-items: center; gap: var(--s-2); font-size: var(--t-md); }
+.sec-estancias__sistema p { margin: 0; font-size: var(--t-sm); color: var(--c-texto-2); }
+.sec-estancias__sistema .ui-chip { justify-self: start; }
+.sec-estancias__sistema .sec-estancias__habitacion { color: var(--c-texto); font-weight: var(--p-fuerte); }
+
+.sec-estancias__comparacion { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.sec-estancias__lado { display: grid; gap: var(--s-1); padding: var(--s-3); border: 1px solid var(--c-critico-borde); background: var(--c-critico-bg); border-radius: var(--r-card); color: var(--c-critico-texto); }
+.sec-estancias__lado-sistema { display: flex; gap: var(--s-2); align-items: center; font-size: var(--t-sm); }
+.sec-estancias__lado strong { font-size: var(--t-lg); }
+.sec-estancias__conflicto-texto { display: flex; gap: var(--s-2); margin: 0; color: var(--c-critico-texto); }
+
+.sec-estancias__registro { list-style: none; margin: 0; padding: 0 0 0 var(--s-4); display: grid; gap: var(--s-3); border-left: 2px solid var(--c-borde-fuerte); }
+.sec-estancias__registro li { position: relative; display: grid; gap: 2px; font-size: var(--t-sm); }
+.sec-estancias__registro li::before { content: ""; position: absolute; left: calc(-1 * var(--s-4) - 5px); top: 5px; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--c-fuerte); }
+.sec-estancias__registro-hora { color: var(--c-texto-2); }
+.sec-estancias__nada { margin: 0; color: var(--c-texto-2); font-size: var(--t-sm); }
+
+.sec-estancias__acciones { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+/* Estrecho: el detalle ocupa la pantalla entera */
+@media (max-width: 900px) {
+  .sec-estancias.con-detalle .sec-estancias__cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .sec-estancias__detalle:not([hidden]) { position: fixed; inset: 0; z-index: 40; max-height: none; border-radius: 0; border: 0; background: var(--c-bg); padding: var(--s-4); }
+  .sec-estancias__fila-semaforo { margin-left: 0; }
+}
+@media (max-width: 520px) {
+  .sec-estancias__comparacion { grid-template-columns: 1fr; }
+  .sec-estancias__color { min-height: 44px; }
+}
