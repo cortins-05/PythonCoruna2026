@@ -21,4 +21,5 @@ export const SECCIONES = [
   { id: "mensajes", titulo: "Mensajes", icono: "message", grupo: "comunicacion", modulo: "./secciones/mensajes.js", css: ["mensajes"] },
   { id: "integraciones", titulo: "Integraciones", icono: "plug", grupo: "sistema", modulo: "./secciones/integraciones.js", css: ["integraciones"] },
   { id: "galeria", titulo: "Guía de estilo", icono: "layers", grupo: "sistema", modulo: "./secciones/galeria.js", css: ["galeria"] },
+  { id: "maqueta", titulo: "Maqueta del asistente", icono: "sparkles", grupo: "sistema", oculta: true, modulo: "./secciones/maqueta.js", css: ["maqueta"] },
 ];

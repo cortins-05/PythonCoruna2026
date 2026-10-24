@@ -1,0 +1,36 @@
+/*
+  Líneas visuales alternativas, solo en tema claro y solo mediante tokens: la interfaz es la misma y cambia la personalidad.
+  Se activan con ?linea=b o ?linea=c en la URL. La línea A es la de tokens.css. Cuando se elija una, se pasa a tokens.css y este fichero se borra.
+*/
+
+/* Línea B: grafito e índigo, menú lateral oscuro y esquinas más contenidas */
+:root[data-linea="b"] {
+  --c-bg: #F1F2F4; --c-surface: #FFFFFF; --c-surface-2: #F8F9FA; --c-surface-3: #ECEEF1;
+  --c-borde: #E1E4E8; --c-borde-fuerte: #CBD0D6; --c-borde-control: #838A94;
+  --c-texto: #0F1115; --c-texto-2: #4F5662; --c-texto-3: #646B77;
+  --c-acento: #4338CA; --c-acento-hover: #382DB0; --c-acento-texto: #FFFFFF; --c-acento-suave: #ECEBFF; --c-acento-borde: #CFCCFA; --c-enlace: #4338CA;
+  --c-cta: #4338CA; --c-cta-hover: #382DB0; --c-cta-texto: #FFFFFF;
+  --c-fuerte: #0F1115; --c-fuerte-hover: #2A2F38; --c-fuerte-texto: #FFFFFF;
+  --c-menta: #F0EFFF; --c-menta-borde: #C7C3F8;
+  --r-panel: 14px; --r-tile: 12px; --r-card: 12px; --r-ctl: 8px; --r-chip: 6px;
+  --lat-bg: #13161B; --lat-borde: #13161B; --lat-texto: #A7AEBA; --lat-texto-fuerte: #FFFFFF; --lat-grupo: #8A92A0;
+  --lat-hover: rgba(255, 255, 255, 0.08); --lat-activo-bg: #FFFFFF; --lat-activo-texto: #0F1115;
+  --lat-icono-bg: rgba(255, 255, 255, 0.08); --lat-icono-borde: transparent; --lat-logo-bg: #FFFFFF; --lat-logo-texto: #0F1115;
+}
+
+/* Línea C: hotel cálido, arena y verde pino, títulos con serifa y esquinas muy redondeadas */
+:root[data-linea="c"] {
+  --c-bg: #F6F1E8; --c-surface: #FFFDF8; --c-surface-2: #FBF7EE; --c-surface-3: #EFE7D8;
+  --c-borde: #E8DDC9; --c-borde-fuerte: #D6C7AB; --c-borde-control: #85775E;
+  --c-texto: #1E1A13; --c-texto-2: #5B5141; --c-texto-3: #6B604E;
+  --c-acento: #1F5C4A; --c-acento-hover: #174839; --c-acento-texto: #FFFFFF; --c-acento-suave: #E2EFE8; --c-acento-borde: #B9D6C8; --c-enlace: #1F5C4A;
+  --c-cta: #F2B84B; --c-cta-hover: #E5A72F; --c-cta-texto: #2A1D05;
+  --c-fuerte: #1E1A13; --c-fuerte-hover: #3A3226; --c-fuerte-texto: #FFFDF8;
+  --c-menta: #E4F0E8; --c-menta-borde: #B4D3C1;
+  --r-panel: 24px; --r-tile: 20px; --r-card: 18px; --r-ctl: 12px; --r-chip: 10px;
+  --f-titulo: Georgia, "Times New Roman", serif;
+  --lat-bg: #1E3B33; --lat-borde: #1E3B33; --lat-texto: #C3D6CD; --lat-texto-fuerte: #FFFDF8; --lat-grupo: #9DB8AB;
+  --lat-hover: rgba(255, 255, 255, 0.08); --lat-activo-bg: #F6F1E8; --lat-activo-texto: #1E3B33;
+  --lat-icono-bg: rgba(255, 255, 255, 0.08); --lat-icono-borde: transparent; --lat-logo-bg: #F2B84B; --lat-logo-texto: #2A1D05;
+  --textura-puntos: radial-gradient(circle at 1px 1px, rgba(90, 70, 30, 0.13) 1px, transparent 1.4px) 0 0 / 10px 10px;
+}

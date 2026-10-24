@@ -94,6 +94,23 @@
   --sombra-2: 0 8px 24px rgba(17, 17, 17, 0.08);
   --sombra-menu: 0 16px 40px rgba(0, 0, 0, 0.28);
 
+  /* Menú lateral (una línea visual puede darle otro color sin tocar el resto) */
+  --lat-bg: var(--c-surface);
+  --lat-borde: var(--c-borde);
+  --lat-texto: var(--c-texto-2);
+  --lat-texto-fuerte: var(--c-texto);
+  --lat-grupo: var(--c-texto-3);
+  --lat-hover: var(--c-surface-3);
+  --lat-activo-bg: var(--c-acento);
+  --lat-activo-texto: var(--c-acento-texto);
+  --lat-icono-bg: var(--c-surface-2);
+  --lat-icono-borde: var(--c-borde);
+  --lat-logo-bg: var(--c-fuerte);
+  --lat-logo-texto: var(--c-fuerte-texto);
+
+  /* Tipografía de los títulos (por defecto la misma que el resto) */
+  --f-titulo: var(--f-sans);
+
   /* Layout */
   --sidebar-w: 256px;
   --sidebar-w-compacta: 76px;

@@ -131,7 +131,7 @@
 .ui-panel--punteada { background: var(--c-surface) var(--textura-puntos); }
 .ui-panel__cabecera { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: var(--s-3); margin-bottom: var(--s-4); }
 .ui-panel__textos { flex: 1 1 180px; min-width: 0; }
-.ui-panel__titulo { font-size: var(--t-lg); font-weight: var(--p-fuerte); line-height: 1.3; }
+.ui-panel__titulo { font-family: var(--f-titulo); font-size: var(--t-lg); font-weight: var(--p-fuerte); line-height: 1.3; }
 .ui-panel__subtitulo { font-size: var(--t-sm); color: var(--c-texto-2); margin-top: 2px; }
 .ui-panel__acciones { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; }
 .ui-panel__cuerpo > * + * { margin-top: var(--s-4); }
@@ -192,7 +192,7 @@ textarea.ui-entrada { height: auto; padding: var(--s-2) var(--s-3); resize: vert
 /* ---------- Estados vacío y carga ---------- */
 .ui-vacio { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--s-2); padding: var(--s-8) var(--s-5); color: var(--c-texto-2); }
 .ui-vacio__icono { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--c-surface-3); color: var(--c-texto-2); margin-bottom: var(--s-2); }
-.ui-vacio__titulo { font-size: var(--t-lg); font-weight: var(--p-fuerte); color: var(--c-texto); }
+.ui-vacio__titulo { font-family: var(--f-titulo); font-size: var(--t-lg); font-weight: var(--p-fuerte); color: var(--c-texto); }
 .ui-vacio__texto { max-width: 46ch; font-size: var(--t-md); }
 .ui-vacio .ui-btn { margin-top: var(--s-3); }
 
@@ -219,7 +219,7 @@ textarea.ui-entrada { height: auto; padding: var(--s-2) var(--s-3); resize: vert
   color: var(--c-texto); box-shadow: var(--sombra-menu);
 }
 .ui-dialogo::backdrop { background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(2px); }
-.ui-dialogo__titulo { font-size: var(--t-xl); font-weight: var(--p-fuerte); line-height: 1.3; }
+.ui-dialogo__titulo { font-family: var(--f-titulo); font-size: var(--t-xl); font-weight: var(--p-fuerte); line-height: 1.3; }
 .ui-dialogo__texto { margin-top: var(--s-2); color: var(--c-texto-2); }
 .ui-dialogo__acciones { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-6); }
 

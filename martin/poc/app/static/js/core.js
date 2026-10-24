@@ -81,9 +81,10 @@ async function cargarEstado() {
 }
 
 const leerTema = () => { try { return localStorage.getItem("tema") || "auto"; } catch { return "auto"; } };
-function aplicarTema(tema) {
+function aplicarTema(tema, persistir = true) {
   if (tema === "auto") delete document.documentElement.dataset.tema;
   else document.documentElement.dataset.tema = tema;
+  if (!persistir) return;
   try { localStorage.setItem("tema", tema); } catch { /* sin almacenamiento */ }
 }
 
@@ -116,7 +117,7 @@ function construirLateral() {
     el("div", { class: "lateral__nombre" }, el("strong", null, "Recepción"), el("span", null, "Hotel de demostración"))));
   const nav = el("nav", { class: "lateral__nav", aria: { label: "Secciones" } });
   for (const grupo of GRUPOS) {
-    const items = SECCIONES.filter((s) => s.grupo === grupo.id);
+    const items = SECCIONES.filter((s) => s.grupo === grupo.id && !s.oculta);
     if (!items.length) continue;
     if (grupo.titulo) nav.append(el("div", { class: "lateral__grupo" }, grupo.titulo));
     nav.append(el("ul", { class: "lateral__lista" }, items.map((s) => el("li", null, el("a", {
@@ -275,8 +276,13 @@ async function montar() {
 /* ------------------------------------------------------------------ arranque */
 
 function arrancar() {
-  const forzado = new URLSearchParams(location.search).get("tema");
-  aplicarTema(["claro", "oscuro", "auto"].includes(forzado) ? forzado : leerTema());
+  // ?tema=claro|oscuro fuerza el tema sin guardarlo, y ?linea=b|c prueba otra línea visual (siempre en claro)
+  const consulta = new URLSearchParams(location.search);
+  const linea = consulta.get("linea");
+  if (linea === "b" || linea === "c") document.documentElement.dataset.linea = linea;
+  const forzado = consulta.get("tema") ?? (linea ? "claro" : null);
+  if (["claro", "oscuro", "auto"].includes(forzado)) aplicarTema(forzado, false);
+  else aplicarTema(leerTema(), false);
   construirLateral();
   $("#saltar").addEventListener("click", () => $("#contenido").focus());
   $("#velo").addEventListener("click", () => alternarLateral(false));

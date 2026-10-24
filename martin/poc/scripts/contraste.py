@@ -1,13 +1,14 @@
 """Comprueba los contrastes de los tokens de color (WCAG 2.2) en el tema claro y en el oscuro.
 
-Uso: python scripts/contraste.py
+Uso: python scripts/contraste.py [b|c]   (sin argumento comprueba la línea A de tokens.css; b y c añaden las sobrescrituras de css/lineas.css, solo en claro)
 Sale con código 1 si algún par de texto no llega a 4,5:1 o algún borde de control o foco no llega a 3:1.
 """
 import re
 import sys
 from pathlib import Path
 
-RUTA = Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "tokens.css"
+CSS = Path(__file__).resolve().parents[1] / "app" / "static" / "css"
+RUTA = CSS / "tokens.css"
 TONOS = ["ok", "aviso", "critico", "info", "neutro"]
 
 
@@ -16,6 +17,13 @@ def bloque(css: str, inicio: str) -> dict:
     abre = css.index("{", i)
     cierra = css.index("}", abre)
     return dict(re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", css[abre:cierra]))
+
+
+def resolver(t: dict, valor: str) -> str:
+    """Sustituye var(--x) por su valor, de forma recursiva, para poder comprobar los tokens que apuntan a otros."""
+    while valor.strip().startswith("var("):
+        valor = t[valor.strip()[4:-1].strip()]
+    return valor
 
 
 def a_rgb(valor: str, fondo=None):
@@ -47,7 +55,7 @@ def ratio(a, b) -> float:
 
 
 def pares(t: dict):
-    c = lambda k, f=None: a_rgb(t[k], f)  # noqa: E731
+    c = lambda k, f=None: a_rgb(resolver(t, t[k]), f)  # noqa: E731
     fondos = ["--c-bg", "--c-surface", "--c-surface-2", "--c-surface-3"]
     for f in fondos:
         yield "texto", 4.5, c("--c-texto"), c(f), f"texto sobre {f}"
@@ -75,6 +83,11 @@ def pares(t: dict):
     yield "control", 3.0, c("--c-borde-control"), c("--c-surface"), "borde de control sobre surface"
     yield "control", 3.0, c("--c-borde-control"), c("--c-bg"), "borde de control sobre bg"
     yield "foco", 3.0, c("--c-enlace"), c("--c-surface"), "anillo de foco sobre surface"
+    yield "lateral", 4.5, c("--lat-texto"), c("--lat-bg"), "texto del menú lateral"
+    yield "lateral", 4.5, c("--lat-texto-fuerte"), c("--lat-bg"), "texto fuerte del menú lateral"
+    yield "lateral", 4.5, c("--lat-grupo"), c("--lat-bg"), "título de grupo del menú lateral"
+    yield "lateral", 4.5, c("--lat-texto-fuerte"), c("--lat-icono-bg", c("--lat-bg")), "texto sobre icono del menú lateral"
+    yield "lateral", 4.5, c("--lat-activo-texto"), c("--lat-activo-bg"), "texto del elemento activo del menú lateral"
 
 
 def main() -> int:
@@ -82,8 +95,13 @@ def main() -> int:
     claro = bloque(css, ":root {")
     oscuro = dict(claro)
     oscuro.update(bloque(css, ':root[data-tema="oscuro"]'))
+    temas = [("claro", claro), ("oscuro", oscuro)]
+    if len(sys.argv) > 1 and sys.argv[1] in ("b", "c"):
+        linea = dict(claro)
+        linea.update(bloque((CSS / "lineas.css").read_text(encoding="utf-8"), f':root[data-linea="{sys.argv[1]}"]'))
+        temas = [(f"claro de la línea {sys.argv[1].upper()}", linea)]
     fallos = 0
-    for nombre, tema in (("claro", claro), ("oscuro", oscuro)):
+    for nombre, tema in temas:
         print(f"== Tema {nombre}")
         for _, minimo, fg, bg, desc in pares(tema):
             r = ratio(fg, bg)
