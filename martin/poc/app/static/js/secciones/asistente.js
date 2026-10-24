@@ -438,7 +438,7 @@ export default {
 
     /* ---------- bienvenida */
     function pintarBienvenida(datos) {
-      return (datos?.preguntas ?? []).map((p) => el("button", { type: "button", class: "asi__pregunta", onclick: () => enviar(p) }, p));
+      return (datos?.preguntas ?? []).slice(0, 2).map((p) => el("button", { type: "button", class: "asi__pregunta", onclick: () => enviar(p) }, p));
     }
 
     const zonaSugerencias = el("div", { class: "asi__sugerencias" }, ui.esqueleto({ lineas: 3, alto: 16 }));

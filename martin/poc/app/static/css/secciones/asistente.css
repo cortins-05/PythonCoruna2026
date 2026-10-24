@@ -1,6 +1,20 @@
 /* Estilos de la sección Asistente. Todo bajo el prefijo .sec-asistente y usando solo tokens de tokens.css. */
 .sec-asistente { display: flex; flex-direction: column; gap: var(--s-6); max-width: 940px; margin: 0 auto; padding-bottom: var(--s-4); }
 
+/* Bienvenida: fondo de puntos, dos sugerencias pequeñas encima y una ventana de texto grande, todo centrado */
+.sec-asistente.es-vacio {
+  max-width: none; min-height: calc(100vh - 96px); justify-content: center; align-items: center; gap: var(--s-4);
+  background-image: radial-gradient(var(--c-borde-fuerte) 1px, transparent 1.3px); background-size: 22px 22px;
+}
+.sec-asistente.es-vacio .asi__panel-bienvenida { order: 1; width: min(720px, 100%); }
+.sec-asistente.es-vacio .asi__caja { order: 2; width: min(720px, 100%); }
+.sec-asistente.es-vacio .asi__bienvenida { align-items: center; gap: var(--s-3); }
+.sec-asistente.es-vacio .asi__saludo h2 { font-size: var(--t-xl); }
+.sec-asistente.es-vacio .asi__sugerencias { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; }
+.sec-asistente.es-vacio .asi__pregunta { font-size: var(--t-xs); padding: 4px 10px; border: 1px solid var(--c-borde-fuerte); background: var(--c-surface); text-decoration: none; }
+.sec-asistente.es-vacio .asi__caja-interior { min-height: 120px; align-items: flex-end; background: var(--c-surface); }
+.sec-asistente.es-vacio .asi__entrada { min-height: 88px; }
+
 /* Bienvenida: saludo, caja y cuatro preguntas */
 .sec-asistente.es-vacio .asi__log { display: none; }
 .sec-asistente:not(.es-vacio) .asi__panel-bienvenida { display: none; }
