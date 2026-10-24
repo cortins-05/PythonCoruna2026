@@ -45,6 +45,7 @@ function rangoLargo(desde, hasta) {
   return mes(desde) === mes(hasta) ? `${dia(desde)} al ${dia(hasta)} de ${mes(hasta)}` : `${dia(desde)} de ${mes(desde)} al ${dia(hasta)} de ${mes(hasta)}`;
 }
 
+const reponer = (nodo, ...hijos) => nodo.replaceChildren(...hijos.flat().filter((h) => h != null && h !== false));
 const recortar = (t, n) => (String(t ?? "").length > n ? `${String(t).slice(0, n).trimEnd()}…` : String(t ?? ""));
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
@@ -203,7 +204,7 @@ function pintarComunicacion(b, ctx) {
         el("span", null, `Respuesta por ${NOMBRE_CANAL[c.respuesta.canal] ?? c.respuesta.canal} a ${c.respuesta.destinatario ?? ""}`)),
       c.respuesta.asunto && el("strong", { class: "bl-burbuja__asunto" }, c.respuesta.asunto),
       el("p", { class: "bl-burbuja__texto" }, c.respuesta.texto));
-    cuerpo.replaceChildren(
+    reponer(cuerpo,
       c.alerta && el("div", { class: "bl-banner", role: "alert" }, ui.icono("alert", { tam: 16 }),
         el("div", null, el("strong", null, `Aviso de las ${c.alerta.hora}`), el("span", null, c.alerta.texto))),
       el("header", { class: "bl-com__cab" },
@@ -213,7 +214,7 @@ function pintarComunicacion(b, ctx) {
         c.prioridad && pastillaNivel(c.prioridad)),
       el("blockquote", { class: "bl-com__original" }, c.asunto && c.canal === "correo" && el("strong", null, c.asunto), el("p", null, recortar(c.texto, 220))),
       el("p", { class: "bl-com__entendido" }, ui.icono("sparkles", { tam: 14 }), entendido(c)),
-      k && el("div", { class: "bl-com__veredicto" }, chipVeredicto(k.veredicto), k.motivo && el("span", null, k.motivo)),
+      k && el("div", { class: "bl-com__veredicto" }, chipVeredicto(k.veredicto), k.motivo && el("span", { class: "bl-com__motivo" }, k.motivo)),
       k?.noches?.length > 0 && tablaNoches(ctx, k.noches, c.id),
       borrador,
       pendiente ? a.el : el("p", { class: `bl__estado is-${c.estado === "descartada" ? "neutro" : "ok"}`, role: "status" },
@@ -235,7 +236,7 @@ function filaComunicacion(ctx, c) {
     el("p", { class: "bl-com__entendido" }, entendido(c)),
     el("div", { class: "bl-com__veredicto" }, c.contraste ? chipVeredicto(c.contraste.veredicto) : null,
       c.estado !== "pendiente" && ui.chip({ texto: { respondida: "Respondida", descartada: "Descartada", en_espera: "En espera" }[c.estado] ?? c.estado, tono: "neutro", punto: true }),
-      c.contraste?.motivo && el("span", null, c.contraste.motivo)),
+      c.contraste?.motivo && el("span", { class: "bl-com__motivo" }, c.contraste.motivo)),
     a.el, a.estado);
 }
 
@@ -258,7 +259,7 @@ function pintarFuentes(b, ctx) {
     return el("li", { class: "bl-fuente" },
       el("div", { class: "bl-fuente__cab" }, el("span", { class: "bl-fuente__icono", aria: { hidden: "true" } }, ui.icono(ICONO_FUENTE[f.id] ?? f.icono ?? "dot", { tam: 16 })),
         el("strong", null, f.nombre ?? NOMBRE_FUENTE[f.id])),
-      el("div", { class: "bl__chips" }, f.nivel ? pastillaNivel({ nivel: f.nivel, fuente: f.nombre, tipo: f.tipo }) : ui.chip({ texto: "Solo salida", tono: "neutro" }),
+      el("div", { class: "bl__chips" }, f.nivel ? pastillaNivel({ nivel: f.nivel, fuente: f.nombre, tipo: f.tipo }, { compacta: true }) : ui.chip({ texto: "Solo salida", tono: "neutro" }),
         ui.chip({ texto: txt, tono: t, punto: true })),
       f.detalle && el("p", { class: "bl-fuente__detalle" }, f.detalle),
       f.ultima && el("p", { class: "bl-fuente__ultima" }, `Última lectura: ${f.ultima}`));
@@ -335,7 +336,7 @@ function pintarProceso(b, ctx) {
 
   const terminar = () => {
     const a = acciones(ctx, b.acciones);
-    pie.replaceChildren(
+    reponer(pie,
       el("div", { class: "bl__acciones" }, ui.boton({ texto: "Ver de nuevo", icono: "refresh", variante: "fantasma", tam: "sm", onclick: arrancar }), a.el?.children ? [...a.el.children] : null),
       a.estado);
   };
@@ -397,7 +398,7 @@ function pintarPropuesta(b, ctx) {
       pintar();
     } }) : { el: null, estado: null };
     const etiqueta = { pendiente: ["aviso", "Pendiente de aprobación"], aprobada: ["ok", "Aprobada"], rechazada: ["neutro", "Rechazada"] }[estado] ?? ["neutro", estado];
-    cuerpo.replaceChildren(
+    reponer(cuerpo,
       cabecera(ctx, "Propuesta del asistente", ui.chip({ texto: etiqueta[1], tono: etiqueta[0], punto: true }), pendiente ? "Nada sale hasta que la apruebes" : null),
       el("blockquote", { class: "bl-cita" }, b.texto),
       ui.kv([b.destino && { etiqueta: "Destino", valor: NOMBRE_FUENTE[b.destino] ?? b.destino }, b.destinatario && { etiqueta: "Destinatario", valor: b.destinatario },
