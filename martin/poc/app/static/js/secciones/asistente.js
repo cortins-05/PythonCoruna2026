@@ -313,7 +313,6 @@ export default {
 
     /* ---------- acciones de los bloques (apartado 4.2) */
     const resultado = (ok, mensaje, estado, detalle = null, tarjeta = null) => ({ ok, mensaje, estado, detalle, tarjeta });
-    const sigue = (...pares) => pares.map(([etiqueta, texto]) => ({ tipo: "preguntar", etiqueta, texto }));
 
     /** Añade un mensaje del asistente ya cerrado, con el resumen de lo que acaba de pasar y la siguiente pregunta dentro. */
     function mensajeResumen(texto, preguntas) {
@@ -359,8 +358,8 @@ export default {
       const que = res.accion === "reservada" ? "Respuesta enviada y habitación reservada" : res.accion === "en_espera" ? "Respuesta enviada, petición en espera" : res.accion === "sin_hueco" ? "Respuesta enviada, sin hueco disponible" : "Respuesta enviada";
       mensajeResumen(`He enviado la respuesta por ${nombreCanal} a ${dest}${extra}. El envío es simulado y no ha salido ningún mensaje real.`, [siguiente, "¿Cómo está la ocupación?"]);
       return resultado(true, `Enviado por ${nombreCanal} a ${dest} (simulado)${extra}`, res.accion ?? "respondida", r, {
-        titulo: que, filas: [{ etiqueta: "Canal", valor: nombreCanal }, { etiqueta: "A", valor: dest }, { etiqueta: "Quién", valor: ACTOR }, { etiqueta: "Resultado", valor: que }],
-        acciones: [{ tipo: "abrir_seccion", etiqueta: "Ver comunicaciones", seccion: "comunicaciones" }, ...sigue(["Ver lo siguiente", siguiente])],
+        titulo: que, filas: [{ etiqueta: "Canal", valor: nombreCanal }, { etiqueta: "A", valor: dest }, { etiqueta: "Quién", valor: ACTOR }],
+        acciones: [{ tipo: "abrir_seccion", etiqueta: "Ver comunicaciones", seccion: "comunicaciones" }],
       });
     }
 
