@@ -115,6 +115,9 @@ def test_alerta_de_parte_fuera_de_plazo_con_el_reloj(cliente):
     cliente.post("/api/reloj", json={"horas": 12})  # 21:00, pasadas las 20 h
     niveles = [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]
     assert niveles == ["aviso"]
-    cliente.post("/api/reloj", json={"horas": 13})  # 34 h después del check-in
+    cliente.post("/api/reloj", json={"horas": 6})  # 03:00, el aviso no puede desaparecer de madrugada
+    niveles = [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]
+    assert "aviso" in niveles and "critico" not in niveles
+    cliente.post("/api/reloj", json={"horas": 7})  # 34 h después del check-in
     niveles = [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]
     assert "critico" in niveles

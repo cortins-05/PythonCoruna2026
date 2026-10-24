@@ -139,7 +139,7 @@ def alertas() -> list[dict]:
         if restante is not None:
             if restante <= 0:
                 salida.append({"id": exp["id"], "nivel": "critico", "texto": f"{nombre}: el parte está fuera de plazo"})
-            elif ahora.hour >= HORA_AVISO:
+            elif ahora.hour >= HORA_AVISO or ahora.hour < 8:
                 salida.append({"id": exp["id"], "nivel": "aviso", "texto": f"{nombre}: parte sin enviar pasadas las {HORA_AVISO} h"})
             elif restante <= 4:
                 salida.append({"id": exp["id"], "nivel": "aviso", "texto": f"{nombre}: quedan {restante} h para enviar el parte"})
