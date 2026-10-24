@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import chat, conversaciones, disponibilidad, estados, hub, lector, plantillas
+from . import chat, conversaciones, disponibilidad, estados, hub, lector, plantillas, prioridades
 from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
 from .deps import http_de
 from .store import Store
@@ -158,6 +158,7 @@ def resumen(exp: dict, lista_conflictos: list[dict] | None = None) -> dict:
             "pendientes": pendientes(exp) if exp["estado"] != "cancelada" else [],
             "parte": exp["tramites"]["parte"]["estado"], "parte_restante_h": parte_restante_h(exp),
             "viaja_por_trabajo": exp["viaja_por_trabajo"], "tipo": estados.tipo_de(exp), "origen": exp["origen"], "personas": exp["personas"],
+            "prioridad": prioridades.nivel_de_origen(exp["origen"]),
             "sistemas": sistemas, "semaforo": estados.semaforo_de(store.db, exp, ahora, sistemas, lista_conflictos)}
 
 
@@ -528,8 +529,10 @@ def rechazar(pid: str, datos: ActorIn):
 # Se incluyen al final para que puedan importar lo que define este módulo sin ciclos. Cada router vive en su fichero
 # y usa `deps.get_store`, que devuelve `main.store` en el momento de la llamada.
 from .routers import chat as router_chat  # noqa: E402
+from .routers import comunicaciones as router_comunicaciones  # noqa: E402
 from .routers import demo, hoy, integraciones, mensajes  # noqa: E402
 from .routers import documentos as router_documentos  # noqa: E402
 
-for _router in (hoy.router, integraciones.router, mensajes.router, router_documentos.router, router_chat.router, demo.router):
+for _router in (hoy.router, integraciones.router, mensajes.router, router_documentos.router, router_chat.router, demo.router,
+                router_comunicaciones.router):
     app.include_router(_router)

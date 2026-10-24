@@ -6,11 +6,12 @@ guardar el huésped, confirmar el parte, simular un mensaje...), así que pasa p
 rastro en el registro y en los eventos que dejaría una persona. Los ids salen de un contador que se reinicia con el
 almacén, y el orden de los pasos es fijo, por eso son siempre los mismos.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
-from .. import documentos
+from .. import comunicaciones, disponibilidad, documentos, hub
 from ..deps import get_store
 from ..store import INICIO_DEMO
 
@@ -43,15 +44,63 @@ LINEAS_ALBARAN_ANA = [
 ]
 
 
+# Mensajes que llegan por la mañana del 24/10. Pasan por el mismo `registrar` que uno escrito en directo: se entienden con las reglas, se
+# contrastan con RoomCloud, OfiHotel y las reservas físicas, y esperan a que recepción confirme la respuesta por el canal de origen.
+COMUNICACIONES_DEMO = [
+    ("correo", "Sophie Martin", "sophie.martin@example.fr", "Demande de chambre du 24 au 27 octobre",
+     "Bonjour, avez-vous une chambre double de libre du 24 au 27 octobre pour 2 personnes ? Merci d'avance.", "2026-10-24T07:58"),
+    ("correo", "Carlos Meijide", "carlos.meijide@meijide-consulting.example", "Reserva para un evento de empresa",
+     "Buenos días. Necesitamos 3 habitaciones dobles del 1 al 3 de noviembre para un equipo de 6 personas. ¿Tenéis disponibilidad?",
+     "2026-10-24T08:31"),
+    ("whatsapp", "Ana Pereira", TELEFONO_ANA, "", "Hola, ¿a qué hora es el check-in?", "2026-10-24T08:40"),
+    ("whatsapp", "Marta Souto", "34622334455", "", "Buenas, necesito una individual para esta noche, ¿hay algo?", "2026-10-24T08:49"),
+    ("whatsapp", "Lucía Fernández", "34655123123", "", "Hola, ¿tenéis una doble libre del 28 al 30 de octubre? Somos 2 personas.", "2026-10-24T08:52"),
+    ("correo", "Pablo Rey", "pablo.rey@example.com", "Habitación individual esta noche",
+     "Buenas, ¿tenéis una individual libre esta noche? Llegaría sobre las 19:00.", "2026-10-24T08:57"),
+]
+# Dos desajustes entre RoomCloud y OfiHotel para enseñar la detección de conflictos: Dubois sale un día antes en OfiHotel y Otero sigue
+# viva en OfiHotel aunque RoomCloud la canceló (por la regla de prioridad, su fila vieja no ocupa habitación).
+OFIHOTEL_OTERO = {"id_ofihotel": "OH-10240", "huesped": "Otero", "habitacion": "112", "tipo": "SGL-STD", "entrada": "2026-10-24",
+                  "salida": "2026-10-25", "estado": "reservada", "numero_externo": "BK-4488003-1", "ref_externa": "1-BK-4488003", "personas": 1}
+
+
+class ReservaRoomcloudIn(BaseModel):
+    tipo: str = "SGL-STD"
+    desde: str | None = None
+    hasta: str | None = None
+    nombre: str = "Reserva de Booking"
+    personas: int = 1
+
+
 def _ajustar_reloj(store) -> None:
     """Pone el reloj de la demo en las 09:00 del 24/10 si el origen configurado (DEMO_START) difiere en horas enteras."""
     horas = (RELOJ_DEMO - INICIO_DEMO).total_seconds() / 3600
     store.db["reloj_h"] = int(horas) if horas == int(horas) else 0
 
 
+def _desajustes_de_ofihotel(store) -> None:
+    lectura = store.db.get("ofihotel") or {}
+    for e in lectura.get("estancias", []):
+        if e.get("ref_externa") == CLAIRE:
+            e["salida"] = "2026-10-26"
+    lectura.setdefault("estancias", []).append(dict(OFIHOTEL_OTERO))
+    for o in lectura.get("ocupaciones", []):
+        if o.get("ref_externa") == CLAIRE:
+            o["hasta"] = "2026-10-26"
+    lectura.setdefault("ocupaciones", []).append({"habitacion": "112", "tipo": "SGL-STD", "desde": "2026-10-24", "hasta": "2026-10-25",
+                                                    "huesped": "Otero", "ref_externa": "1-BK-4488003"})
+
+
 def _leer_reservas(principal) -> None:
     principal.sincronizar()
     principal.sincronizar_ofihotel()
+
+
+def _comunicaciones(store) -> None:
+    for canal, nombre, contacto, asunto, texto, ts in COMUNICACIONES_DEMO:
+        comunicaciones.registrar(store, canal, nombre, contacto, texto, asunto, ts=ts)
+    for com in store.db["comunicaciones"]:
+        comunicaciones.vista(store, com)  # fija el veredicto de partida: los avisos se disparan por cambios posteriores, no por el orden de la semilla
 
 
 def _checkin_de_ana(principal) -> None:
@@ -95,6 +144,8 @@ def sembrar_estado(store, nivel: str) -> None:
     _checkin_de_ana(principal)
     _checkin_de_marcos(principal)
     _documentos(store)
+    _desajustes_de_ofihotel(store)
+    _comunicaciones(store)
 
 
 @router.post("/semilla")
@@ -109,3 +160,31 @@ def sembrar(nivel: str = "completa", store=Depends(get_store)):
                 "eventos": len(db["eventos"]), "propuestas": len(db["propuestas"]),
                 "propuestas_pendientes": sum(p["estado"] == "pendiente" for p in db["propuestas"]),
                 "documentos": len(db["documentos"])}
+
+
+@router.post("/reserva-roomcloud")
+def reserva_roomcloud(datos: ReservaRoomcloudIn, store=Depends(get_store)):
+    """Control de la demo: entra una reserva nueva de Booking por RoomCloud (prioridad 1) y las peticiones que competían por el hueco lo notan."""
+    from .. import main as principal
+    hoy = store.ahora().date()
+    desde, hasta = datos.desde or hoy.isoformat(), datos.hasta or (hoy + timedelta(days=1)).isoformat()
+    try:
+        entrada, salida = datetime.fromisoformat(desde), datetime.fromisoformat(hasta)
+    except ValueError:
+        raise HTTPException(422, {"problemas": ["Las fechas deben tener formato AAAA-MM-DD"]})
+    if salida <= entrada:
+        raise HTTPException(422, {"problemas": ["La salida debe ser posterior a la llegada"]})
+    if datos.tipo not in disponibilidad.capacidad():
+        raise HTTPException(422, {"problemas": [f"Tipo de habitación desconocido: {datos.tipo}"]})
+    nombre = (datos.nombre.strip() or "Reserva de Booking").split()
+    numero = store.siguiente_id("rc").split("-")[1]
+    r = {"portal_id": "1", "id_canal": f"BK-91{numero}", "dlm": store.ahora().isoformat(timespec="minutes"), "estado_rc": "4",
+         "checkin": desde, "checkout": hasta, "nombre": nombre[0], "apellidos": " ".join(nombre[1:]), "telefono": "", "email": "", "pais": "",
+         "importe": "", "medio_pago": "TARJETA", "notas": "",
+         "habitaciones": [{"tipo": datos.tipo, "tarifa": "BAR", "adultos": str(max(1, datos.personas)), "ninos": "0"}]}
+    exp = principal.nuevo_expediente(r)
+    store.db["expedientes"][exp["id"]] = exp
+    hub.registrar_evento(store, "roomcloud", "reserva_nueva", " ".join(nombre), f"Reserva {exp['id']}: {desde} a {hasta}", exp["id"])
+    hub.revisar_ocupacion(store)
+    store.guardar()
+    return {"id": exp["id"], "tipo": datos.tipo, "desde": desde, "hasta": hasta}

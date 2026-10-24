@@ -24,9 +24,9 @@ def _dias(desde: str, hasta: str):
 def ocupaciones(db: dict) -> list[dict]:
     filas, refs = [], set()
     for exp in db["expedientes"].values():
+        refs.add(exp["referencia"])  # también las canceladas: si RoomCloud (prioridad 1) la dio de baja, su fila vieja de OfiHotel no cuenta
         if exp["estado"] in ("cancelada", "cerrado"):
             continue
-        refs.add(exp["referencia"])
         for h in exp["habitaciones"]:
             filas.append({"tipo": h["tipo"], "desde": exp["checkin_prevista"], "hasta": exp["checkout_prevista"],
                           "quien": exp["id"], "fuente": exp["origen"]})

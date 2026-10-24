@@ -39,6 +39,10 @@ def _palabras(texto: str) -> set[str]:
     return {p for p in re.split(r"[^a-z0-9]+", _sin_tildes(texto)) if len(p) > 2}
 
 
+def _corta(iso: str) -> str:
+    return f"{iso[8:10]}/{iso[5:7]}"
+
+
 def _solapan(desde_a: str, hasta_a: str, desde_b: str, hasta_b: str) -> bool:
     return desde_a < hasta_b and desde_b < hasta_a
 
@@ -127,7 +131,7 @@ def conflictos(db: dict, ahora: datetime) -> list[dict]:
     for c in disponibilidad.conflictos(db, hoy):
         if c["nivel"] == "overbooking":
             salida.append({"tipo": "overbooking", "nivel": "rojo", "expediente_id": None, "sistemas": ["roomcloud", "ofihotel"],
-                           "texto": f"Overbooking en {c['tipo']} el {c['fecha']}: {c['ocupadas']} ocupadas para {c['capacidad']}"})
+                           "texto": f"Overbooking en {c['tipo']} el {_corta(c['fecha'])}: {c['ocupadas']} ocupadas para {c['capacidad']}"})
     for exp in db["expedientes"].values():
         encontrada = buscar_en_ofihotel(db, exp)
         if not encontrada:
@@ -140,7 +144,8 @@ def conflictos(db: dict, ahora: datetime) -> list[dict]:
             continue
         if (encontrada["entrada"], encontrada["salida"]) != (exp["checkin_prevista"], exp["checkout_prevista"]):
             salida.append({"tipo": "fechas_distintas", "nivel": "rojo", "expediente_id": exp["id"], "sistemas": ["roomcloud", "ofihotel"],
-                           "texto": f"{nombre}: RoomCloud dice {exp['checkin_prevista']} a {exp['checkout_prevista']} y OfiHotel {encontrada['entrada']} a {encontrada['salida']}"})
+                           "texto": (f"{nombre}: RoomCloud dice del {_corta(exp['checkin_prevista'])} al {_corta(exp['checkout_prevista'])} "
+                                     f"y OfiHotel del {_corta(encontrada['entrada'])} al {_corta(encontrada['salida'])}")})
     vistas: dict[str, list[dict]] = {}
     for e in lectura_ofihotel(db).get("estancias", []):
         if e.get("estado") in ("reservada", "en_casa") and e.get("habitacion"):

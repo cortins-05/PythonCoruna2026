@@ -82,7 +82,7 @@ def test_la_funcion_de_formas_detecta_lo_que_debe():
 SEMAFORO = {"color": {"rojo", "naranja", "amarillo", "azul", "gris", "verde"}, "tono": TONO_BLOQUE, "motivo": str, "accion_sugerida": str}
 RESUMEN_EXPEDIENTE = {"id": str, "huesped": str, "estado": str, "checkin": str, "checkout": str, "pendientes": [str], "parte": str,
                       "parte_restante_h": (float, None), "viaja_por_trabajo": bool, "tipo": str, "origen": str, "personas": int,
-                      "sistemas": dict, "semaforo": SEMAFORO}
+                      "prioridad": {"nivel": int, "fuente": str, "id": str, "tipo": {"firme", "peticion"}}, "sistemas": dict, "semaforo": SEMAFORO}
 KPI = {"id": str, "etiqueta": str, "valor": (int, str), "detalle": str, "tono": TONO, "ruta": SECCIONES}
 HOY = {"reloj": str, "kpis": [KPI],
        "alertas": [{"id": str, "nivel": {"critico", "aviso", "info"}, "texto": str, "ruta": SECCIONES, "params": dict}],
