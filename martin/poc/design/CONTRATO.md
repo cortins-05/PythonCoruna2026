@@ -21,7 +21,7 @@ Cada agente trabaja en su rama `ui/<agente>` y solo toca los ficheros que se le 
 | `mensajes` | `ui/mensajes` | `static/js/secciones/mensajes.js`, `static/css/secciones/mensajes.css` |
 | `documentos-front` | `ui/documentos-front` | `static/js/secciones/documentos.js`, `static/css/secciones/documentos.css` |
 | `integraciones-front` | `ui/integraciones-front` | `static/js/secciones/integraciones.js`, `static/css/secciones/integraciones.css` |
-| `back-chat` | `ui/back-chat` | `app/chat.py`, `app/chat_bloques.py`, `tests/test_chat_bloques.py` |
+| `back-chat` | `ui/back-chat` | `app/chat.py`, `app/chat_bloques.py`, `app/routers/chat.py`, `tests/test_chat_bloques.py` |
 | `back-mensajes` | `ui/back-mensajes` | `app/routers/mensajes.py`, `app/adapters/correo.py`, `tests/test_mensajes.py` |
 | `back-hoy` | `ui/back-hoy` | `app/routers/hoy.py`, `app/routers/integraciones.py`, `tests/test_hoy_integraciones.py` |
 | `back-documentos` | `ui/back-documentos` | `app/documentos.py`, `app/routers/documentos.py`, `fixtures/hotel.json`, `tests/test_documentos.py` |

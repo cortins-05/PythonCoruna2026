@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import chat, disponibilidad, hub, lector, plantillas
@@ -158,9 +159,18 @@ def resumen(exp: dict) -> dict:
             "viaja_por_trabajo": exp["viaja_por_trabajo"]}
 
 
+app.mount("/static", StaticFiles(directory=ESTATICO), name="static")
+
+
 @app.get("/")
 def portada():
-    return FileResponse(ESTATICO / "index.html")
+    nueva = ESTATICO / "index.html"
+    return FileResponse(nueva if nueva.exists() else ESTATICO / "legacy.html")
+
+
+@app.get("/legacy")
+def interfaz_antigua():
+    return FileResponse(ESTATICO / "legacy.html")
 
 
 @app.get("/api/estado")
