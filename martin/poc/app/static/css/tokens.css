@@ -57,12 +57,12 @@
   --c-menu-borde: rgba(255, 255, 255, 0.08);
 
   /* Radios */
-  --r-panel: 18px;
-  --r-tile: 16px;
-  --r-card: 14px;
-  --r-ctl: 10px;
-  --r-chip: 8px;
-  --r-pill: 999px;
+  --r-panel: 0;
+  --r-tile: 0;
+  --r-card: 0;
+  --r-ctl: 2px;
+  --r-chip: 2px;
+  --r-pill: 2px;
 
   /* Espacios */
   --s-1: 4px;
