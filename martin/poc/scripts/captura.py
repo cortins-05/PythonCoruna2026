@@ -42,6 +42,7 @@ ESPERA_ARRANQUE_CHROME_S = 20.0
 ALTO_MAXIMO_CAPTURA = 16000
 LIMITE_CONSOLA = 200
 LIMITE_TEXTO = 1500
+LIMITE_RESULTADO_JS = 10000
 FECHA_DEMO = "2026-10-24T09:00:00"
 
 T0 = time.monotonic()
@@ -87,14 +88,22 @@ class ErrorCDP(Exception):
 # Utilidades de rutas y argumentos
 # ---------------------------------------------------------------------------------------------------------------------
 
-_RAIZ_MSYS = re.compile(r"[A-Za-z]:[/\\](?:Program Files(?: \(x86\))?[/\\]Git|Git|msys(?:32|64)|cygwin(?:64)?)(?=[/\\])", re.IGNORECASE)
+def _raices_msys() -> list[str]:
+    """Carpetas donde Git Bash sitúa la barra inicial de Unix, que solo existen si el script se lanzó desde un shell MSYS (variable MSYSTEM)."""
+    if not os.environ.get("MSYSTEM"):
+        return []
+    raices = ["C:/Program Files/Git", "C:/Program Files (x86)/Git", "C:/msys64", "C:/msys32"]
+    exepath = os.environ.get("EXEPATH", "").replace("\\", "/").rstrip("/")
+    if exepath:
+        raices.insert(0, exepath[:-4] if exepath.lower().endswith("/bin") else exepath)
+    return raices
 
 
 def deshacer_msys(texto: str) -> str:
-    """Git Bash convierte los argumentos que empiezan por barra (incluso '#/hoy') en rutas como 'C:/Program Files/Git/hoy', así que aquí se revierte."""
-    if "Git" not in texto and "git" not in texto and "msys" not in texto.lower() and "cygwin" not in texto.lower():
-        return texto
-    return _RAIZ_MSYS.sub("", texto)
+    """Git Bash convierte los argumentos que empiezan por barra, incluso '#/hoy' o '/api/x', en rutas como 'C:/Program Files/Git/hoy', y aquí se revierte."""
+    for raiz in _raices_msys():
+        texto = re.sub(re.escape(raiz) + r"(?=/)", "", texto, flags=re.IGNORECASE)
+    return texto
 
 
 def ruta_local(texto: str) -> Path:
@@ -147,6 +156,7 @@ class Informe:
         self.peticiones_fallidas: list[dict] = []
         self.pasos: list[dict] = []
         self.avisos: list[str] = []
+        self.log_servidor: str | None = None
         self.paso_actual: str | None = None
         self._impreso = False
         self._cerrojo = threading.Lock()
@@ -186,6 +196,8 @@ class Informe:
             salida["errores_permitidos"] = True
         if self.consola_omitidas:
             salida["consola_omitidas"] = self.consola_omitidas
+        if self.log_servidor:
+            salida["log_servidor"] = self.log_servidor
         return salida
 
     def imprimir(self, codigo: int) -> None:
@@ -193,8 +205,11 @@ class Informe:
             if self._impreso:
                 return
             self._impreso = True
-        sys.stdout.write(serializar(self.a_dict(codigo)))
-        sys.stdout.flush()
+        try:
+            sys.stdout.write(serializar(self.a_dict(codigo)))
+            sys.stdout.flush()
+        except (BrokenPipeError, OSError):
+            pass  # quien lee cerró la tubería antes de tiempo y ya no hay a quién contárselo
 
 
 def serializar(datos: dict) -> str:
@@ -438,11 +453,13 @@ def puerto_libre() -> int:
 # Servidor de la demo
 # ---------------------------------------------------------------------------------------------------------------------
 
-def leer_cola(ruta: Path, caracteres: int = 1500) -> str:
+def leer_cola(ruta: Path, lineas: int = 25, caracteres: int = 3000) -> str:
+    """Últimas líneas del log del servidor, cortadas por línea para que el traceback no empiece a mitad de una."""
     try:
-        return ruta.read_text(encoding="utf-8", errors="replace")[-caracteres:].strip()
+        cola = "\n".join(ruta.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-lineas:])
     except OSError:
         return ""
+    return cola if len(cola) <= caracteres else cola[-caracteres:].split("\n", 1)[-1]
 
 
 async def esperar_estado(base: str, proceso: subprocess.Popen | None, registro: Path | None, limite_s: float) -> None:
@@ -455,7 +472,7 @@ async def esperar_estado(base: str, proceso: subprocess.Popen | None, registro: 
             raise ErrorEntorno(f"El servidor se cerró al arrancar (código {proceso.returncode}). Últimas líneas de su log:\n{cola}")
         try:
             estado, _ = await http_async("GET", base + "api/estado", timeout=3)
-            if estado == 200:
+            if estado == 200 and (proceso is None or proceso.poll() is None):
                 return
             ultimo = f"HTTP {estado}"
         except Exception as e:
@@ -496,7 +513,11 @@ async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> 
                 continue
             raise
         informe.servidor = {"url": base, "propio": True, "pid": proceso.pid, "hotel_db": posix(tmp / "db.json")}
-        if "HOTEL_DB" not in (RAIZ_POC / "app" / "store.py").read_text(encoding="utf-8", errors="replace"):
+        try:
+            lee_hotel_db = "HOTEL_DB" in (RAIZ_POC / "app" / "store.py").read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            lee_hotel_db = True
+        if not lee_hotel_db:
             informe.aviso("app/store.py todavía no lee HOTEL_DB, así que el servidor usa data/db.json y dos ejecuciones simultáneas en este mismo árbol comparten ese fichero.")
         return base
     raise ErrorEntorno(ultimo_error or "No se pudo arrancar el servidor.")
@@ -685,6 +706,7 @@ class ClienteCDP:
             for futuro in list(self._pendientes.values()) + [f for fs in self._una_vez.values() for f in fs]:
                 if not futuro.done():
                     futuro.set_exception(ErrorEntorno(motivo))
+                    futuro.exception()  # se marca como leída para que asyncio no proteste por un futuro que nadie esperaba
             self._pendientes.clear()
             self._una_vez.clear()
 
@@ -786,6 +808,7 @@ class Recolector:
         self.permitidos_404 = permitidos_404
         self.solicitudes: dict[str, dict] = {}
         self.en_vuelo: set[str] = set()
+        self.ignoradas: set[str] = set()  # peticiones que ya hicieron esperar de más y no vuelven a retrasar ningún paso
         self.ultima_actividad = time.monotonic()
         self.cdp: ClienteCDP | None = None
         self.colgada = False
@@ -1085,16 +1108,20 @@ return {
 
 JS_MEDIR = r"""
 const de = document.documentElement;
-let interno = 0;
+let interno = 0, internoX = 0, elementoX = null;
 for (const e of document.querySelectorAll('body *')) {
-  if (e.clientHeight < 80) continue;
-  const extra = e.scrollHeight - e.clientHeight;
-  if (extra <= 1) continue;
-  const oy = getComputedStyle(e).overflowY;
-  if (oy === 'auto' || oy === 'scroll') interno = Math.max(interno, extra);
+  const extraY = e.clientHeight >= 80 ? e.scrollHeight - e.clientHeight : 0;
+  const extraX = e.clientWidth >= 100 ? e.scrollWidth - e.clientWidth : 0;
+  if (extraY <= 1 && extraX <= 1) continue;
+  const cs = getComputedStyle(e);
+  if (extraY > 1 && (cs.overflowY === 'auto' || cs.overflowY === 'scroll')) interno = Math.max(interno, extraY);
+  if (extraX > internoX && (cs.overflowX === 'auto' || cs.overflowX === 'scroll')) {
+    internoX = extraX;
+    elementoX = descr(e).replace(/ «.*»$/, '') + ' (contenido de ' + e.scrollWidth + ' px en una caja de ' + e.clientWidth + ' px)';
+  }
 }
 return { alto: innerHeight, ancho: innerWidth, documento: Math.max(de.scrollHeight - innerHeight, 0),
-         interno: interno, ancho_documento: de.scrollWidth };
+         interno: interno, ancho_documento: de.scrollWidth, interno_x: internoX, elemento_x: elementoX };
 """
 
 JS_ASENTAR = r"""
@@ -1284,9 +1311,22 @@ class Pagina:
             {"name": "prefers-reduced-motion", "value": "reduce" if self.reducido else "no-preference"}]})
 
     # -- evaluación ---------------------------------------------------------------------------------------------------
+    async def _evaluar_en_bruto(self, parametros: dict, timeout: float) -> dict:
+        """Si un clic provoca una navegación completa, el contexto de la página se destruye a mitad de la llamada, así que se reintenta sobre el documento nuevo."""
+        for intento in range(8):
+            try:
+                return await self.cdp.enviar("Runtime.evaluate", parametros, timeout=timeout)
+            except ErrorCDP as e:
+                texto = str(e).lower()
+                if intento < 7 and ("context" in texto or "navigated" in texto or "destroyed" in texto):
+                    trazar(f"el contexto cambió durante la evaluación, reintento ({texto[:80]})")
+                    await asyncio.sleep(0.25)
+                    continue
+                raise
+        raise ErrorEntorno("La página no dejó de cambiar de documento durante la evaluación.")
+
     async def evaluar(self, codigo: str, promesa: bool = False, timeout: float = 20.0):
-        r = await self.cdp.enviar("Runtime.evaluate", {"expression": codigo, "returnByValue": True, "awaitPromise": promesa,
-                                                       "userGesture": True}, timeout=timeout)
+        r = await self._evaluar_en_bruto({"expression": codigo, "returnByValue": True, "awaitPromise": promesa, "userGesture": True}, timeout)
         if "exceptionDetails" in r:
             d = r["exceptionDetails"]
             exc = d.get("exception", {})
@@ -1301,10 +1341,12 @@ class Pagina:
             if self.rec.colgada:
                 raise ErrorEntorno("La pestaña de Chrome se cayó (Inspector.targetCrashed).")
             ahora = time.monotonic()
-            if not self.rec.en_vuelo and ahora - self.rec.ultima_actividad >= quieto_s:
+            pendientes = self.rec.en_vuelo - self.rec.ignoradas
+            if not pendientes and ahora - self.rec.ultima_actividad >= quieto_s:
                 return
             if ahora > fin:
-                self.informe.aviso(f"La red no se calmó en {maximo_s:.0f} s ({len(self.rec.en_vuelo)} peticiones siguen en vuelo); sigo igualmente.")
+                self.informe.aviso(f"La red no se calmó en {maximo_s:.0f} s ({len(pendientes)} peticiones siguen en vuelo); sigo igualmente y no vuelvo a esperarlas.")
+                self.rec.ignoradas |= pendientes
                 return
             await asyncio.sleep(0.05)
 
@@ -1325,9 +1367,14 @@ class Pagina:
             m = await self.evaluar(expresion(JS_MEDIR))
         except (ErrorPaso, ErrorEntorno):
             return
-        if m and m["ancho_documento"] > m["ancho"] + 1:
+        if not m:
+            return
+        if m["ancho_documento"] > m["ancho"] + 1:
             self.anchos_vigilados.add(self.ancho)
             self.informe.aviso(f"Hay desbordamiento horizontal con ventana de {m['ancho']} px: el documento mide {m['ancho_documento']} px de ancho.")
+        elif m.get("interno_x", 0) > 1 and m["ancho"] <= 800:
+            self.anchos_vigilados.add(self.ancho)
+            self.informe.aviso(f"Con ventana de {m['ancho']} px hay scroll horizontal dentro de {m['elemento_x']}; si no es intencionado, algo se sale de su caja.")
 
     # -- navegación ---------------------------------------------------------------------------------------------------
     async def cargar(self, url: str) -> None:
@@ -1479,7 +1526,7 @@ class Pagina:
                 raise ErrorPaso(f"No existe ningún elemento que cumpla «{selector}» tras esperar {ESPERA_SELECTOR_S:.0f} s.")
             await asyncio.sleep(0.1)
         texto = r.get("texto", "").strip()
-        self.informe.textos[clave_unica(self.informe.textos, selector)] = texto
+        self.informe.textos[clave_unica(self.informe.textos, selector)] = recortar(texto, LIMITE_RESULTADO_JS)
         return {"caracteres": len(texto)}
 
     async def existe(self, selector: str) -> dict:
@@ -1491,19 +1538,20 @@ class Pagina:
 
     async def js(self, codigo: str) -> dict:
         try:
-            r = await self.cdp.enviar("Runtime.evaluate", {"expression": codigo, "returnByValue": True, "awaitPromise": True,
-                                                           "userGesture": True}, timeout=30)
+            r = await self._evaluar_en_bruto({"expression": codigo, "returnByValue": True, "awaitPromise": True, "userGesture": True}, 30)
         except ErrorCDP as e:
             if "reference chain" not in str(e) and "serializ" not in str(e).lower():
                 raise
-            r = await self.cdp.enviar("Runtime.evaluate", {"expression": codigo, "returnByValue": False, "awaitPromise": True,
-                                                           "userGesture": True}, timeout=30)
+            r = await self._evaluar_en_bruto({"expression": codigo, "returnByValue": False, "awaitPromise": True, "userGesture": True}, 30)
             r["result"] = {"value": r.get("result", {}).get("description")}
         if "exceptionDetails" in r:
             d = r["exceptionDetails"]
             exc = d.get("exception", {})
             raise ErrorPaso(f"La expresión lanzó una excepción: {recortar(exc.get('description') or d.get('text') or 'sin detalle', 600)}")
         valor = r.get("result", {}).get("value")
+        serializado = json.dumps(valor, ensure_ascii=False, default=str)
+        if len(serializado) > LIMITE_RESULTADO_JS:
+            valor = serializado[:LIMITE_RESULTADO_JS] + f"… [recortado, {len(serializado)} caracteres]"
         self.informe.resultados_js[clave_unica(self.informe.resultados_js, codigo)] = valor
         await self._vigilar_desbordamiento()
         return {}
@@ -1739,6 +1787,10 @@ async def trabajo(args, pasos: list[Paso], informe: Informe, limpieza: Limpieza)
             await pagina.captura(ruta_local(args.salida), args.pagina_completa)
     finally:
         await cdp.cerrar()
+        if propio:
+            if any((f.get("estado") or 0) >= 500 for f in informe.peticiones_fallidas):
+                await asyncio.sleep(0.5)  # uvicorn escribe el traceback unos milisegundos después de enviar el 500
+            informe.log_servidor = leer_cola(tmp / "servidor.log") or None
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1838,10 +1890,13 @@ def main(argv: list[str] | None = None) -> int:
             flujo.reconfigure(encoding="utf-8", errors="replace")
         except Exception:
             pass
-    argv = [deshacer_msys(a) for a in (sys.argv[1:] if argv is None else argv)]
     parser = construir_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     VERBOSO = args.verboso
+    if args.ruta:
+        args.ruta = deshacer_msys(args.ruta)
+    args.permitir_404 = [deshacer_msys(x) for x in args.permitir_404]
+    args.paso = [x if x.strip().lower().startswith("captura") else deshacer_msys(x) for x in args.paso]
     informe = Informe(args.permitir_errores)
     limpieza = Limpieza()
     atexit.register(limpieza.ejecutar)
@@ -1883,6 +1938,8 @@ def main(argv: list[str] | None = None) -> int:
         informe.error = str(e)
     except ErrorEntorno as e:
         informe.error = str(e)
+    except ErrorCDP as e:
+        informe.error = f"Chrome rechazó un comando de DevTools: {e}"
     except KeyboardInterrupt:
         informe.error = "Interrumpido por el usuario (Ctrl+C) antes de terminar."
     except Exception as e:
