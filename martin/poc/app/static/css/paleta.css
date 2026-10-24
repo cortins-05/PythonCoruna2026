@@ -1,0 +1,16 @@
+/*
+  Paleta de la presentación aplicada a la aplicación (tema claro): tinta azul marino, papel frío, latón en la acción principal
+  y azul de bolígrafo como acento. El tema oscuro conserva sus propios tokens, que tienen más especificidad.
+*/
+:root {
+  --c-bg: #F3F5F9; --c-surface: #FFFFFF; --c-surface-2: #F8F9FC; --c-surface-3: #E9EDF4;
+  --c-borde: #DCE2EE; --c-borde-fuerte: #C3CCDD; --c-borde-control: #7C8AA8;
+  --c-texto: #0E1B33; --c-texto-2: #4A5878; --c-texto-3: #5A6785;
+  --c-acento: #2B4FD0; --c-acento-hover: #2142B3; --c-acento-texto: #FFFFFF; --c-acento-suave: #E8EDFD; --c-acento-borde: #C5D1F7; --c-enlace: #2B4FD0;
+  --c-cta: #F2B632; --c-cta-hover: #E5A51E; --c-cta-texto: #0E1B33;
+  --c-fuerte: #0E1B33; --c-fuerte-hover: #17294B; --c-fuerte-texto: #FFFFFF;
+  --c-menta: #E3F4EB; --c-menta-borde: #8FD0AE;
+  --lat-bg: #0E1B33; --lat-borde: #0E1B33; --lat-texto: #B4C0D8; --lat-texto-fuerte: #FFFFFF; --lat-grupo: #8394B5;
+  --lat-hover: rgba(255, 255, 255, 0.08); --lat-activo-bg: #F3F5F9; --lat-activo-texto: #0E1B33;
+  --lat-icono-bg: rgba(255, 255, 255, 0.08); --lat-icono-borde: transparent; --lat-logo-bg: #F2B632; --lat-logo-texto: #0E1B33;
+}
