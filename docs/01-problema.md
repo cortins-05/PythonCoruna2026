@@ -142,6 +142,29 @@ Ordenados por lo que bloquea antes.
 21. **No hay línea base.** Sin saber cuánto tarda hoy el volcado ni cuántos overbookings hubo,
     no se puede justificar el gasto ni demostrar después que algo mejoró.
 
+### De la operativa en recepción
+
+> Añadidos después de la primera redacción. Salen de la conversación con el equipo; no
+> están verificados con el hotel.
+
+22. **Doble tecleo de los datos del cliente.** El BIENVENIDO se rellena en papel y alguien
+    lo vuelve a teclear a mano en OfiHotel. Cada ficha se escribe dos veces, con riesgo de
+    errores de transcripción (nombres, números de documento, fechas) que acaban en la
+    factura y en el parte a la policía. Es trabajo repetido que no aporta nada y que además
+    retrasa el parte (problema 5). *Sin confirmar: si los clientes de OTA también rellenan el
+    BIENVENIDO al llegar.*
+23. **Listado diario de clientes en papel, desfasado desde que se imprime.** Se imprime un
+    listado de los clientes del día y, a partir de ese momento, los datos nuevos (llegadas
+    tardías, cambios de habitación, altas de última hora) se **añaden a mano** sobre el
+    papel. Consecuencias:
+    - **Dos fuentes de verdad**: OfiHotel y el papel, que divergen cada hora.
+    - **Riesgo legal**: si partes, listas de evacuación o avisos de limpieza se hacen desde
+      el papel, pueden ir incompletos (problemas 5 y 6).
+    - **Más papel con datos personales** (problema 8): el listado impreso se custodia y se
+      destruye sin control.
+    - *Sin confirmar: para qué se usa (recepción, limpieza, desayunos), cuándo se imprime y
+      cuántos añadidos suele haber después.*
+
 ### Lectura de conjunto
 
 - El problema **más caro** es el 5 (legal) y no espera al proyecto.
@@ -177,3 +200,6 @@ Cuestionario de campo para rellenar con la dueña, Ofimática, RoomCloud y Flor:
 8. El formulario BIENVENIDO, campo por campo.
 9. Check-ins al día en alta y en baja; minutos del volcado diario; overbookings del último año.
 10. Medios de cobro, y dónde se guardan los datos fiscales de las empresas cliente.
+11. ¿Los clientes que reservan por OTA también rellenan el BIENVENIDO al llegar?
+12. El listado diario de clientes en papel: ¿para qué se usa y quién lo usa, a qué hora se
+    imprime, cuántos añadidos a mano suele haber después y dónde se guarda o se destruye?
