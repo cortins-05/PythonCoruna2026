@@ -487,6 +487,17 @@ export default {
       });
     }
 
+    async function modificarEstancia(accion) {
+      const ok = await ctx.confirmar({ titulo: "Cambiar las fechas", texto: `Las fechas de la estancia pasan a ser del ${accion.entrada} al ${accion.salida}.`, confirmar: "Sí, cambiar", contenido: el("span") });
+      if (!ok) return resultado(false, "No se ha cambiado nada", "cancelado");
+      const r = await ctx.api(`/api/expedientes/${encodeURIComponent(accion.id)}/fechas`, "PUT", { checkin: accion.entrada, checkout: accion.salida, actor: ACTOR });
+      mensajeResumen("He cambiado las fechas de la estancia.", ["¿Qué conflictos hay?", "¿Cómo está la ocupación?"]);
+      return resultado(true, "Fechas cambiadas", "cambiada", r, {
+        titulo: "Fechas cambiadas", simulado: false, filas: [{ etiqueta: "Nuevas fechas", valor: `${accion.entrada} a ${accion.salida}` }, { etiqueta: "Quién", valor: ACTOR }],
+        acciones: [{ tipo: "abrir_estancia", etiqueta: "Abrir la estancia", id: accion.id }],
+      });
+    }
+
     /** Ejecuta una acción de un bloque. Nunca lanza: los errores vuelven como ok:false con su mensaje. */
     async function ejecutar(accion, valores) {
       try {
@@ -507,6 +518,7 @@ export default {
           case "sincronizar": return await sincronizar(accion);
           case "simular_roomcloud": return await simularRoomcloud(accion);
           case "marcar_ofihotel": return await marcarOfihotel(accion);
+          case "modificar_estancia": return await modificarEstancia(accion);
           default: return resultado(false, "Esta acción no se puede ejecutar desde el chat", "error");
         }
       } catch (e) {

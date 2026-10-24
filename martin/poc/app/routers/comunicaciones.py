@@ -140,3 +140,41 @@ def insignias(store=Depends(get_store)):
 def ver_habitaciones(fecha: str | None = None, store=Depends(get_store)):
     """Quién hay en cada habitación un día (hoy por defecto), con quién llega y quién sale."""
     return habitaciones.vista(store, fecha)
+
+
+class FechasIn(BaseModel):
+    checkin: str
+    checkout: str
+    actor: str = "Recepción"
+    forzar: bool = False
+
+
+@router.put("/expedientes/{exp_id}/fechas")
+def cambiar_fechas(exp_id: str, datos: FechasIn, store=Depends(get_store)):
+    """Cambia las fechas de una estancia. Si el cambio produce overbooking en su tipo de habitación responde 409, salvo que se fuerce."""
+    from datetime import date
+    from fastapi import HTTPException
+    from .. import main
+    exp = store.db["expedientes"].get(exp_id)
+    if not exp:
+        raise HTTPException(404, "Estancia no encontrada")
+    if exp["estado"] in ("cancelada", "cerrado"):
+        raise HTTPException(409, {"problemas": ["La estancia está cancelada o cerrada"]})
+    try:
+        entrada, salida = date.fromisoformat(datos.checkin), date.fromisoformat(datos.checkout)
+    except ValueError:
+        raise HTTPException(422, {"problemas": ["Las fechas deben tener formato AAAA-MM-DD"]})
+    if salida <= entrada:
+        raise HTTPException(422, {"problemas": ["La salida debe ser posterior a la llegada"]})
+    antes = (exp["checkin_prevista"], exp["checkout_prevista"])
+    exp["checkin_prevista"], exp["checkout_prevista"] = datos.checkin, datos.checkout
+    choques = [c for c in disponibilidad.conflictos(store.db, store.ahora().date().isoformat(), 30)
+               if c["nivel"] == "overbooking" and datos.checkin <= c["fecha"] < datos.checkout and c["tipo"] in [h["tipo"] for h in exp["habitaciones"]]]
+    if choques and not datos.forzar:
+        exp["checkin_prevista"], exp["checkout_prevista"] = antes
+        raise HTTPException(409, {"conflicto": choques})
+    main.anotar(exp, f"Fechas cambiadas de {antes[0]} a {antes[1]} a {datos.checkin} a {datos.checkout}", datos.actor)
+    hub.registrar_evento(store, "recepcion", "reserva_modificada", estados.nombre_de(exp), f"{estados.nombre_de(exp)}: nuevas fechas {datos.checkin} a {datos.checkout}", exp_id)
+    hub.revisar_ocupacion(store)
+    store.guardar()
+    return main.resumen(exp)
