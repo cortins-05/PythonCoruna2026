@@ -193,8 +193,33 @@ class Informe:
             if self._impreso:
                 return
             self._impreso = True
-        sys.stdout.write(json.dumps(self.a_dict(codigo), ensure_ascii=False, indent=2, default=str) + "\n")
+        sys.stdout.write(serializar(self.a_dict(codigo)))
         sys.stdout.flush()
+
+
+def serializar(datos: dict) -> str:
+    """JSON válido y legible con una línea por elemento de las listas y por clave de los diccionarios largos, que ocupa la mitad que indent=2 completo."""
+    def uno(valor) -> str:
+        return json.dumps(valor, ensure_ascii=False, default=str)
+
+    lineas = []
+    claves = list(datos)
+    for i, clave in enumerate(claves):
+        valor = datos[clave]
+        coma = "," if i < len(claves) - 1 else ""
+        compacto = uno(valor)
+        if isinstance(valor, list) and valor and len(compacto) > 100:
+            lineas.append(f"  {uno(clave)}: [")
+            lineas.extend("    " + uno(e) + ("," if j < len(valor) - 1 else "") for j, e in enumerate(valor))
+            lineas.append("  ]" + coma)
+        elif isinstance(valor, dict) and valor and len(compacto) > 100:
+            lineas.append(f"  {uno(clave)}: {{")
+            elementos = list(valor.items())
+            lineas.extend("    " + uno(a) + ": " + uno(b) + ("," if j < len(elementos) - 1 else "") for j, (a, b) in enumerate(elementos))
+            lineas.append("  }" + coma)
+        else:
+            lineas.append(f"  {uno(clave)}: {compacto}{coma}")
+    return "{\n" + "\n".join(lineas) + "\n}\n"
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -511,7 +536,7 @@ async def sembrar(base: str, nivel: str, informe: Informe) -> None:
         elif estado >= 400:
             raise ErrorEntorno(f"La siembra falló en POST /api/demo/semilla?nivel={nivel}: HTTP {estado} {datos[:300].decode('utf-8', 'replace')}")
     else:
-        via = "roomcloud"
+        via = "sync_roomcloud"
     if via != "endpoint":
         await post_ok(base, "/api/reiniciar")
         if nivel in ("basica", "completa"):
@@ -798,6 +823,8 @@ class Recolector:
 
     def _log(self, p: dict) -> None:
         e = p.get("entry", {})
+        if e.get("source") == "network" and "404" in e.get("text", "") and self._permitida(e.get("url", ""), 404):
+            return
         nivel = {"verbose": "debug", "info": "info", "warning": "warning", "error": "error"}.get(e.get("level"), "info")
         origen = "red" if e.get("source") == "network" else "log:" + str(e.get("source", ""))
         linea = e.get("lineNumber")
