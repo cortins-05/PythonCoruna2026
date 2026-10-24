@@ -22,11 +22,11 @@ PLAZO_PARTE_H = 24
 COLORES = ("rojo", "naranja", "amarillo", "azul", "gris", "verde")
 TONOS = {"rojo": "critico", "naranja": "aviso", "amarillo": "aviso", "azul": "info", "gris": "neutro", "verde": "ok"}
 LEYENDA = [
-    {"color": "rojo", "titulo": "Conflicto", "descripcion": "Orígenes que no coinciden, habitación doble, overbooking o parte fuera de plazo"},
-    {"color": "naranja", "titulo": "Parte pendiente", "descripcion": "El parte de viajeros no se ha enviado y el plazo de 24 horas corre"},
-    {"color": "amarillo", "titulo": "Por pasar a OfiHotel", "descripcion": "Falta pasar la estancia a OfiHotel y la llegada es hoy o antes"},
-    {"color": "azul", "titulo": "Por atender", "descripcion": "Llegada de hoy sin check-in o mensaje nuevo sin enlazar con ninguna estancia"},
-    {"color": "gris", "titulo": "Por reflejar", "descripcion": "Cancelada en RoomCloud pero todavía viva en OfiHotel"},
+    {"color": "rojo", "titulo": "Conflicto", "descripcion": "Fuentes que no coinciden, habitación doble, overbooking o parte vencido"},
+    {"color": "naranja", "titulo": "Parte pendiente", "descripcion": "Parte sin enviar con el plazo de 24 h en marcha"},
+    {"color": "amarillo", "titulo": "Por pasar a OfiHotel", "descripcion": "Falta pasarla a OfiHotel y llega hoy o antes"},
+    {"color": "azul", "titulo": "Por atender", "descripcion": "Llega hoy sin check-in"},
+    {"color": "gris", "titulo": "Por reflejar", "descripcion": "Cancelada en RoomCloud y viva en OfiHotel"},
     {"color": "verde", "titulo": "Todo cuadrado", "descripcion": "Nada pendiente"},
 ]
 
@@ -97,33 +97,33 @@ def sistemas_de(db: dict, exp: dict, ahora: datetime) -> dict:
     elif exp["origen"] == "roomcloud":
         roomcloud = {"estado": "sincronizado", "detalle": "Leída de RoomCloud"}
     else:
-        roomcloud = {"estado": "no_aplica", "detalle": "Reserva física: no pasa por RoomCloud"}
+        roomcloud = {"estado": "no_aplica", "detalle": "Reserva física, no pasa por RoomCloud"}
 
     lectura, encontrada = lectura_ofihotel(db), buscar_en_ofihotel(db, exp)
     if not lectura:
-        ofihotel = {"estado": "sin_lectura", "detalle": "OfiHotel todavía no se ha leído"}
+        ofihotel = {"estado": "sin_lectura", "detalle": "OfiHotel sin leer"}
     elif encontrada:
-        sitio = f" (hab. {encontrada['habitacion']})" if encontrada.get("habitacion") else ""
-        ofihotel = {"estado": "migrado", "detalle": f"Está en OfiHotel{sitio}, según los datos de ayer", "habitacion": encontrada.get("habitacion", ""),
+        sitio = f", habitación {encontrada['habitacion']}" if encontrada.get("habitacion") else ""
+        ofihotel = {"estado": "migrado", "detalle": f"En OfiHotel{sitio}, con los datos de ayer", "habitacion": encontrada.get("habitacion", ""),
                     "inferida": encontrada["inferida"]}
     elif exp["estado"] == "cancelada":
         ofihotel = {"estado": "no_aplica", "detalle": "Cancelada y sin rastro en OfiHotel"}
     elif t["ofihotel_alta"]["estado"] == "hecho":
-        ofihotel = {"estado": "marcado", "detalle": "Marcada como pasada a OfiHotel; la lectura de mañana lo confirmará"}
+        ofihotel = {"estado": "marcado", "detalle": "Marcada en OfiHotel, la lectura de mañana la confirma"}
     else:
-        ofihotel = {"estado": "por_migrar", "detalle": "Todavía no está en OfiHotel"}
+        ofihotel = {"estado": "por_migrar", "detalle": "Aún no está en OfiHotel"}
 
     restante = parte_restante_h(exp, ahora)
     if exp["estado"] == "cancelada":
-        documentacion = {"estado": "no_aplica", "detalle": "Sin documentación: la reserva está cancelada"}
+        documentacion = {"estado": "no_aplica", "detalle": "Reserva cancelada, sin parte"}
     elif exp["parte"]:
-        documentacion = {"estado": "parte_enviado", "detalle": f"Parte enviado, justificante {exp['parte']['justificante']} (simulado)"}
+        documentacion = {"estado": "parte_enviado", "detalle": f"Parte enviado, justificante {exp['parte']['justificante']}"}
     elif restante is not None and restante <= 0:
-        documentacion = {"estado": "parte_vencido", "detalle": "El parte está fuera de plazo"}
+        documentacion = {"estado": "parte_vencido", "detalle": "Parte vencido"}
     elif t["huesped"]["estado"] == "hecho" and t["pago"]["estado"] == "hecho":
         documentacion = {"estado": "parte_pendiente", "detalle": f"Quedan {_horas(restante)} h para enviar el parte" if restante is not None else "Falta enviar el parte"}
     elif t["huesped"]["estado"] == "hecho":
-        documentacion = {"estado": "incompleta", "detalle": "Faltan el medio de pago o los datos de la empresa"}
+        documentacion = {"estado": "incompleta", "detalle": "Falta el medio de pago o la empresa"}
     else:
         documentacion = {"estado": "sin_datos", "detalle": "Faltan los datos del huésped"}
     return {"roomcloud": roomcloud, "ofihotel": ofihotel, "documentacion": documentacion}
@@ -173,7 +173,7 @@ def semaforo_de(db: dict, exp: dict, ahora: datetime, sistemas: dict | None = No
     if rojos:
         return _sem("rojo", rojos[0]["texto"], "Revisar el conflicto")
     if doc == "parte_vencido":
-        return _sem("rojo", "El parte de viajeros está fuera de plazo", "Enviar el parte ya")
+        return _sem("rojo", "El parte de viajeros está vencido", "Enviar el parte ya")
     if doc == "parte_pendiente" or (exp["estado"] == "en_curso" and doc in ("sin_datos", "incompleta")):
         return _sem("naranja", sistemas["documentacion"]["detalle"], "Completar y enviar el parte")
     grises = [c for c in propios if c["nivel"] == "gris"]

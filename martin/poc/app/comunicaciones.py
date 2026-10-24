@@ -208,7 +208,7 @@ def contrastar(store, com: dict, peticion: dict | None = None) -> dict:
     capacidad = disponibilidad.capacidad().get(tipo)
     if capacidad is None:
         nombre_tipo = NOMBRE_TIPO["es"].get(tipo, tipo)
-        return {"veredicto": "sin_datos", "motivo": f"El inventario de la demo no incluye {nombre_tipo}, así que recepción tiene que comprobarlo a mano.",
+        return {"veredicto": "sin_datos", "motivo": f"El inventario no incluye {nombre_tipo}: recepción lo comprueba a mano.",
                 "noches": [], "bloqueada_por": [],
                 "retenida_por": [], "alternativa": None}
     nombres, filas = _ids_de(store.db), disponibilidad.ocupaciones(store.db)
@@ -235,21 +235,21 @@ def contrastar(store, com: dict, peticion: dict | None = None) -> dict:
             if quienes:
                 info = prioridades.info(grupo)
                 bloqueada.append({"fuente": info["fuente"], "id": grupo, "nivel": info["nivel"], "cantidad": len(quienes), "ocupantes": quienes})
-        quien = " y ".join(f"{b['fuente']} ({b['cantidad']})" for b in bloqueada)
+        quien = " y ".join(f"{b['fuente']} {b['cantidad']}" for b in bloqueada)
         libres = max(0, peor_firme["libres"])
         queda = ("no queda ninguna " + NOMBRE_TIPO["es"][tipo] + " libre" if libres == 0
                  else f"solo queda{'n' if libres > 1 else ''} {_tipo_plural(tipo, libres, 'es')} libre{'s' if libres > 1 else ''} y pide {n}")
-        motivo = f"El {_fecha_larga(peor_firme['fecha'], 'es')} {queda}: lo ocupan {quien}, con más prioridad que esta petición."
+        motivo = f"El {_fecha_larga(peor_firme['fecha'], 'es')} {queda}: {quien}, con más prioridad."
     elif peor_mia["libres_para_esta"] < n:
         veredicto = "en_competencia"
         ganadoras = [c for c in _retenciones(store, com, tipo, peor_mia["fecha"])]
         retenida = [{"comunicacion": c["id"], "de": c["de"]["nombre"], "canal": c["canal"], "nivel": c["prioridad"]["nivel"],
                      "fuente": c["prioridad"]["fuente"], "hora": c["ts"][11:16]} for c in ganadoras]
         primera = retenida[0]
-        motivo = (f"La petición por {primera['fuente'].lower()} de {primera['de']} ({primera['hora']}) tiene más prioridad "
-                  f"(nivel {primera['nivel']} frente a {com['prioridad']['nivel']}) y se queda con la última habitación.")
+        motivo = (f"La petición por {primera['fuente'].lower()} de {primera['de']}, de las {primera['hora']}, tiene más prioridad "
+                  f"que esta, nivel {primera['nivel']} frente a {com['prioridad']['nivel']}, y se queda con la última habitación.")
     elif peor_mia["libres_para_esta"] == n:
-        veredicto, motivo = "ajustado", f"Queda libre justo lo que pide: después no sobrará ninguna {NOMBRE_TIPO['es'][tipo]}."
+        veredicto, motivo = "ajustado", f"Queda justo lo que pide y después no sobra ninguna {NOMBRE_TIPO['es'][tipo]}."
     else:
         libres = peor_mia["libres_para_esta"]
         veredicto, motivo = "disponible", (f"Queda{'n' if libres > 1 else ''} {_tipo_plural(tipo, libres, 'es')} libre{'s' if libres > 1 else ''} "
@@ -315,20 +315,17 @@ def redactar(com: dict, contraste: dict | None) -> dict:
         d1, d2 = _fecha_larga(p["desde"], idioma), _fecha_larga(p["hasta"], idioma)
         cosa = _tipo_plural(p["tipo_habitacion"], p["habitaciones"], idioma)
         if v in ("disponible", "ajustado"):
-            cuerpo = {"es": f"Hola {nombre}, buenos días. Sí tenemos {cosa} libre del {d1} al {d2} ({p['noches']} noche{'s' if p['noches'] != 1 else ''}). "
-                            "Te la dejamos reservada a tu nombre; si necesitas cualquier cambio, dínoslo por aquí. ¡Te esperamos!",
-                      "fr": f"Bonjour {nombre}, oui, nous avons {cosa} de libre du {d1} au {d2} ({p['noches']} nuit{'s' if p['noches'] != 1 else ''}). "
-                            "Nous vous la réservons à votre nom. À bientôt !",
-                      "en": f"Hello {nombre}, yes, we have {cosa} available from {d1} to {d2} ({p['noches']} night{'s' if p['noches'] != 1 else ''}). "
-                            "We will keep it booked in your name. See you soon!"}[idioma]
+            cuerpo = {"es": f"Hola {nombre}, sí tenemos {cosa} libre del {d1} al {d2}, {p['noches']} noche{'s' if p['noches'] != 1 else ''}. Te la dejamos reservada a tu nombre.",
+                      "fr": f"Bonjour {nombre}, nous avons {cosa} de libre du {d1} au {d2}, {p['noches']} nuit{'s' if p['noches'] != 1 else ''}. Nous vous la réservons à votre nom.",
+                      "en": f"Hello {nombre}, we have {cosa} available from {d1} to {d2}, {p['noches']} night{'s' if p['noches'] != 1 else ''}. We have booked it in your name."}[idioma]
         elif v == "sin_datos":
-            cuerpo = {"es": f"Hola {nombre}, gracias por tu consulta. Estamos comprobando si tenemos {cosa} del {d1} al {d2} y te respondemos en breve.",
-                      "fr": f"Bonjour {nombre}, merci pour votre demande. Nous vérifions si nous avons {cosa} du {d1} au {d2} et nous vous répondons rapidement.",
-                      "en": f"Hello {nombre}, thank you for your request. We are checking whether we have {cosa} from {d1} to {d2} and will reply shortly."}[idioma]
+            cuerpo = {"es": f"Hola {nombre}, estamos comprobando si tenemos {cosa} del {d1} al {d2} y te respondemos en breve.",
+                      "fr": f"Bonjour {nombre}, nous vérifions si nous avons {cosa} du {d1} au {d2} et nous vous répondons rapidement.",
+                      "en": f"Hello {nombre}, we are checking whether we have {cosa} from {d1} to {d2} and will reply shortly."}[idioma]
         elif v == "en_competencia":
-            cuerpo = {"es": f"Hola {nombre}, estamos terminando de confirmar otra consulta para esas fechas. En unos minutos te decimos si podemos dejártela reservada.",
-                      "fr": f"Bonjour {nombre}, nous terminons de confirmer une autre demande pour ces dates. Nous revenons vers vous dans quelques minutes.",
-                      "en": f"Hello {nombre}, we are finishing confirming another request for those dates. We will get back to you in a few minutes."}[idioma]
+            cuerpo = {"es": f"Hola {nombre}, estamos confirmando otra consulta para esas fechas y en unos minutos te decimos si podemos reservártela.",
+                      "fr": f"Bonjour {nombre}, nous confirmons une autre demande pour ces dates et nous revenons vers vous dans quelques minutes.",
+                      "en": f"Hello {nombre}, we are confirming another request for those dates and will tell you in a few minutes whether we can book it."}[idioma]
         else:
             extra = ""
             if alt:
@@ -336,14 +333,14 @@ def redactar(com: dict, contraste: dict | None) -> dict:
                 extra = {"es": f" Sí tenemos {cosa} del {a1} al {a2}. ¿Te la reservamos?",
                          "fr": f" Nous avons {cosa} de libre du {a1} au {a2}. Souhaitez-vous la réserver ?",
                          "en": f" We do have {cosa} available from {a1} to {a2}. Shall we book it?"}[idioma]
-            cuerpo = {"es": f"Hola {nombre}, lo sentimos: del {d1} al {d2} no nos queda {NOMBRE_TIPO['es'][p['tipo_habitacion']]} libre.{extra}",
-                      "fr": f"Bonjour {nombre}, nous sommes désolés : du {d1} au {d2} nous n'avons plus de {NOMBRE_TIPO['fr'][p['tipo_habitacion']]} libre.{extra}",
-                      "en": f"Hello {nombre}, we are sorry: from {d1} to {d2} we have no {NOMBRE_TIPO['en'][p['tipo_habitacion']]} left.{extra}"}[idioma]
+            cuerpo = {"es": f"Hola {nombre}, lo sentimos, del {d1} al {d2} no nos queda {NOMBRE_TIPO['es'][p['tipo_habitacion']]} libre.{extra}",
+                      "fr": f"Bonjour {nombre}, désolés, du {d1} au {d2} nous n'avons plus de {NOMBRE_TIPO['fr'][p['tipo_habitacion']]} libre.{extra}",
+                      "en": f"Hello {nombre}, sorry, from {d1} to {d2} we have no {NOMBRE_TIPO['en'][p['tipo_habitacion']]} left.{extra}"}[idioma]
     elif com["tipo"] == "pregunta":
         cuerpo = (f"Hola {nombre}, el check-in empieza a las {plantillas.HORAS['hora_checkin']} y el check-out termina a las "
-                  f"{plantillas.HORAS['hora_checkout']}. ¿A qué hora prevés llegar?")
+                  f"{plantillas.HORAS['hora_checkout']}. ¿A qué hora llegas?")
     else:
-        cuerpo = f"Hola {nombre}, gracias por escribirnos. Lo revisamos y te respondemos en breve."
+        cuerpo = f"Hola {nombre}, lo revisamos y te respondemos en breve."
     firma = {"es": "\n\nUn saludo,\nRecepción", "fr": "\n\nCordialement,\nLa réception", "en": "\n\nKind regards,\nReception"}[idioma]
     asunto = f"Re: {com['asunto']}" if com["canal"] == "correo" and com.get("asunto") else ("Re: su consulta" if com["canal"] == "correo" else "")
     return {"canal": com["canal"], "destinatario": com["de"]["contacto"], "asunto": asunto,
@@ -404,7 +401,7 @@ def vista(store, com: dict) -> dict:
         if (previo in ("disponible", "ajustado") and ahora_v in ("no_disponible", "en_competencia")) or (
                 previo == "en_competencia" and ahora_v == "no_disponible"):
             com["alerta"] = {"hora": store.ahora().isoformat(timespec="minutes"),
-                             "texto": f"Ha dejado de estar disponible desde que la leyó recepción: {contraste['motivo']}"}
+                             "texto": f"Ha dejado de estar disponible: {contraste['motivo']}"}
         elif ahora_v in ("disponible", "ajustado"):
             com["alerta"] = None
         com["veredicto_visto"] = ahora_v
@@ -516,9 +513,9 @@ def editar_texto(store, com_id: str, texto: str) -> dict:
 ICONOS_EVENTO = {"roomcloud": "refresh", "ofihotel": "building", "whatsapp": "message", "correo": "mail", "recepcion": "door",
                  "sistema": "alert", "ses": "shield"}
 TEXTOS_EVENTO = {"reserva_nueva": "Reserva nueva", "reserva_modificada": "Reserva modificada", "reserva_cancelada": "Reserva cancelada",
-                 "instantanea_lectura": "Lectura de OfiHotel", "mensaje_saliente_simulado": "Respuesta enviada por WhatsApp (simulada)",
-                 "correo_saliente_simulado": "Respuesta enviada por correo (simulada)", "walk_in": "Walk-in", "reserva_por_mensaje": "Reserva confirmada desde un mensaje",
-                 "alerta_ocupacion": "Aviso de ocupación", "modify_simulado": "Venta cerrada en RoomCloud (simulada)"}
+                 "instantanea_lectura": "Lectura de OfiHotel", "mensaje_saliente_simulado": "Respuesta por WhatsApp",
+                 "correo_saliente_simulado": "Respuesta por correo", "walk_in": "Walk-in", "reserva_por_mensaje": "Reserva desde un mensaje",
+                 "alerta_ocupacion": "Aviso de ocupación", "modify_simulado": "Venta cerrada en RoomCloud"}
 
 
 def fuentes(store) -> list[dict]:
@@ -545,27 +542,27 @@ def fuentes(store) -> list[dict]:
     pend = lambda canal: sum(c["canal"] == canal and c["estado"] in ABIERTAS for c in comms)  # noqa: E731
     base = [
         {"id": "roomcloud", "nivel": prioridades.info("roomcloud")["nivel"], "tipo": "firme", "nombre": "RoomCloud", "icono": "refresh",
-         "estado": "simulado", "recibido": rc_vivas, "detalle": f"{rc_vivas} reservas de canal leídas", "ultima": ultima("roomcloud"),
-         "entra": "Reservas de Booking, Expedia y la web, con cancelaciones y cambios"},
+         "estado": "simulado", "recibido": rc_vivas, "detalle": f"{rc_vivas} reservas leídas", "ultima": ultima("roomcloud"),
+         "entra": "Reservas de Booking, Expedia y la web"},
         {"id": "ofihotel", "nivel": prioridades.info("ofihotel")["nivel"], "tipo": "firme", "nombre": "OfiHotel", "icono": "building",
          "estado": "simulado" if lectura else "sin_lectura", "recibido": len(lectura.get("estancias", [])),
-         "detalle": f"{len(lectura.get('estancias', []))} estancias, datos hasta {lectura['datos_hasta'][11:16] if lectura else '-'} de ayer" if lectura else "Todavía sin leer",
-         "ultima": ultima("ofihotel"), "entra": "La copia diaria de SQL Server: quién está, quién llega y qué ya se pasó"},
+         "detalle": f"{len(lectura.get('estancias', []))} estancias, datos de ayer hasta las {lectura['datos_hasta'][11:16] if lectura else '-'}" if lectura else "Sin leer",
+         "ultima": ultima("ofihotel"), "entra": "La copia diaria de SQL Server"},
         {"id": "recepcion", "nivel": prioridades.info("recepcion")["nivel"], "tipo": "firme", "nombre": "Recepción", "icono": "door",
          "estado": "real", "recibido": sum(1 for e in db["expedientes"].values() if e["origen"] in ("walk-in", "mensaje")),
          "detalle": "Walk-ins y peticiones confirmadas", "ultima": ultima("recepcion"),
-         "entra": "Lo que recepción teclea o confirma desde la aplicación"},
+         "entra": "Lo que recepción registra o confirma"},
         {"id": "correo", "nivel": prioridades.info("correo")["nivel"], "tipo": "peticion", "nombre": "Correo", "icono": "mail",
-         "estado": "simulado", "recibido": ncorreo, "detalle": f"{pend('correo')} por confirmar de {ncorreo} recibidos", "ultima": ultima_com("correo"),
-         "entra": "Correos con peticiones de habitación y consultas"},
+         "estado": "simulado", "recibido": ncorreo, "detalle": f"{pend('correo')} por confirmar de {ncorreo}", "ultima": ultima_com("correo"),
+         "entra": "Peticiones y consultas por correo"},
         {"id": "whatsapp", "nivel": prioridades.info("whatsapp")["nivel"], "tipo": "peticion", "nombre": "WhatsApp", "icono": "message",
-         "estado": "simulado", "recibido": nwa, "detalle": f"{pend('whatsapp')} por confirmar de {nwa} recibidos",
+         "estado": "simulado", "recibido": nwa, "detalle": f"{pend('whatsapp')} por confirmar de {nwa}",
          "ultima": ultima_com("whatsapp"),
-         "entra": "Mensajes con peticiones de habitación y consultas"},
+         "entra": "Peticiones y consultas por WhatsApp"},
     ]
     base.append({"id": "ses", "nivel": None, "tipo": "salida", "nombre": "SES.Hospedajes", "icono": "shield", "estado": "simulado",
-                 "recibido": len(partes), "detalle": f"{len(partes)} partes de viajeros enviados (simulado)", "ultima": max(partes)[11:16] if partes else None,
-                 "entra": "No entra información: aquí sale el parte de viajeros de cada llegada"})
+                 "recibido": len(partes), "detalle": f"{len(partes)} partes de viajeros enviados", "ultima": max(partes)[11:16] if partes else None,
+                 "entra": "Salida: el parte de viajeros de cada llegada"})
     for f in base:
         f["hoy"] = hoy
     return base
@@ -598,7 +595,7 @@ def cola(store) -> list[dict]:
             hay_aviso = bool(v["alerta"]) or (v["contraste"] and v["contraste"]["veredicto"] in ("no_disponible", "en_competencia"))
             items.append({"id": f"com-{c['id']}", "tipo": "comunicacion", "color": "rojo" if v["alerta"] else "azul",
                           "titulo": f"{'Petición' if c['tipo'] == 'peticion_habitacion' else 'Mensaje'} por {NOMBRE_CANAL[c['canal']]} de {c['de']['nombre']}",
-                          "detalle": (v["contraste"]["motivo"] if v["contraste"] and hay_aviso else "Confirmar y responder"),
+                          "detalle": (v["contraste"]["motivo"] if v["contraste"] and hay_aviso else "Responder"),
                           "prioridad": c["prioridad"], "ts": c["ts"], "ruta": "comunicaciones", "params": {"id": c["id"]}})
     items.sort(key=lambda i: (i["prioridad"]["nivel"], estados.COLORES.index(i["color"]), i["ts"]))
     return items

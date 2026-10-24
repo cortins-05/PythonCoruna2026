@@ -131,7 +131,7 @@ def test_una_peticion_en_competencia_se_confirma_en_espera_y_despues_queda_sin_h
     assert marta["contraste"]["veredicto"] == "en_competencia"
     r = cliente.post(f"/api/comunicaciones/{marta['id']}/confirmar", json={"actor": "Flor"})
     assert r.status_code == 200 and r.json()["estado"] == "en_espera" and r.json()["resultado"]["accion"] == "en_espera"
-    assert r.json()["resultado"]["reserva_id"] is None and "terminando de confirmar" in r.json()["resultado"]["texto"]
+    assert r.json()["resultado"]["reserva_id"] is None and "confirmando otra consulta" in r.json()["resultado"]["texto"]
     assert casilla(cliente, "SGL-STD")["ocupadas"] == 1
     assert cliente.get("/api/insignias").json()["insignias"]["comunicaciones"] == 6  # sigue abierta
     pablo = de(cliente, "Pablo Rey")
@@ -335,7 +335,7 @@ def test_aprobar_el_cierre_de_venta_marca_la_ocupacion_como_cerrada(cliente):
     assert r.status_code == 200 and r.json()["estado"] == "aprobada"
     assert casilla(cliente, "SGL-STD")["cerrado_en_roomcloud"] is True and casilla(cliente, "SGL-STD", "2026-10-25")["cerrado_en_roomcloud"] is False
     assert cliente.post(f"/api/propuestas/{prop['id']}/aprobar", json={"actor": "Flor"}).status_code == 409
-    assert any(a["titulo"] == "Venta cerrada en RoomCloud (simulada)" for a in cliente.get("/api/fuente-unica").json()["actividad"])
+    assert any(a["titulo"] == "Venta cerrada en RoomCloud" for a in cliente.get("/api/fuente-unica").json()["actividad"])
     # no vuelve a proponerse lo que ya está cerrado
     cliente.post("/api/sync/roomcloud")
     assert not [p for p in cliente.get("/api/propuestas", params={"estado": "pendiente"}).json() if p["plantilla"] == "cerrar_disponibilidad" and p["slots"]["tipo"] == "SGL-STD"]

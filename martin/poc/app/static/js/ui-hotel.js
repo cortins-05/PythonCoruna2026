@@ -50,8 +50,8 @@ export function escalera(prioridades, { resaltar = null, compacta = false, regla
     el("ol", { class: "escalera__lista" }, prioridades.niveles.filter((n) => n.tipo === tipo).map(fila)));
   return el("div", { class: "escalera" },
     grupo("firme", "Reservas firmes", "Bloquean la habitación"),
-    el("div", { class: "escalera__entre" }, icono("lock", { tam: 13 }), el("span", null, "Una petición nunca desplaza a una reserva firme")),
-    grupo("peticion", "Peticiones sin confirmar", "Compiten entre sí por lo que queda libre"),
+    el("div", { class: "escalera__entre" }, icono("lock", { tam: 13 }), el("span", null, "Una petición nunca desplaza a una firme")),
+    grupo("peticion", "Peticiones", "Compiten por lo que queda libre"),
     reglas && el("ol", { class: "escalera__reglas", aria: { label: "Reglas de prioridad" } }, prioridades.reglas.map((r) => el("li", null, r))));
 }
 
@@ -73,11 +73,11 @@ export function chipVeredicto(veredicto) {
 const ESTADO_SISTEMA = {
   roomcloud: { sincronizado: ["ok", "Sincronizada"], cancelada: ["neutro", "Cancelada"], no_aplica: ["neutro", "No aplica"] },
   ofihotel: {
-    migrado: ["ok", "Migrada"], marcado: ["info", "Marcada"], por_migrar: ["aviso", "Por migrar"], sin_lectura: ["neutro", "Sin lectura"], no_aplica: ["neutro", "No aplica"],
+    migrado: ["ok", "Migrada"], marcado: ["info", "Marcada"], por_migrar: ["aviso", "Por migrar"], sin_lectura: ["neutro", "Sin leer"], no_aplica: ["neutro", "No aplica"],
   },
   documentacion: {
     parte_enviado: ["ok", "Parte enviado"], parte_pendiente: ["aviso", "Parte pendiente"], parte_vencido: ["critico", "Parte vencido"],
-    incompleta: ["aviso", "Incompleta"], sin_datos: ["neutro", "Sin datos"], no_aplica: ["neutro", "No aplica"],
+    incompleta: ["aviso", "Incompleta"], sin_datos: ["neutro", "Faltan datos"], no_aplica: ["neutro", "No aplica"],
   },
 };
 export const NOMBRE_SISTEMA = { roomcloud: "RoomCloud", ofihotel: "OfiHotel", documentacion: "Documentación" };

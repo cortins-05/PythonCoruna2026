@@ -67,7 +67,7 @@ def test_entre_dos_peticiones_gana_el_correo_al_whatsapp_aunque_llegara_despues(
     assert marta["ts"] < pablo["ts"]  # Marta escribió antes, pero el correo tiene más nivel que WhatsApp
     retenida = marta["contraste"]["retenida_por"][0]
     assert retenida["de"] == "Pablo Rey" and retenida["nivel"] == 4 and "más prioridad" in marta["contraste"]["motivo"]
-    assert "terminando de confirmar" in marta["respuesta"]["texto"] and marta["alerta"] is None
+    assert "confirmando otra consulta" in marta["respuesta"]["texto"] and marta["alerta"] is None
 
 
 def test_confirmar_reserva_responde_por_el_canal_de_origen_y_crea_una_reserva_de_nivel_3(cliente):
