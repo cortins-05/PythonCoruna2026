@@ -101,3 +101,10 @@
 @media (max-width: 520px) {
   .sec-asistente-bloques { padding: var(--s-3); }
 }
+
+/* Tarjeta de resultado tras una acción de escritura */
+.sec-asistente-bloques .bl-resultado { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-card); border: 1px solid var(--c-ok-borde); background: var(--c-ok-bg); }
+.sec-asistente-bloques .bl-resultado.is-neutro, .sec-asistente-bloques .bl-resultado.is-info { border-color: var(--c-neutro-borde); background: var(--c-neutro-bg); }
+.sec-asistente-bloques .bl-resultado__cab { display: flex; align-items: center; gap: var(--s-2); color: var(--c-ok-texto); }
+.sec-asistente-bloques .bl-resultado.is-neutro .bl-resultado__cab, .sec-asistente-bloques .bl-resultado.is-info .bl-resultado__cab { color: var(--c-neutro-texto); }
+.sec-asistente-bloques .bl-resultado__titulo { flex: 1; min-width: 0; font-size: var(--t-lg); }

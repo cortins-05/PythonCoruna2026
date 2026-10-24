@@ -116,7 +116,8 @@ DOCUMENTO = {"id": str, "tipo": {"factura", "albaran"}, "estado": {"borrador", "
 DOCUMENTOS = {"documentos": [{"id": str, "tipo": {"factura", "albaran"}, "estado": {"borrador", "emitido", "enviado", "anulado"},
                               "numero": (str, None), "expediente_id": str, "receptor_nombre": str, "total": (float, None), "fecha": str,
                               "enviado": bool, "fiscal": bool, "origen": {"generado", "subido"}}]}
-SUGERENCIAS = {"preguntas": [str]}
+SUGERENCIAS = {"categorias": [{"id": str, "titulo": str, "icono": str, "preguntas": [str]}],
+               "flujos": [{"id": str, "titulo": str, "descripcion": str, "icono": str, "pregunta": str}]}
 ESTADO = {"reloj": str, "ses": str, "roomcloud": str, "ofihotel": str,
           "modos": {"roomcloud": str, "ofihotel": str, "whatsapp": str, "correo": str, "ses": str, "lector": str, "chat": str}}
 
@@ -365,12 +366,15 @@ def test_el_html_del_documento_lleva_el_aviso_fiscal_y_el_pdf_y_la_subida_respon
     assert subida.status_code == 501 and "no está disponible" in subida.json()["detail"]
 
 
-def test_sugerencias_tiene_cuatro_preguntas(cliente):
+def test_sugerencias_tiene_cuatro_grupos_de_tres_atajos_y_diez_tarjetas_de_procesos(cliente):
     datos = ver(cliente, "/api/chat/sugerencias")
     exigir(SUGERENCIAS, datos)
-    assert len(datos["preguntas"]) == 4
+    assert len(datos["categorias"]) == 4 and all(len(c["preguntas"]) == 3 for c in datos["categorias"])
+    assert [c["id"] for c in datos["categorias"]] == ["hoy", "comunicaciones", "estancias", "procesos"]
+    assert len(datos["flujos"]) == 10
+    assert [f["id"] for f in datos["flujos"]] == list(chat_procesos.PROCESOS)
     assert set(chat_procesos.PROCESOS) == {"peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica",
-                                          "prioridades"}
+                                          "prioridades", "walkin_alta", "cambio_cancelacion", "parte_vencido", "booking_desplaza"}
 
 
 def test_la_muestra_de_bloques_trae_un_bloque_de_cada_tipo_con_sus_campos(cliente):
@@ -465,7 +469,7 @@ PREGUNTAS_ESPERADAS = {
 
 def test_el_chat_devuelve_bloques_reales_con_la_forma_del_contrato(cliente):
     sugerencias = ver(cliente, "/api/chat/sugerencias")
-    preguntas = list(sugerencias["preguntas"]) + [t[0] for t in chat_procesos.TARJETAS.values()]
+    preguntas = [p for c in sugerencias["categorias"] for p in c["preguntas"]] + [f["pregunta"] for f in sugerencias["flujos"]]
     for pregunta in preguntas + list(PREGUNTAS_ESPERADAS):
         r = cliente.post("/api/chat", json={"mensaje": pregunta})
         assert r.status_code == 200
@@ -478,9 +482,9 @@ def test_el_chat_devuelve_bloques_reales_con_la_forma_del_contrato(cliente):
         if pregunta in PREGUNTAS_ESPERADAS:
             assert PREGUNTAS_ESPERADAS[pregunta] <= {b["tipo"] for b in datos["bloques"]}, pregunta
     # cada tarjeta de proceso abre el proceso que anuncia
-    for pid, (pregunta, _icono) in chat_procesos.TARJETAS.items():
-        bloques = cliente.post("/api/chat", json={"mensaje": pregunta}).json()["bloques"]
-        assert any(b["tipo"] in ("proceso", "prioridades") for b in bloques), pid
+    for flujo in sugerencias["flujos"]:
+        bloques = cliente.post("/api/chat", json={"mensaje": flujo["pregunta"]}).json()["bloques"]
+        assert any(b["tipo"] in ("proceso", "prioridades") for b in bloques), flujo["id"]
 
 
 def test_todas_las_acciones_usan_solo_tipos_de_la_lista_cerrada(cliente):

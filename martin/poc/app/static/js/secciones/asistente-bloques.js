@@ -112,6 +112,13 @@ function acciones(ctx, lista, { alTerminar = null, valores = null, discreto = fa
         try { res = await ctx.ejecutar(a, valores ? valores() : undefined); } catch (e) { res = { ok: false, mensaje: "No se ha podido completar la acción." }; }
         botones.forEach((x) => { x.disabled = false; });
         b.removeAttribute("aria-busy");
+        const articulo = b.closest("article.bl");
+        if (res?.ok && res.tarjeta && articulo) {
+          articulo.className = "sec-asistente-bloques bl bl--resultado";
+          articulo.dataset.bloque = "resultado";
+          articulo.replaceChildren(pintarResultado({ ...res.tarjeta, tipo: "resultado" }, ctx).firstChild);
+          return;
+        }
         if (res?.mensaje) mostrarEstado(estado, res);
         if (alTerminar) alTerminar(res ?? {}, a);
       },
@@ -395,7 +402,22 @@ function pintarSugerencias(b, ctx) {
     (b.items ?? []).map((t) => el("button", { type: "button", class: "bl-sugerencia", onclick: () => ctx.ejecutar({ tipo: "preguntar", texto: String(t) }) }, String(t)))));
 }
 
+/** Tarjeta de resultado de una acción de escritura: qué se hizo, con filas de datos y la siguiente acción. */
+function pintarResultado(b, ctx) {
+  const { el, ui } = ctx;
+  const t = tono(b.tono ?? "ok");
+  const sig = acciones(ctx, b.acciones);
+  return raiz(ctx, "resultado", el("div", { class: `bl-resultado is-${t}` },
+    el("div", { class: "bl-resultado__cab" },
+      el("span", { class: "bl-resultado__icono", aria: { hidden: "true" } }, ui.icono(t === "ok" ? "check" : "info", { tam: 20 })),
+      el("strong", { class: "bl-resultado__titulo" }, b.titulo ?? "Hecho"),
+      b.simulado !== false && ui.chip({ texto: "Simulado", tono: "neutro" })),
+    (b.filas ?? []).length > 0 && ui.kv(b.filas, { columnas: 2 }),
+    sig.el));
+}
+
 const PINTORES = {
+  resultado: pintarResultado,
   resumen_kpi: pintarKpi, tarjeta_reserva: pintarReserva, lista_estancias: pintarEstancias, comunicacion: pintarComunicacion,
   lista_comunicaciones: pintarListaComunicaciones, fuentes: pintarFuentes, prioridades: pintarPrioridades, cola: pintarCola, conflictos: pintarConflictos,
   navegacion: pintarNavegacion, proceso: pintarProceso, tabla_ocupacion: pintarOcupacion, propuesta: pintarPropuesta, formulario: pintarFormulario,

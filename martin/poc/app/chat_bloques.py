@@ -21,11 +21,11 @@ MAX_ITEMS = 6
 PROCESOS = list(chat_procesos.PROCESOS)
 FILTROS = {"todas": "Estancias", "hoy": "Llegadas de hoy", "en_casa": "Estancias en casa", "salidas": "Salidas de hoy"}
 DESTINOS = {
-    "fuente": ("Fuente única", "Fuentes unificadas", "layers"),
-    "comunicaciones": ("Comunicaciones", "Peticiones por confirmar", "inbox"),
-    "estancias": ("Estancias", "Estado de cada estancia", "key"),
-    "ocupacion": ("Ocupación", "Habitaciones libres", "bed"),
-    "asistente": ("Asistente", "Preguntas", "sparkles"),
+    "fuente": ("Fuente única", "Todas las fuentes unificadas y la cola de trabajo", "layers"),
+    "comunicaciones": ("Comunicaciones", "Peticiones contrastadas, listas para confirmar", "inbox"),
+    "estancias": ("Estancias", "Estado de cada estancia en RoomCloud, OfiHotel y documentación", "key"),
+    "ocupacion": ("Ocupación", "Mapa de habitaciones libres y ocupadas por fuente", "bed"),
+    "asistente": ("Asistente", "Pregunta, enseña los procesos y ejecuta lo básico", "sparkles"),
 }
 PASOS = [("huesped", "Datos del huésped", "documento"), ("pago", "Pago", "pago"), ("empresa", "Datos de la empresa", "pago"),
          ("parte", "Parte de viajeros", "parte"), ("ofihotel_alta", "Alta en OfiHotel", "ofihotel")]
@@ -98,11 +98,11 @@ def bloque_resumen_kpi(store) -> dict:
     abiertas = _abiertas(store)
     conflictos = len(_lista_conflictos(store))
     return {"tipo": "resumen_kpi", "titulo": "Hoy", "items": [
-        _item("Llegadas", len(llegadas), ""),
+        _item("Llegadas", len(llegadas), f"{hechos} con check-in hecho" if llegadas else ""),
         _item("En casa", sum(e["estado"] == "en_curso" for e in exps)),
-        _item("Peticiones por confirmar", len(abiertas), "", "aviso" if abiertas else "ok"),
-        _item("Conflictos", conflictos, "", "critico" if conflictos else "ok"),
-        _item("Partes pendientes", partes, "", "aviso" if partes else "ok")]}
+        _item("Peticiones por confirmar", len(abiertas), "Correo y WhatsApp" if abiertas else "", "aviso" if abiertas else "ok"),
+        _item("Conflictos", conflictos, "Entre RoomCloud y OfiHotel" if conflictos else "", "critico" if conflictos else "ok"),
+        _item("Partes pendientes", partes, "Plazo de 24 horas" if partes else "", "aviso" if partes else "ok")]}
 
 
 def bloque_lista_estancias(store, filtro: str = "todas", color: str | None = None) -> dict:
@@ -119,7 +119,7 @@ def bloque_lista_estancias(store, filtro: str = "todas", color: str | None = Non
     elegidas = [r for r in todas if filtros[filtro](r) and (color is None or r["semaforo"]["color"] == color)]
     if filtro == "todas" and color is None:
         elegidas = [r for r in elegidas if r["semaforo"]["color"] != "verde"]
-        titulo = "Estancias pendientes"
+        titulo = "Estancias con algo pendiente"
     elif color is not None:
         titulo = f"{FILTROS[filtro]} en {color}"
     else:
@@ -153,13 +153,11 @@ def _titulo_color(color: str) -> str:
 
 def bloque_lista_comunicaciones(store, estado: str = "pendientes", canal: str = "todos") -> dict:
     lista = comunicaciones.listar(store, estado, canal)
-    titulo = {"pendientes": "Peticiones por confirmar", "respondida": "Respondidas",
-              "descartada": "Descartadas"}.get(estado, "Comunicaciones")
+    titulo = {"pendientes": "Peticiones por confirmar", "respondida": "Comunicaciones respondidas",
+              "descartada": "Comunicaciones descartadas"}.get(estado, "Comunicaciones")
     if canal in ("whatsapp", "correo"):
         titulo += " por WhatsApp" if canal == "whatsapp" else " por correo"
-    if len(lista) > 6:
-        titulo += f" ({6} de {len(lista)})"
-    return {"tipo": "lista_comunicaciones", "titulo": titulo, "comunicaciones": lista[:6],
+    return {"tipo": "lista_comunicaciones", "titulo": titulo, "comunicaciones": lista,
             "acciones": [{"tipo": "abrir_seccion", "etiqueta": "Abrir las comunicaciones", "seccion": "comunicaciones",
                           "params": {"canal": canal} if canal in ("whatsapp", "correo") else {}}]}
 
@@ -177,7 +175,7 @@ def bloque_comunicacion(store, com_id: str) -> dict:
 
 
 def bloque_fuentes(store) -> dict:
-    return {"tipo": "fuentes", "titulo": "Las cinco fuentes", "fuentes": comunicaciones.fuentes(store),
+    return {"tipo": "fuentes", "titulo": "De dónde bebe la aplicación", "fuentes": comunicaciones.fuentes(store),
             "prioridades": {"niveles": copy.deepcopy(prioridades.NIVELES), "reglas": list(prioridades.REGLAS)},
             "acciones": [{"tipo": "sincronizar", "etiqueta": "Leer RoomCloud", "fuente": "roomcloud"},
                          {"tipo": "sincronizar", "etiqueta": "Leer OfiHotel", "fuente": "ofihotel"}]}
@@ -186,14 +184,12 @@ def bloque_fuentes(store) -> dict:
 def bloque_prioridades(resaltar: str | None = None) -> dict:
     if resaltar not in {n["id"] for n in prioridades.NIVELES}:
         resaltar = None
-    return {"tipo": "prioridades", "titulo": "Qué fuente gana",
+    return {"tipo": "prioridades", "titulo": "Quién gana cuando dos cosas compiten",
             "prioridades": {"niveles": copy.deepcopy(prioridades.NIVELES), "reglas": list(prioridades.REGLAS)}, "resaltar": resaltar}
 
 
 def bloque_cola(store) -> dict:
-    items = comunicaciones.cola(store)
-    return {"tipo": "cola", "titulo": f"Qué atender primero ({min(len(items), 6)} de {len(items)})" if len(items) > 6 else "Qué atender primero",
-            "items": items[:6]}
+    return {"tipo": "cola", "titulo": "Qué atender primero", "items": comunicaciones.cola(store)}
 
 
 def bloque_conflictos(store) -> dict:
@@ -296,6 +292,10 @@ TEMAS = [
 ]
 _TEMAS = [(tema, re.compile(patron)) for tema, patron in TEMAS]
 _PROCESO_POR_PALABRA = [
+    ("booking_desplaza", r"desplaz"),
+    ("parte_vencido", r"venc"),
+    ("cambio_cancelacion", r"cambia|cancela"),
+    ("walkin_alta", r"walk-?in"),
     ("overbooking_cierre", r"overbooking|cierre|cerrar la venta"),
     ("reserva_canal", r"booking|reserva de canal|reserva del canal|expedia"),
     ("checkin_parte", r"check-?in|\bpartes?\b|\bses\b|hospedajes|llegada del hu[eé]sped|viajeros"),
@@ -340,19 +340,19 @@ def _por_tema(store, tema: str, mensaje: str, exp: dict | None) -> list[dict]:
     if tema == "proceso":
         proceso_id = _proceso_de(mensaje)
         return [bloque_proceso(proceso_id)] if proceso_id else [bloque_aviso(
-            "info", "Procesos disponibles", "Puedo enseñar la petición por WhatsApp, la reserva de Booking, el check-in con el parte, "
-            "el overbooking, la fuente única y las prioridades.")]
+            "info", "Procesos que puedo enseñar", "Dime cuál quieres ver: el alta de un walk-in, un cambio por mensaje, el parte vencido, la reserva de Booking, "
+            "el overbooking, la fuente única o las prioridades.")]
     if tema == "reserva_fisica":
         return [bloque_formulario_walkin()]
     if tema == "conflictos":
         bloque = bloque_conflictos(store)
-        return [bloque] if bloque["conflictos"] else [bloque_aviso("ok", "Sin conflictos", "RoomCloud y OfiHotel coinciden.")]
+        return [bloque] if bloque["conflictos"] else [bloque_aviso("ok", "Sin conflictos", "RoomCloud y OfiHotel coinciden en todas las estancias.")]
     if tema == "prioridades":
         resaltar = "correo" if "correo" in bajo else "whatsapp" if "whatsapp" in bajo else None
         return [bloque_prioridades(resaltar)]
     if tema == "cola":
         bloque = bloque_cola(store)
-        return [bloque] if bloque["items"] else [bloque_aviso("ok", "Nada pendiente", "La cola está vacía.")]
+        return [bloque] if bloque["items"] else [bloque_aviso("ok", "Nada pendiente", "No hay nada en la cola de trabajo.")]
     if tema == "ir":
         pedidos = [d for d in DESTINOS if d in _sin_tildes(bajo) or (d == "fuente" and "fuente" in bajo)] or ["fuente", "comunicaciones", "estancias", "ocupacion"]
         return [bloque_navegacion(store, pedidos)]
@@ -362,33 +362,33 @@ def _por_tema(store, tema: str, mensaje: str, exp: dict | None) -> list[dict]:
         canal = "whatsapp" if "whatsapp" in bajo else "correo" if re.search(r"correo|e-?mail", bajo) else "todos"
         bloque = bloque_lista_comunicaciones(store, "pendientes", canal)
         bloque["comunicaciones"] = bloque["comunicaciones"][:MAX_ITEMS]
-        return [bloque] if bloque["comunicaciones"] else [bloque_aviso("ok", "Todo respondido", "No quedan peticiones por confirmar.")]
+        return [bloque] if bloque["comunicaciones"] else [bloque_aviso("ok", "Todo respondido", "No hay peticiones ni mensajes por confirmar.")]
     if tema == "propuestas":
         ids = [p["id"] for p in store.db["propuestas"] if p["estado"] == "pendiente"]
-        return [bloque_propuesta(store, i) for i in ids[:MAX_ITEMS]] or [bloque_aviso("ok", "Nada pendiente", "No hay propuestas por aprobar.")]
+        return [bloque_propuesta(store, i) for i in ids[:MAX_ITEMS]] or [bloque_aviso("ok", "Nada pendiente", "No hay propuestas esperando aprobación.")]
     if tema == "ocupacion":
         return [bloque_tabla_ocupacion(store)]
     if tema == "estancia" and exp:
         return [bloque_tarjeta_estancia(store, exp["id"])]
     if tema == "partes":
         bloque = bloque_lista_estancias(store, "todas", "naranja")
-        return [bloque] if bloque["estancias"] else [bloque_aviso("ok", "Partes al día", "No queda ningún parte por enviar.")]
+        return [bloque] if bloque["estancias"] else [bloque_aviso("ok", "Partes al día", "No hay partes de viajeros pendientes de enviar.")]
     if tema == "llegadas":
         filtro = _filtro_de(bajo)
         bloque = bloque_lista_estancias(store, filtro)
         bloque["estancias"] = bloque["estancias"][:MAX_ITEMS]
         if filtro != "todas" and not bloque["estancias"]:
-            return [bloque_resumen_kpi(store), bloque_aviso("info", "Sin resultados", "No hay estancias para esa pregunta.")]
+            return [bloque_resumen_kpi(store), bloque_aviso("info", "Sin resultados", "No hay estancias que encajen con esa pregunta.")]
         return [bloque_resumen_kpi(store), bloque]
     return [bloque_aviso("info", "No he entendido la pregunta",
-                         "Pregunta por comunicaciones, estancias, ocupación, fuentes o procesos.")]
+                         "Puedo enseñarte las comunicaciones, las estancias, la ocupación, las fuentes y cómo funcionan los procesos del hotel.")]
 
 
 def sugerencias_de(tema: str, exp: dict | None, mensaje: str) -> list[str]:
     por_tema = {
         "proceso": ["Enséñame cómo entra una petición por WhatsApp", "¿Qué prioridades hay?", "¿Qué conflictos hay?"],
         "reserva_fisica": ["¿Cómo está la ocupación?", "¿Qué llegadas hay hoy?", "¿Qué conflictos hay?"],
-        "conflictos": ["¿Qué atender primero?", "¿Qué fuentes usa la aplicación?", "Enséñame cómo funciona la fuente única"],
+        "conflictos": ["¿Qué atender primero?", "¿De dónde bebe la aplicación?", "Enséñame cómo funciona la fuente única"],
         "prioridades": ["Enséñame quién gana cuando dos fuentes compiten", "¿Qué peticiones hay por confirmar?", "¿Qué atender primero?"],
         "cola": ["¿Qué peticiones hay por confirmar?", "¿Qué conflictos hay?", "¿Cómo está la ocupación?"],
         "ir": ["¿Qué llegadas hay hoy?", "¿Qué peticiones hay por confirmar?", "¿Cómo está la ocupación?"],
@@ -458,7 +458,7 @@ _MUESTRA = [{'tipo': 'resumen_kpi',
                'accion_sugerida': 'Revisar el conflicto'},
   'sistemas': {'roomcloud': {'estado': 'sincronizado', 'detalle': 'Leída de RoomCloud'},
                'ofihotel': {'estado': 'migrado',
-                            'detalle': 'En OfiHotel, habitación 105, con los datos de ayer',
+                            'detalle': 'Está en OfiHotel (hab. 105), según los datos de ayer',
                             'habitacion': '105',
                             'inferida': False},
                'documentacion': {'estado': 'sin_datos', 'detalle': 'Faltan los datos del huésped'}},
@@ -481,7 +481,7 @@ _MUESTRA = [{'tipo': 'resumen_kpi',
                  'prioridad': {'nivel': 1, 'fuente': 'RoomCloud', 'id': 'roomcloud', 'tipo': 'firme'},
                  'sistemas': {'roomcloud': {'estado': 'sincronizado', 'detalle': 'Leída de RoomCloud'},
                               'ofihotel': {'estado': 'migrado',
-                                           'detalle': 'En OfiHotel, habitación 105, con los datos de ayer',
+                                           'detalle': 'Está en OfiHotel (hab. 105), según los datos de ayer',
                                            'habitacion': '105',
                                            'inferida': False},
                               'documentacion': {'estado': 'sin_datos', 'detalle': 'Faltan los datos del huésped'}},
@@ -503,7 +503,7 @@ _MUESTRA = [{'tipo': 'resumen_kpi',
                  'personas': 1,
                  'prioridad': {'nivel': 1, 'fuente': 'RoomCloud', 'id': 'roomcloud', 'tipo': 'firme'},
                  'sistemas': {'roomcloud': {'estado': 'sincronizado', 'detalle': 'Leída de RoomCloud'},
-                              'ofihotel': {'estado': 'por_migrar', 'detalle': 'Aún no está en OfiHotel'},
+                              'ofihotel': {'estado': 'por_migrar', 'detalle': 'Todavía no está en OfiHotel'},
                               'documentacion': {'estado': 'parte_pendiente', 'detalle': 'Quedan 24.0 h para enviar el parte'}},
                  'semaforo': {'color': 'naranja',
                               'tono': 'aviso',
@@ -954,6 +954,16 @@ def bloques_muestra() -> list[dict]:
 # ================================================================ sugerencias de bienvenida
 
 def sugerencias_bienvenida() -> dict:
-    """Pantalla de bienvenida del asistente: cuatro preguntas, sin categorías ni tarjetas de procesos."""
+    """Pantalla de bienvenida del asistente: cuatro grupos con tres atajos y una tarjeta por proceso."""
     tarjetas = chat_procesos.TARJETAS
-    return {"preguntas": ["¿Qué atender primero?", "¿Qué peticiones hay por confirmar?", "¿Cómo está la ocupación?", tarjetas["peticion_mensaje"][0]]}
+    return {"categorias": [
+        {"id": "hoy", "titulo": "Hoy", "icono": "sun",
+         "preguntas": ["¿Qué llegadas hay hoy?", "¿Qué atender primero?", "¿Cómo está la ocupación?"]},
+        {"id": "comunicaciones", "titulo": "Comunicaciones", "icono": "inbox",
+         "preguntas": ["¿Qué peticiones hay por confirmar?", tarjetas["peticion_mensaje"][0], tarjetas["cambio_cancelacion"][0]]},
+        {"id": "estancias", "titulo": "Estancias", "icono": "key",
+         "preguntas": ["¿Quién está en casa ahora mismo?", "¿Qué partes de viajeros hay pendientes?", "¿Qué conflictos hay?"]},
+        {"id": "procesos", "titulo": "Procesos", "icono": "layers",
+         "preguntas": [tarjetas["walkin_alta"][0], tarjetas["parte_vencido"][0], tarjetas["booking_desplaza"][0]]}],
+        "flujos": [{"id": pid, "titulo": chat_procesos.proceso(pid)["titulo"], "icono": tarjetas[pid][1], "pregunta": tarjetas[pid][0],
+                    "descripcion": tarjetas[pid][2]} for pid in PROCESOS]}
