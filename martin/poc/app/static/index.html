@@ -61,11 +61,13 @@
     <span id="reloj" class="suave"></span>
     <button id="btnReloj" title="Avanza el reloj de la demo para ver las alarmas">Reloj +6 h</button>
     <button id="btnSync" class="primario">Leer reservas de RoomCloud</button>
+    <button id="btnOfi" title="Lectura de ejemplo: no se escribe nunca en OfiHotel">Leer OfiHotel (solo lectura)</button>
     <button id="btnReset">Reiniciar</button>
   </div>
 </header>
 <main>
   <div>
+    <section aria-labelledby="hBandeja"><h2 id="hBandeja">Bandeja</h2><div id="bandeja" aria-live="polite"></div></section>
     <section aria-labelledby="hAlertas"><h2 id="hAlertas">Avisos</h2><div id="alertas" aria-live="polite"></div></section>
     <section aria-labelledby="hListado">
       <h2 id="hListado">Listado del día</h2>
@@ -73,7 +75,41 @@
       <div id="listado"></div>
     </section>
   </div>
-  <div id="detalle"><section><p class="suave">Lee las reservas y elige una llegada.</p></section></div>
+  <div>
+    <section aria-labelledby="hOcup">
+      <h2 id="hOcup">Ocupación (7 días)</h2>
+      <div id="ocupacion"></div>
+      <h3>Reserva física (walk-in)</h3>
+      <div class="rejilla">
+        <div><label for="w_nombre">Nombre</label><input id="w_nombre"></div>
+        <div><label for="w_apellidos">Apellidos</label><input id="w_apellidos"></div>
+        <div><label for="w_tipo">Tipo de habitación</label><select id="w_tipo"></select></div>
+        <div><label for="w_in">Llegada</label><input id="w_in" type="date"></div>
+        <div><label for="w_out">Salida</label><input id="w_out" type="date"></div>
+      </div>
+      <label id="forzarEtiqueta" hidden><input type="checkbox" id="w_forzar" style="width:auto"> Reservar de todos modos (provoca overbooking)</label>
+      <div id="errW"></div>
+      <button id="btnWalkin">Añadir reserva física</button>
+    </section>
+    <section aria-labelledby="hWa">
+      <h2 id="hWa">Simular WhatsApp entrante</h2>
+      <div class="rejilla">
+        <div><label for="wa_id">Número (wa_id)</label><input id="wa_id" value="34600111222"></div>
+        <div><label for="wa_nombre">Nombre de perfil</label><input id="wa_nombre" value="Ana"></div>
+      </div>
+      <label for="wa_texto">Mensaje</label>
+      <input id="wa_texto" value="Hola, ¿a qué hora es el check-in?">
+      <p><button id="btnWa" class="primario">Enviar mensaje simulado</button></p>
+    </section>
+    <section aria-labelledby="hChat">
+      <h2 id="hChat">Chat con la información</h2>
+      <div id="chatLog" aria-live="polite"></div>
+      <label for="chatTexto">Pregunta</label>
+      <input id="chatTexto" placeholder="¿Qué llegadas hay hoy? ¿Cómo está la ocupación?">
+      <p><button id="btnChat">Preguntar</button></p>
+    </section>
+    <div id="detalle"><section><p class="suave">Lee las reservas y elige una llegada.</p></section></div>
+  </div>
 </main>
 <script>
 const $ = (s) => document.querySelector(s);
@@ -119,6 +155,44 @@ async function pintarPanel() {
   $("#listado").innerHTML = bloque("Llegadas de hoy", p.llegadas_hoy) + bloque("En casa", p.en_casa) + bloque("Salidas de hoy", p.salidas_hoy) || `<p class="suave">Nada previsto hoy.</p>`;
   document.querySelectorAll(".fila").forEach((b) => b.onclick = () => abrir(b.dataset.id));
   await pintarEstado();
+  await pintarBandeja();
+  await pintarOcupacion();
+}
+
+async function pintarBandeja() {
+  const b = await api("/bandeja");
+  const pendientes = b.propuestas.map((p) => `<div class="alerta aviso"><strong>${esc(p.texto)}</strong><br>
+    <span class="suave">${esc(p.destino)} · propuesta por ${esc(p.origen)}${p.destinatario ? " · a " + esc(p.destinatario) : ""}</span><br>
+    <button class="primario" data-aprobar="${esc(p.id)}">Aprobar</button> <button data-rechazar="${esc(p.id)}">Rechazar</button></div>`).join("");
+  const eventos = b.eventos.slice(0, 30).map((e) => `<tr><td>${esc(e.ts.slice(11))}<br><span class="suave">${esc(e.fuente)}</span></td>
+    <td><strong>${esc(e.remitente)}</strong> ${esc((e.contenido || "").slice(0, 140))}${e.expediente_id ? ` <button data-exp="${esc(e.expediente_id)}">ver</button>` : ""}</td></tr>`).join("");
+  $("#bandeja").innerHTML = `<h3>Pendientes de aprobar (${b.propuestas.length})</h3>${pendientes || `<p class="suave">Nada pendiente.</p>`}<div id="errB"></div>
+    <h3>Lo último que ha llegado</h3><table><caption class="suave">Hora y fuente, remitente y contenido</caption>${eventos}</table>`;
+  const decidir = (ruta) => async (ev) => {
+    try { await api("/propuestas/" + ev.target.dataset[ruta === "aprobar" ? "aprobar" : "rechazar"] + "/" + ruta, "POST", { actor: "Flor" }); pintarPanel(); if (actual) abrir(actual); }
+    catch (e) { $("#errB").innerHTML = errores(e); }
+  };
+  document.querySelectorAll("[data-aprobar]").forEach((x) => x.onclick = decidir("aprobar"));
+  document.querySelectorAll("[data-rechazar]").forEach((x) => x.onclick = decidir("rechazar"));
+  document.querySelectorAll("#bandeja [data-exp]").forEach((x) => x.onclick = () => abrir(x.dataset.exp));
+}
+
+async function pintarOcupacion() {
+  const d = await api("/disponibilidad");
+  const m = d.mapa;
+  const celdas = (t) => m.tipos[t].dias.map((c) => {
+    const clase = c.ocupadas > m.tipos[t].capacidad ? "critico" : c.ocupadas === m.tipos[t].capacidad ? "aviso" : "ok";
+    return `<td><span class="chip ${clase}" title="${c.ocupadas} ocupadas de ${m.tipos[t].capacidad}">${c.libres}</span>${c.cerrado_en_roomcloud ? ` <span class="suave" title="Cerrado en RoomCloud">cerrado</span>` : ""}</td>`;
+  }).join("");
+  $("#ocupacion").innerHTML = `<table><caption class="suave">Habitaciones libres por tipo y día (negativo = overbooking)</caption>
+    <tr><th scope="col">Tipo</th>${m.fechas.map((f) => `<th scope="col">${esc(f.slice(5))}</th>`).join("")}</tr>
+    ${Object.keys(m.tipos).map((t) => `<tr><th scope="row">${esc(t)}</th>${celdas(t)}</tr>`).join("")}</table>`;
+  const sel = $("#w_tipo");
+  if (!sel.options.length) sel.innerHTML = Object.keys(m.tipos).map((t) => `<option>${esc(t)}</option>`).join("");
+  if (!$("#w_in").value) {
+    const hoy = m.fechas[0], manana = new Date(hoy + "T00:00:00Z"); manana.setUTCDate(manana.getUTCDate() + 1);
+    $("#w_in").value = hoy; $("#w_out").value = manana.toISOString().slice(0, 10);
+  }
 }
 
 function formHuesped(campos, confianza = {}) {
@@ -227,6 +301,33 @@ function enlazar(id) {
 }
 
 $("#btnSync").onclick = async () => { await api("/sync/roomcloud", "POST"); pintarPanel(); };
+$("#btnOfi").onclick = async () => { await api("/sync/ofihotel", "POST"); pintarPanel(); };
+$("#btnWa").onclick = async () => {
+  await api("/whatsapp/simular", "POST", { wa_id: $("#wa_id").value, nombre: $("#wa_nombre").value, texto: $("#wa_texto").value });
+  pintarPanel();
+};
+$("#btnWalkin").onclick = async () => {
+  const cuerpo = { nombre: $("#w_nombre").value, apellidos: $("#w_apellidos").value, tipo: $("#w_tipo").value,
+    checkin: $("#w_in").value, checkout: $("#w_out").value, forzar: $("#w_forzar").checked };
+  try {
+    const r = await api("/walkin", "POST", cuerpo);
+    $("#errW").innerHTML = ""; $("#forzarEtiqueta").hidden = true; $("#w_forzar").checked = false; $("#w_nombre").value = "";
+    await pintarPanel(); abrir(r.id);
+  } catch (e) {
+    if (e.conflicto) {
+      $("#errW").innerHTML = errores([`No hay habitaciones ${cuerpo.tipo} libres: ` + e.conflicto.map((c) => `${c.fecha} (${c.ocupadas} para ${c.capacidad})`).join(", ")]);
+      $("#forzarEtiqueta").hidden = false;
+    } else { $("#errW").innerHTML = errores(e); }
+  }
+};
+const historial = [];
+$("#btnChat").onclick = async () => {
+  const texto = $("#chatTexto").value.trim(); if (!texto) return;
+  const r = await api("/chat", "POST", { mensaje: texto, historial });
+  historial.push({ role: "user", content: texto }, { role: "assistant", content: r.respuesta });
+  $("#chatLog").innerHTML += `<p><strong>Tú:</strong> ${esc(texto)}</p><p><strong>Asistente:</strong> ${esc(r.respuesta)} <span class="suave">(${esc(r.modo)})</span></p>`;
+  $("#chatTexto").value = ""; pintarPanel();
+};
 $("#btnReloj").onclick = async () => { await api("/reloj", "POST", { horas: 6 }); await pintarPanel(); if (actual) abrir(actual); };
 $("#btnReset").onclick = async () => { await api("/reiniciar", "POST"); actual = null; $("#detalle").innerHTML = `<section><p class="suave">Lee las reservas y elige una llegada.</p></section>`; pintarPanel(); };
 pintarPanel();

@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from . import disponibilidad, hub, lector, plantillas
+from . import chat, disponibilidad, hub, lector, plantillas
 from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
 from .adapters.ocr import leer_documento
 from .store import Store
@@ -436,6 +436,16 @@ def webhook_whatsapp(payload: dict):
 @app.post("/api/whatsapp/simular")
 def simular_whatsapp(datos: WhatsappIn):
     return _procesar_whatsapp(whatsapp.construir_payload(datos.wa_id, datos.nombre, datos.texto, store.ahora()))
+
+
+class ChatIn(BaseModel):
+    mensaje: str
+    historial: list[dict] = []
+
+
+@app.post("/api/chat")
+def chat_con_la_informacion(datos: ChatIn):
+    return chat.responder(store, datos.mensaje, datos.historial)
 
 
 @app.get("/api/bandeja")
