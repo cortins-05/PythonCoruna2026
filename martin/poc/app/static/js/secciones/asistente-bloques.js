@@ -45,7 +45,29 @@ function rangoLargo(desde, hasta) {
   return mes(desde) === mes(hasta) ? `${dia(desde)} al ${dia(hasta)} de ${mes(hasta)}` : `${dia(desde)} de ${mes(desde)} al ${dia(hasta)} de ${mes(hasta)}`;
 }
 
-const recortar = (t, n) => (String(t ?? "").length > n ? `${String(t).slice(0, n).trimEnd()}…` : String(t ?? ""));
+/** replaceChildren que ignora null, undefined y false (el nativo los pinta como texto). */
+function llenar(nodo, ...hijos) {
+  nodo.replaceChildren(...hijos.flat(Infinity).filter((h) => h != null && h !== false));
+}
+
+const ORIGEN_PROPUESTA = { enrutador: "Asistente", ocupacion: "Ocupación", ocupación: "Ocupación", asistente: "Asistente" };
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+/** Pule datos técnicos que llegan en bruto: fechas ISO ("24 oct"), horas con decimales ("24 h") y rangos del mismo día. */
+function limpiar(texto) {
+  return String(texto ?? "")
+    .replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_, a, m, d) => `${Number(d)} ${MESES_CORTOS[Number(m) - 1] ?? m}`)
+    .replace(/\b(\d+)\.0 h\b/g, "$1 h");
+}
+
+/** 34600111222 pasa a +34 600 111 222; cualquier otro destinatario queda tal cual. */
+function telefono(valor) {
+  const t = String(valor ?? "");
+  const m = /^\+?(34)(\d{3})(\d{3})(\d{3})$/.exec(t);
+  return m ? `+${m[1]} ${m[2]} ${m[3]} ${m[4]}` : t;
+}
+
+const recortar =(t, n) => (String(t ?? "").length > n ? `${String(t).slice(0, n).trimEnd()}…` : String(t ?? ""));
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
 function entendido(c) {
@@ -144,7 +166,7 @@ function cuerpoReserva(ctx, d) {
       el("div", { class: "bl-reserva__textos" }, el("strong", { class: "bl-reserva__titulo" }, d.titulo), d.subtitulo && el("span", { class: "bl-reserva__sub" }, d.subtitulo)),
       d.prioridad && pastillaNivel(d.prioridad)),
     el("div", { class: "bl__chips" }, d.semaforo && chipSemaforo(d.semaforo.color), (d.chips ?? []).map((c) => ui.chip({ texto: c.texto, tono: tono(c.tono), punto: true }))),
-    d.semaforo?.motivo && el("p", { class: "bl-reserva__motivo" }, d.semaforo.motivo),
+    d.semaforo?.motivo && el("p", { class: "bl-reserva__motivo" }, limpiar(d.semaforo.motivo)),
     d.campos?.length > 0 && ui.kv(d.campos, { columnas: 3 }),
     d.sistemas && chipsSistemas(d.sistemas));
 }
@@ -172,7 +194,7 @@ function pintarEstancias(b, ctx) {
 
 function tablaNoches(ctx, noches, id) {
   const { el } = ctx;
-  const cols = ["Noche", "RoomCloud", "OfiHotel", "Recepción", "Retenidas", "Libres para esta"];
+  const cols = ["Noche", "RoomCloud", "OfiHotel", "Recepción", "Retenidas", "Libres"];
   return el("div", { class: "ui-tabla-caja" }, el("table", { class: "ui-tabla bl-noches" },
     el("caption", { class: "u-ocultar-visual" }, "Disponibilidad noche a noche para esta petición"),
     el("thead", null, el("tr", null, cols.map((c) => el("th", { scope: "col", class: c === "Noche" ? null : "u-derecha" }, c)))),
@@ -203,8 +225,8 @@ function pintarComunicacion(b, ctx) {
         el("span", null, `Respuesta por ${NOMBRE_CANAL[c.respuesta.canal] ?? c.respuesta.canal} a ${c.respuesta.destinatario ?? ""}`)),
       c.respuesta.asunto && el("strong", { class: "bl-burbuja__asunto" }, c.respuesta.asunto),
       el("p", { class: "bl-burbuja__texto" }, c.respuesta.texto));
-    cuerpo.replaceChildren(
-      c.alerta && el("div", { class: "bl-banner", role: "alert" }, ui.icono("alert", { tam: 16 }),
+    llenar(cuerpo,
+      c.alerta &&el("div", { class: "bl-banner", role: "alert" }, ui.icono("alert", { tam: 16 }),
         el("div", null, el("strong", null, `Aviso de las ${c.alerta.hora}`), el("span", null, c.alerta.texto))),
       el("header", { class: "bl-com__cab" },
         el("span", { class: "bl-com__canal", aria: { hidden: "true" } }, ui.icono(ICONO_FUENTE[c.canal] ?? "message", { tam: 18 })),
@@ -323,7 +345,7 @@ function pintarProceso(b, ctx) {
 
   const pintarPaso = (p, animar) => {
     const li = el("li", { class: `bl-paso${animar ? " is-entrando" : ""}`, dataset: { fuente: p.fuente ?? "sistema" } },
-      el("span", { class: "bl-paso__marca", aria: { hidden: "true" } }, ui.icono(ICONO_FUENTE[p.fuente] ?? "dot", { tam: 16 })),
+      el("span", { class: "bl-paso__marca", aria: { hidden: "true" } }, ui.icono(p.fuente === "sistema" ? "sparkles" : (ICONO_FUENTE[p.fuente] ?? "dot"), { tam: 16 })),
       el("div", { class: "bl-paso__cuerpo" },
         el("div", { class: "bl-paso__cab" }, el("strong", null, p.titulo), p.fuente && el("span", { class: "bl-paso__fuente" }, NOMBRE_FUENTE[p.fuente] ?? p.fuente)),
         p.detalle && el("p", { class: "bl-paso__detalle" }, p.detalle),
@@ -335,7 +357,7 @@ function pintarProceso(b, ctx) {
 
   const terminar = () => {
     const a = acciones(ctx, b.acciones);
-    pie.replaceChildren(
+    llenar(pie,
       el("div", { class: "bl__acciones" }, ui.boton({ texto: "Ver de nuevo", icono: "refresh", variante: "fantasma", tam: "sm", onclick: arrancar }), a.el?.children ? [...a.el.children] : null),
       a.estado);
   };
@@ -397,11 +419,11 @@ function pintarPropuesta(b, ctx) {
       pintar();
     } }) : { el: null, estado: null };
     const etiqueta = { pendiente: ["aviso", "Pendiente de aprobación"], aprobada: ["ok", "Aprobada"], rechazada: ["neutro", "Rechazada"] }[estado] ?? ["neutro", estado];
-    cuerpo.replaceChildren(
+    llenar(cuerpo,
       cabecera(ctx, "Propuesta del asistente", ui.chip({ texto: etiqueta[1], tono: etiqueta[0], punto: true }), pendiente ? "Nada sale hasta que la apruebes" : null),
-      el("blockquote", { class: "bl-cita" }, b.texto),
-      ui.kv([b.destino && { etiqueta: "Destino", valor: NOMBRE_FUENTE[b.destino] ?? b.destino }, b.destinatario && { etiqueta: "Destinatario", valor: b.destinatario },
-        b.origen && { etiqueta: "Propuesta por", valor: b.origen }].filter(Boolean), { columnas: 3 }),
+      el("blockquote", { class: "bl-cita" }, limpiar(b.texto)),
+      ui.kv([b.destino && { etiqueta: "Destino", valor: NOMBRE_FUENTE[b.destino] ?? b.destino }, b.destinatario && { etiqueta: "Destinatario", valor: telefono(b.destinatario) },
+        b.origen && { etiqueta: "Propuesta por", valor: ORIGEN_PROPUESTA[b.origen] ?? b.origen }].filter(Boolean), { columnas: 3 }),
       pendiente ? a.el : el("p", { class: `bl__estado is-${estado === "aprobada" ? "ok" : "neutro"}`, role: "status" },
         ui.icono(estado === "aprobada" ? "check" : "x", { tam: 14 }), resultado ?? (estado === "aprobada" ? "Aprobada" : "Rechazada")),
       pendiente && a.estado);
