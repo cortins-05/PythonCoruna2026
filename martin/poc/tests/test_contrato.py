@@ -18,7 +18,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app import hub, main  # noqa: E402
+from app import chat_bloques, chat_procesos, hub, main  # noqa: E402
 from app.adapters import roomcloud  # noqa: E402
 from app.store import Store  # noqa: E402
 
@@ -123,47 +123,80 @@ ESTADO = {"reloj": str, "ses": str, "roomcloud": str, "ofihotel": str,
 
 ACCION_BASE = {"tipo": str, "etiqueta": str}
 CHIP = {"texto": str, "tono": TONO_BLOQUE}
+PRIORIDAD = {"nivel": int, "fuente": str, "id": {"roomcloud", "ofihotel", "recepcion", "correo", "whatsapp"}, "tipo": {"firme", "peticion"}}
+NIVEL_PRIORIDAD = {"nivel": int, "id": str, "nombre": str, "tipo": {"firme", "peticion"}, "icono": str, "descripcion": str}
+PRIORIDADES = {"niveles": [NIVEL_PRIORIDAD], "reglas": [str]}
+COLORES = {"rojo", "naranja", "amarillo", "azul", "gris", "verde"}
+CONTADORES_COLOR = {c: int for c in COLORES}
+SISTEMA = {"estado": str, "detalle": str, "?habitacion": (str, None), "?inferida": bool}
+SISTEMAS = {"roomcloud": SISTEMA, "ofihotel": SISTEMA, "documentacion": SISTEMA}
+SEMAFORO_ESTANCIA = {"color": COLORES, "tono": TONO_BLOQUE, "motivo": str, "accion_sugerida": str}
+ESTANCIA = {"id": str, "huesped": str, "estado": str, "checkin": str, "checkout": str, "pendientes": [str], "parte": str,
+            "parte_restante_h": (int, float, None), "viaja_por_trabajo": bool, "tipo": str, "origen": str, "personas": int,
+            "prioridad": PRIORIDAD, "sistemas": SISTEMAS, "semaforo": SEMAFORO_ESTANCIA}
+CONFLICTO = {"id": str, "tipo": str, "nivel": str, "expediente_id": (str, None), "sistemas": [str], "texto": str}
+VEREDICTOS = {"disponible", "ajustado", "en_competencia", "no_disponible", "sin_datos"}
+CONTRASTE = {"veredicto": VEREDICTOS, "motivo": str, "noches": [dict], "bloqueada_por": [dict], "retenida_por": [dict],
+             "alternativa": ({"desde": str, "hasta": str, "noches": int}, None)}
+PETICION = {"tipo_habitacion": str, "desde": str, "hasta": str, "noches": int, "personas": int, "habitaciones": int}
+COMUNICACION = {"id": str, "ts": str, "hora": str, "canal": {"whatsapp", "correo"}, "de": {"nombre": str, "contacto": str}, "asunto": str,
+                "texto": str, "tipo": {"peticion_habitacion", "pregunta", "cambio", "otro"}, "idioma": {"es", "fr", "en"},
+                "peticion": (PETICION, None), "prioridad": PRIORIDAD, "estado": {"pendiente", "en_espera", "respondida", "descartada"},
+                "expediente_id": (str, None), "contraste": (CONTRASTE, None),
+                "respuesta": {"canal": {"whatsapp", "correo"}, "destinatario": str, "asunto": str, "texto": str, "idioma": str},
+                "alerta": ({"hora": str, "texto": str}, None),
+                "resultado": ({"hora": str, "canal": str, "destinatario": str, "texto": str,
+                               "accion": {"reservada", "en_espera", "sin_hueco", "respondida", "descartada"},
+                               "reserva_id": (str, None), "actor": str, "simulado": bool}, None)}
+FUENTE = {"id": str, "nivel": (int, None), "tipo": {"firme", "peticion", "salida"}, "nombre": str, "icono": str, "estado": str, "recibido": int,
+          "detalle": str, "ultima": (str, None), "entra": str, "hoy": str}
+ITEM_COLA = {"id": str, "tipo": str, "color": COLORES, "titulo": str, "detalle": str, "prioridad": PRIORIDAD, "ts": str, "ruta": str,
+             "params": dict}
+PASO_PROCESO = {"id": str, "titulo": str, "fuente": str, "detalle": str, "?dato": str, "?resultado": str}
 BLOQUES = {
     "resumen_kpi": {"tipo": {"resumen_kpi"}, "titulo": str, "items": [{"etiqueta": str, "valor": str, "detalle": str, "tono": TONO_BLOQUE}]},
     "tarjeta_reserva": {"tipo": {"tarjeta_reserva"}, "id": str, "titulo": str, "subtitulo": str, "chips": [CHIP],
-                        "campos": [{"etiqueta": str, "valor": str}], "acciones": [dict]},
+                        "campos": [{"etiqueta": str, "valor": str}], "prioridad": PRIORIDAD, "semaforo": SEMAFORO_ESTANCIA,
+                        "sistemas": SISTEMAS, "acciones": [dict]},
+    "lista_estancias": {"tipo": {"lista_estancias"}, "titulo": str, "contadores": CONTADORES_COLOR, "estancias": [ESTANCIA]},
+    "comunicacion": {"tipo": {"comunicacion"}, "comunicacion": COMUNICACION, "acciones": [dict]},
+    "lista_comunicaciones": {"tipo": {"lista_comunicaciones"}, "titulo": str, "comunicaciones": [COMUNICACION], "acciones": [dict]},
+    "fuentes": {"tipo": {"fuentes"}, "titulo": str, "fuentes": [FUENTE], "prioridades": PRIORIDADES, "acciones": [dict]},
+    "prioridades": {"tipo": {"prioridades"}, "titulo": str, "prioridades": PRIORIDADES, "resaltar": (str, None)},
+    "cola": {"tipo": {"cola"}, "titulo": str, "items": [ITEM_COLA]},
+    "conflictos": {"tipo": {"conflictos"}, "titulo": str, "conflictos": [CONFLICTO]},
+    "navegacion": {"tipo": {"navegacion"}, "titulo": str,
+                   "items": [{"seccion": str, "titulo": str, "descripcion": str, "icono": str, "params": dict, "?insignia": int}]},
+    "proceso": {"tipo": {"proceso"}, "id": str, "titulo": str, "resumen": str, "pasos": [PASO_PROCESO], "acciones": [dict]},
     "tabla_ocupacion": {"tipo": {"tabla_ocupacion"}, "fechas": [str],
                         "filas": [{"tipo": str, "capacidad": int,
                                    "celdas": [{"fecha": str, "ocupadas": int, "libres": int, "cerrado": bool}]}]},
-    "flujo": {"tipo": {"flujo"}, "titulo": str,
-              "pasos": [{"id": str, "titulo": str, "estado": {"hecho", "actual", "pendiente", "bloqueado"}, "detalle": str, "accion": dict}]},
     "propuesta": {"tipo": {"propuesta"}, "id": str, "texto": str, "plantilla": str, "destino": str, "origen": str, "destinatario": str,
                   "estado": {"pendiente", "aprobada", "rechazada"}, "acciones": [dict]},
-    "lista_mensajes": {"tipo": {"lista_mensajes"}, "titulo": str,
-                       "mensajes": [{"de": str, "canal": {"whatsapp", "correo"}, "hora": str, "texto": str, "intencion": (str, None),
-                                     "accion": dict}]},
     "formulario": {"tipo": {"formulario"}, "id": str, "titulo": str,
                    "campos": [{"nombre": str, "etiqueta": str, "tipo": {"texto", "select", "fecha", "numero"}, "opciones": [str],
                                "valor": str, "obligatorio": bool}], "envio": dict},
-    "documento": {"tipo": {"documento"}, "id": str, "documento": {"factura", "albaran"}, "estado": {"borrador", "emitido", "enviado"},
-                  "numero": (str, None), "titulo": str, "receptor": str, "total": str, "fiscal": bool, "aviso": str,
-                  "lineas": [{"concepto": str, "importe": str}], "acciones": [dict]},
     "aviso": {"tipo": {"aviso"}, "tono": TONO_BLOQUE, "titulo": str, "texto": str},
     "sugerencias": {"tipo": {"sugerencias"}, "items": [str]},
 }
-# Campos de las acciones del apartado 5, por tipo. Todas llevan además `tipo` y `etiqueta`, salvo las de los pasos y la del envío
-# del formulario, que también.
-CAMPOS_ACCION = {"preguntar": {"texto"}, "abrir_seccion": {"seccion", "params"}, "abrir_expediente": {"id", "?paso"},
-                 "abrir_documento": {"id"}, "abrir_conversacion": {"id"}, "aprobar_propuesta": {"id"}, "rechazar_propuesta": {"id"},
-                 "enviar_formulario": {"formulario"}, "sincronizar": {"fuente"}, "emitir_documento": {"id"},
-                 "enviar_documento": {"id", "destinatario"}}
+TIPOS_FUERA_DE_ALCANCE = {"flujo", "documento", "lista_mensajes"}
+# Campos de las acciones del apartado 4.2 de CONTRATO-CORE.md. Todas llevan además `tipo` y `etiqueta`.
+CAMPOS_ACCION = {"preguntar": {"texto"}, "abrir_seccion": {"seccion", "params"}, "abrir_estancia": {"id"}, "abrir_comunicacion": {"id"},
+                 "confirmar_comunicacion": {"id", "?texto"}, "descartar_comunicacion": {"id"}, "aprobar_propuesta": {"id"},
+                 "rechazar_propuesta": {"id"}, "enviar_formulario": {"formulario"}, "sincronizar": {"fuente"},
+                 "simular_roomcloud": {"?tipo"}, "marcar_ofihotel": {"id"}}
 
 
-ACCIONES = set(CAMPOS_ACCION)  # la lista cerrada del contrato: once tipos de acción
+ACCIONES = set(CAMPOS_ACCION)  # la lista cerrada del contrato: doce tipos de acción
 
 
 def acciones_de(bloque: dict) -> list[dict]:
-    """Todas las acciones que lleva un bloque, estén donde estén (acciones, acción, envío, pasos y filas de mensajes)."""
+    """Todas las acciones que lleva un bloque: las de `acciones`, `accion` y `envio`."""
     encontradas = []
     for clave in ("acciones", "accion", "envio"):
         valor = bloque.get(clave)
         encontradas += valor if isinstance(valor, list) else [valor] if isinstance(valor, dict) else []
-    return encontradas + [paso["accion"] for paso in bloque.get("pasos", [])] + [fila["accion"] for fila in bloque.get("mensajes", [])]
+    return encontradas
 
 
 def comprobar_bloque(bloque: dict):
@@ -174,7 +207,6 @@ def comprobar_bloque(bloque: dict):
         permitidos = {c.lstrip("?") for c in CAMPOS_ACCION[accion["tipo"]]} | {"tipo", "etiqueta"}
         obligatorios = {c for c in CAMPOS_ACCION[accion["tipo"]] if not c.startswith("?")} | {"tipo", "etiqueta"}
         assert obligatorios <= set(accion) <= permitidos, f"campos de la acción {accion['tipo']}: {sorted(accion)}"
-
 
 # ================================================================ fixtures
 
@@ -334,21 +366,26 @@ def test_el_html_del_documento_lleva_el_aviso_fiscal_y_el_pdf_y_la_subida_respon
     assert subida.status_code == 501 and "no está disponible" in subida.json()["detail"]
 
 
-def test_sugerencias_tiene_cuatro_categorias_de_tres_preguntas_y_cuatro_flujos(cliente):
+def test_sugerencias_tiene_cinco_categorias_de_tres_preguntas_y_seis_tarjetas_de_procesos(cliente):
     datos = ver(cliente, "/api/chat/sugerencias")
     exigir(SUGERENCIAS, datos)
-    assert len(datos["categorias"]) == 4 and all(len(c["preguntas"]) == 3 for c in datos["categorias"])
-    assert len(datos["flujos"]) == 4
+    assert len(datos["categorias"]) == 5 and all(len(c["preguntas"]) == 3 for c in datos["categorias"])
+    assert [c["id"] for c in datos["categorias"]] == ["hoy", "comunicaciones", "estancias", "ocupacion", "procesos"]
+    assert len(datos["flujos"]) == 6
+    assert [f["id"] for f in datos["flujos"]] == list(chat_procesos.PROCESOS)
+    assert set(chat_procesos.PROCESOS) == {"peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica",
+                                          "prioridades"}
 
 
 def test_la_muestra_de_bloques_trae_un_bloque_de_cada_tipo_con_sus_campos(cliente):
     bloques = ver(cliente, "/api/chat/bloques-muestra")["bloques"]
     tipos = [b["tipo"] for b in bloques]
-    # El contrato define diez tipos de bloque (el encargo hablaba de once): hay que verlos todos, y ninguno de más.
-    assert set(tipos) == set(BLOQUES) and len(BLOQUES) == 10
+    # El contrato nuevo define dieciséis tipos de bloque: hay que verlos todos, una sola vez, y ninguno de los que salieron del alcance.
+    assert set(tipos) == set(BLOQUES) and len(BLOQUES) == 16 and len(tipos) == len(set(tipos))
+    assert not set(tipos) & TIPOS_FUERA_DE_ALCANCE
     for bloque in bloques:
         comprobar_bloque(bloque)
-    assert {b["estado"] for b in bloques if b["tipo"] == "documento"} == {"emitido", "borrador"}
+    assert tipos[-1] == "sugerencias"
 
 
 def test_la_muestra_no_depende_del_almacen(cliente, tmp_path, monkeypatch):
@@ -357,109 +394,139 @@ def test_la_muestra_no_depende_del_almacen(cliente, tmp_path, monkeypatch):
     assert ver(TestClient(main.app), "/api/chat/bloques-muestra")["bloques"] == muestra
 
 
+def test_las_acciones_del_validador_son_las_del_chat():
+    assert ACCIONES == chat_bloques.ACCIONES and len(ACCIONES) == 12
+
+
 def test_la_muestra_es_coherente_con_la_semilla_completa(cliente):
-    """Cada referencia de la muestra (ids, nombres, números, importes) existe en la semilla y dice lo mismo que la API."""
+    """Cada referencia de la muestra (ids, nombres, prioridades, contadores) existe en la semilla y dice lo mismo que la API."""
     muestra: dict[str, list[dict]] = {}
     for bloque in ver(cliente, "/api/chat/bloques-muestra")["bloques"]:
         muestra.setdefault(bloque["tipo"], []).append(bloque)
-    kpi = {k["id"]: k for k in ver(cliente, "/api/hoy")["kpis"]}
-    items = {i["etiqueta"]: i for i in muestra["resumen_kpi"][0]["items"]}
-    assert items["Llegadas"]["valor"] == str(kpi["llegadas"]["valor"]) and items["En casa"]["valor"] == str(kpi["en_casa"]["valor"])
-    tarjeta, flujo = muestra["tarjeta_reserva"][0], muestra["flujo"][0]
-    exp = ver(cliente, f"/api/expedientes/{tarjeta['id']}")
-    assert tarjeta["titulo"] == f"{exp['reserva']['nombre']} {exp['reserva']['apellidos']}" and tarjeta["titulo"] in flujo["titulo"]
-    assert {p["accion"]["id"] for p in flujo["pasos"]} == {tarjeta["id"]}
-    assert {p["id"] for p in flujo["pasos"] if p["estado"] == "hecho"} == {t for t, v in exp["tramites"].items() if v["estado"] == "hecho"}
+    estancias = {e["id"]: e for e in ver(cliente, "/api/estancias")["estancias"]}
+    comunicaciones = {c["id"]: c for c in ver(cliente, "/api/comunicaciones", estado="todas")["comunicaciones"]}
+    fuente = ver(cliente, "/api/fuente-unica")
+    prioridades = ver(cliente, "/api/prioridades")
+    # tarjeta de reserva: la estancia existe y semáforo, prioridad y sistemas son los de la API
+    tarjeta = muestra["tarjeta_reserva"][0]
+    real = estancias[tarjeta["id"]]
+    assert tarjeta["titulo"] == real["huesped"]
+    assert (tarjeta["semaforo"], tarjeta["prioridad"], tarjeta["sistemas"]) == (real["semaforo"], real["prioridad"], real["sistemas"])
+    # lista de estancias: cada una es idéntica a la de la API y los contadores son los del hotel entero
+    lista = muestra["lista_estancias"][0]
+    assert lista["estancias"] and all(e == estancias[e["id"]] for e in lista["estancias"])
+    assert lista["contadores"] == ver(cliente, "/api/estancias")["contadores"]
+    # comunicaciones: las de la muestra son las reales, con su contraste
+    assert muestra["comunicacion"][0]["comunicacion"] == comunicaciones[muestra["comunicacion"][0]["comunicacion"]["id"]]
+    assert muestra["lista_comunicaciones"][0]["comunicaciones"]
+    for com in muestra["lista_comunicaciones"][0]["comunicaciones"]:
+        assert com == comunicaciones[com["id"]]
+    # fuentes, prioridades, cola y conflictos
+    por_id = {f["id"]: f for f in fuente["fuentes"]}
+    assert muestra["fuentes"][0]["fuentes"] and all(f == por_id[f["id"]] for f in muestra["fuentes"][0]["fuentes"])
+    niveles = {n["nivel"]: n for n in prioridades["niveles"]}
+    for bloque in (muestra["fuentes"][0], muestra["prioridades"][0]):  # la muestra puede recortar la escalera, pero no cambiarla
+        assert bloque["prioridades"]["niveles"] and all(n == niveles[n["nivel"]] for n in bloque["prioridades"]["niveles"])
+        assert set(bloque["prioridades"]["reglas"]) <= set(prioridades["reglas"])
+    assert muestra["prioridades"][0]["resaltar"] in {n["id"] for n in prioridades["niveles"]} | {None}
+    assert muestra["cola"][0]["items"] == fuente["cola"][:len(muestra["cola"][0]["items"])]
+    assert muestra["conflictos"][0]["conflictos"] == ver(cliente, "/api/conflictos")["conflictos"]
+    # navegación: las pantallas existen y la insignia es la de /api/insignias
+    insignias = ver(cliente, "/api/insignias")["insignias"]
+    for item in muestra["navegacion"][0]["items"]:
+        assert item["seccion"] in {"fuente", "comunicaciones", "estancias", "ocupacion", "asistente"}
+        if "insignia" in item and item["seccion"] in insignias:
+            assert item["insignia"] == insignias[item["seccion"]]
+    # proceso: es exactamente el que devuelve chat_procesos
+    proceso = muestra["proceso"][0]
+    assert proceso == chat_procesos.proceso(proceso["id"])
+    # tabla de ocupación y propuesta, como antes
     mapa = ver(cliente, "/api/disponibilidad")["mapa"]["tipos"]
     assert [f["tipo"] for f in muestra["tabla_ocupacion"][0]["filas"]] == list(mapa)
     for fila in muestra["tabla_ocupacion"][0]["filas"]:
         assert fila["capacidad"] == mapa[fila["tipo"]]["capacidad"]
         for celda in fila["celdas"]:
-            real = next(d for d in mapa[fila["tipo"]]["dias"] if d["fecha"] == celda["fecha"])
-            assert (celda["ocupadas"], celda["libres"], celda["cerrado"]) == (real["ocupadas"], real["libres"], real["cerrado_en_roomcloud"])
+            real_dia = next(d for d in mapa[fila["tipo"]]["dias"] if d["fecha"] == celda["fecha"])
+            assert (celda["ocupadas"], celda["libres"], celda["cerrado"]) == (
+                real_dia["ocupadas"], real_dia["libres"], real_dia["cerrado_en_roomcloud"])
     propuesta = muestra["propuesta"][0]
-    real = next(p for p in ver(cliente, "/api/propuestas") if p["id"] == propuesta["id"])
-    assert all(propuesta[c] == real[c] for c in ("texto", "plantilla", "destino", "destinatario", "estado"))
-    conversaciones = {c["id"]: c for c in ver(cliente, "/api/mensajes/conversaciones")["conversaciones"]}
-    for fila in muestra["lista_mensajes"][0]["mensajes"]:
-        conv = conversaciones[fila["accion"]["id"]]
-        assert (fila["canal"], fila["texto"], fila["intencion"]) == (conv["canal"], conv["ultimo"]["texto"], conv["intencion"])
-    for bloque in muestra["documento"]:
-        doc = ver(cliente, f"/api/documentos/{bloque['id']}")
-        assert (bloque["documento"], bloque["estado"], bloque["numero"], bloque["receptor"], bloque["aviso"], bloque["fiscal"]) == (
-            doc["tipo"], doc["estado"], doc["numero"], doc["receptor"]["nombre"], doc["aviso_fiscal"], doc["fiscal"])
-        if doc["totales"]["total"]:
-            assert bloque["total"] == f"{doc['totales']['total']:.2f} EUR".replace(".", ",")
+    real_prop = next(p for p in ver(cliente, "/api/propuestas") if p["id"] == propuesta["id"])
+    assert all(propuesta[c] == real_prop[c] for c in ("texto", "plantilla", "destino", "destinatario", "estado"))
     tipos = next(c for c in muestra["formulario"][0]["campos"] if c["nombre"] == "tipo")["opciones"]
     assert tipos == list(mapa)
-    aviso = muestra["aviso"][0]
-    assert ver(cliente, "/api/documentos", expediente=CLAIRE)["documentos"] == [] and "Claire Dubois" in aviso["texto"]
+
+
+PREGUNTAS_ESPERADAS = {
+    "¿Qué llegadas hay hoy?": {"resumen_kpi", "lista_estancias"}, "¿Qué atender primero?": {"cola"},
+    "¿Qué conflictos hay?": {"conflictos"}, "¿Qué peticiones hay por confirmar?": {"lista_comunicaciones"},
+    "¿Qué mensajes han llegado por WhatsApp?": {"lista_comunicaciones"}, "¿Qué prioridad tiene cada fuente?": {"prioridades"},
+    "¿Qué estancias tienen algo pendiente?": {"lista_estancias"}, "¿Cómo está la ocupación?": {"tabla_ocupacion"},
+    "¿Qué propuestas hay pendientes de aprobar?": {"propuesta"}, "Quiero añadir un walk-in": {"formulario"},
+    "Enséñame cómo funciona la fuente única": {"proceso"}, "Enséñame cómo se evita un overbooking": {"proceso"},
+    "Quiero hacer el check-in de Marcos": {"tarjeta_reserva"},
+}
 
 
 def test_el_chat_devuelve_bloques_reales_con_la_forma_del_contrato(cliente):
     sugerencias = ver(cliente, "/api/chat/sugerencias")
     preguntas = [p for c in sugerencias["categorias"] for p in c["preguntas"]] + [f["pregunta"] for f in sugerencias["flujos"]]
-    esperados = {"¿Qué llegadas hay hoy?": {"resumen_kpi", "tarjeta_reserva"}, "¿Cómo está la ocupación?": {"tabla_ocupacion"},
-                 "¿Qué partes están pendientes?": {"tarjeta_reserva", "flujo"}, "¿Qué mensajes han llegado?": {"lista_mensajes"},
-                 "¿Qué propuestas hay pendientes de aprobar?": {"propuesta"}, "Quiero añadir una reserva física": {"formulario"},
-                 "Enséñame la factura de Ana": {"documento"}, "Prepara el albarán de Ana": {"documento"},
-                 "Quiero hacer el check-in de Ana": {"tarjeta_reserva", "flujo"}, "Prepara la factura de Ana": {"documento"}}
-    for pregunta in preguntas:
+    for pregunta in preguntas + list(PREGUNTAS_ESPERADAS):
         r = cliente.post("/api/chat", json={"mensaje": pregunta})
         assert r.status_code == 200
         datos = r.json()
         exigir({"respuesta": str, "modo": str, "propuestas": [str], "bloques": [dict]}, datos)
+        assert datos["modo"] == "simulado"
         assert datos["bloques"][-1]["tipo"] == "sugerencias", f"{pregunta}: las sugerencias van siempre al final"
         for bloque in datos["bloques"]:
             comprobar_bloque(bloque)
-        if pregunta in esperados:
-            assert esperados[pregunta] <= {b["tipo"] for b in datos["bloques"]}, pregunta
+        if pregunta in PREGUNTAS_ESPERADAS:
+            assert PREGUNTAS_ESPERADAS[pregunta] <= {b["tipo"] for b in datos["bloques"]}, pregunta
+    # cada tarjeta de proceso abre el proceso que anuncia
+    for flujo in sugerencias["flujos"]:
+        bloques = cliente.post("/api/chat", json={"mensaje": flujo["pregunta"]}).json()["bloques"]
+        assert any(b["tipo"] in ("proceso", "prioridades") for b in bloques), flujo["id"]
 
 
 def test_todas_las_acciones_usan_solo_tipos_de_la_lista_cerrada(cliente):
     bloques = ver(cliente, "/api/chat/bloques-muestra")["bloques"]
-    for tema_pregunta in ["¿Qué llegadas hay hoy?", "¿Cómo está la ocupación?", "¿Qué partes están pendientes?", "¿Qué mensajes han llegado?",
-                          "¿Qué propuestas hay pendientes de aprobar?", "Quiero añadir una reserva física", "factura de Claire",
-                          "Quiero hacer el check-in de Marcos", "¿Qué documentos hay por enviar?", "hola"]:
-        bloques += cliente.post("/api/chat", json={"mensaje": tema_pregunta}).json()["bloques"]
+    for pregunta in list(PREGUNTAS_ESPERADAS) + ["Enséñame cómo entra una petición por WhatsApp", "hola"]:
+        bloques += cliente.post("/api/chat", json={"mensaje": pregunta}).json()["bloques"]
     acciones = [a for b in bloques for a in acciones_de(b)]
     assert acciones and {a["tipo"] for a in acciones} <= ACCIONES
-    # el contrato lista once tipos de acción: la muestra y las respuestas cubren casi todos (preguntar y sincronizar los pinta el front)
-    assert {"abrir_expediente", "abrir_documento", "abrir_conversacion", "aprobar_propuesta", "rechazar_propuesta", "enviar_formulario",
-            "emitir_documento", "enviar_documento", "abrir_seccion"} <= {a["tipo"] for a in acciones}
+    # el contrato lista doce tipos de acción: la muestra y las respuestas cubren estos (el resto los dispara el front)
+    assert {"abrir_estancia", "abrir_comunicacion", "confirmar_comunicacion", "descartar_comunicacion", "aprobar_propuesta",
+            "rechazar_propuesta", "enviar_formulario", "sincronizar", "abrir_seccion"} <= {a["tipo"] for a in acciones}
 
 
 def test_cada_respuesta_del_chat_pinta_texto_plano_sin_html(cliente):
-    for pregunta in ["<script>alert(1)</script> llegadas", "factura de <b>Ana</b>"]:
+    for pregunta in ["<script>alert(1)</script> llegadas", "estancia de <b>Ana</b>"]:
         datos = cliente.post("/api/chat", json={"mensaje": pregunta}).json()
         assert "<script>" not in json.dumps(datos["bloques"]) and "<b>" not in json.dumps(datos["bloques"])
 
 
 # ================================================================ reglas de seguridad del contrato
 
-def test_enviar_documento_a_un_destinatario_desconocido_no_crea_propuesta(cliente):
+def test_el_chat_solo_propone_plantillas_de_su_lista_y_con_destinatario_conocido(cliente):
+    """Los documentos salieron del alcance: el chat no puede proponer enviarlos ni emitirlos, y un WhatsApp exige una estancia real."""
+    from app import chat
     s = main.store
     antes = len(s.db["propuestas"])
+    for plantilla, slots in (("enviar_documento", {"documento": "doc-0011", "destinatario": "otro@example.org"}),
+                             ("emitir_factura", {"expediente": ANA}),
+                             ("plantilla_inventada", {})):
+        resultado, bloques = chat.ejecutar_con_bloques(s, "proponer_accion", {"plantilla": plantilla, "slots": slots, "expediente_id": ANA})
+        assert "error" in resultado and bloques == [], plantilla
+    resultado, bloques = chat.ejecutar_con_bloques(s, "proponer_accion", {"plantilla": "pedir_documentos", "slots": {"nombre": "Ana"},
+                                                                         "expediente_id": "9-NO-EXISTE"})
+    assert "error" in resultado and bloques == []
+    # un correo a una dirección que no consta en la estancia no se envía: queda como revisión humana
     assert hub.crear_propuesta(s, "enviar_documento", {"documento": "doc-0011", "destinatario": "otro@example.org"}) is None
-    assert not hub.contexto_valido(s, "enviar_documento", {"documento": "doc-0011", "destinatario": "otro@example.org"})
-    for conocido in ("facturas@atlantico.example", "FACTURAS@atlantico.example", "ana.pereira@example.com"):  # empresa, receptor y huésped
-        assert hub.contexto_valido(s, "enviar_documento", {"documento": "doc-0011", "destinatario": conocido}), conocido
     assert len(s.db["propuestas"]) == antes
-    # por la API de mensajes
-    r = cliente.post("/api/mensajes/conversaciones/mail:claire.dubois@example.com/proponer",
-                     json={"plantilla": "enviar_documento", "slots": {"documento": "doc-0011"}})
-    assert r.status_code == 422 and len(s.db["propuestas"]) == antes  # Claire no es una dirección de la estancia de Ana
-    # por el chat: no se crea el envío y el caso va a revisión humana
-    from app import chat
-    r = chat.ejecutar(s, "proponer_accion", {"plantilla": "enviar_documento", "slots": {"documento": "doc-0011", "destinatario": "otro@example.org"},
-                                              "expediente_id": ANA})
-    assert "error" in r and r["propuesta_revision"]
-    nueva = s.db["propuestas"][antes:]
-    assert [p["plantilla"] for p in nueva] == ["revision_humana"] and nueva[0]["slots"] == {"motivo": "envio_a_otra_direccion"}
-    # y un documento que no está emitido o que no existe tampoco se puede proponer enviar
-    assert not hub.contexto_valido(s, "enviar_documento", {"documento": "doc-0013", "destinatario": "facturas@atlantico.example"})
-    assert not hub.contexto_valido(s, "enviar_documento", {"documento": "doc-9999", "destinatario": "facturas@atlantico.example"})
-    assert not hub.contexto_valido(s, "emitir_factura", {"expediente": "9-NO-EXISTE"})
+    # y una propuesta válida de la lista sí se crea, con su bloque
+    resultado, bloques = chat.ejecutar_con_bloques(s, "proponer_accion", {"plantilla": "revision_humana", "slots": {"motivo": "envio_a_otra_direccion"}})
+    assert "propuesta" in resultado and bloques and bloques[0]["tipo"] == "propuesta"
+    comprobar_bloque(bloques[0])
+    assert len(s.db["propuestas"]) == antes + 1
 
 
 def test_aprobar_vuelve_a_validar_el_contexto(cliente):
@@ -534,9 +601,8 @@ def test_con_el_almacen_vacio_todo_responde_con_su_forma(tmp_path, monkeypatch):
     exigir(CONVERSACIONES, ver(c, "/api/mensajes/conversaciones"))
     exigir(DOCUMENTOS, ver(c, "/api/documentos"))
     exigir(INTEGRACIONES, ver(c, "/api/integraciones"))
-    for pregunta in ["¿Qué llegadas hay hoy?", "¿Cómo está la ocupación?", "¿Qué partes están pendientes?", "¿Qué mensajes han llegado?",
-                     "¿Qué propuestas hay pendientes de aprobar?", "Quiero añadir una reserva física", "¿Qué documentos hay por enviar?",
-                     "Prepara la factura de Ana", "Quiero hacer el check-in de Ana", "hola"]:
+    for pregunta in list(PREGUNTAS_ESPERADAS) + ["Enséñame cómo entra una petición por WhatsApp", "Enséñame quién gana cuando dos fuentes compiten",
+                                                 "Prepara la factura de Ana", "hola"]:
         datos = c.post("/api/chat", json={"mensaje": pregunta}).json()
         exigir({"respuesta": str, "modo": str, "propuestas": [str], "bloques": [dict]}, datos)
         assert datos["respuesta"] and datos["bloques"][-1]["tipo"] == "sugerencias", pregunta
