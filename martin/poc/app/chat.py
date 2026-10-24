@@ -345,11 +345,7 @@ PROCESOS_POR_PALABRA = [
 
 def _ruta_simulada(store, mensaje: str) -> list[tuple[str, dict]]:
     n = _sin_tildes(mensaje)
-    if re.search(r"ensena|explica|como (entra|funciona|se hace|es)|paso a paso|proceso|que pasa cuando|muestrame como", n):
-        for patron, proceso in PROCESOS_POR_PALABRA:
-            if re.search(patron, n):
-                return [("mostrar_proceso", {"proceso": proceso})]
-    for c in comunicaciones._db(store):
+    for c in comunicaciones._db(store):  # una persona concreta gana a un proceso: "la petición de Pablo" abre su tarjeta
         for palabra in re.split(r"\W+", _sin_tildes(c["de"]["nombre"])):
             if len(palabra) >= 4 and re.search(r"\b" + re.escape(palabra) + r"\b", n):
                 return [("comunicacion", {"consulta": c["id"]})]
@@ -357,6 +353,10 @@ def _ruta_simulada(store, mensaje: str) -> list[tuple[str, dict]]:
         for palabra in re.split(r"\W+", _sin_tildes(estados.nombre_de(exp))):
             if len(palabra) >= 4 and re.search(r"\b" + re.escape(palabra) + r"\b", n):
                 return [("estancia", {"consulta": exp["id"]})]
+    if re.search(r"explica|como (entra|funciona|se hace|es|va)|paso a paso|proceso|que pasa cuando|(ensena|muestra)\w*( me)? como", n):
+        for patron, proceso in PROCESOS_POR_PALABRA:
+            if re.search(patron, n):
+                return [("mostrar_proceso", {"proceso": proceso})]
     if re.search(r"walk-?in|reserva fisica|nueva reserva", n):
         return [("mostrar_formulario", {"formulario": "walkin"})]
     if re.search(r"llevame|abre|abrir|ir a|pantalla|navega", n):

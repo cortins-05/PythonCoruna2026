@@ -287,7 +287,7 @@ TEMAS = [
     ("mensajes", r"comunicaci|mensaje|whatsapp|correo|e-?mail|petici|sin responder|por confirmar"),
     ("propuestas", r"propuesta|aprobar|cerrar la venta|cierre"),
     ("ocupacion", r"ocupaci|libre|disponib|complet|overbooking|habitaci"),
-    ("partes", r"partes?|ses\.hospedajes"),
+    ("partes", r"\bpartes?\b|ses\.hospedajes"),
     ("llegadas", r"estancia|en casa|salida|sem[aá]foro|llegad|hoy|check-?in|resumen|kpi"),
 ]
 _TEMAS = [(tema, re.compile(patron)) for tema, patron in TEMAS]
