@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from . import chat, disponibilidad, hub, lector, plantillas
 from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
 from .adapters.ocr import leer_documento
+from .deps import http_de
 from .store import Store
 from .validators import campos_que_faltan, problemas_huesped
 
@@ -47,6 +48,7 @@ class EmpresaIn(BaseModel):
     razon_social: str = ""
     cif: str = ""
     direccion: str = ""
+    email: str = ""  # opcional: es uno de los correos a los que se pueden enviar documentos de la estancia
 
 
 class PagoIn(BaseModel):
@@ -103,7 +105,8 @@ def nuevo_expediente(r: dict) -> dict:
         "personas": sum(int(h["adultos"] or 0) + int(h["ninos"] or 0) for h in r["habitaciones"]) or 1,
         "habitaciones": r["habitaciones"],
         "importe": r["importe"],
-        "reserva": {"nombre": r["nombre"], "apellidos": r["apellidos"], "pais": r["pais"], "telefono": r["telefono"]},
+        "reserva": {"nombre": r["nombre"], "apellidos": r["apellidos"], "pais": r["pais"], "telefono": r["telefono"],
+                    "email": r["email"]},
         "huesped": {c: "" for c in CAMPOS_HUESPED},
         "pago": {"medio": r["medio_pago"]},
         "empresa": {},
@@ -175,9 +178,13 @@ def interfaz_antigua():
 
 @app.get("/api/estado")
 def estado():
+    con_clave = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    modo_claude = "real" if con_clave else "simulado"
     return {"reloj": store.ahora().isoformat(timespec="minutes"),
-            "ocr": "en vivo" if os.environ.get("ANTHROPIC_API_KEY") else "simulado",
-            "ses": "simulado", "roomcloud": "XML grabado", "ofihotel": "copia asistida"}
+            "ocr": "en vivo" if con_clave else "simulado",
+            "ses": "simulado", "roomcloud": "XML grabado", "ofihotel": "copia asistida",
+            # Añadido por la interfaz nueva: el modo de cada integración, con los mismos ids que /api/integraciones.
+            "modos": {**hub.MODOS, "ocr": modo_claude, "lector": modo_claude, "chat": modo_claude}}
 
 
 @app.post("/api/reiniciar")
@@ -284,10 +291,12 @@ def guardar_pago(exp_id: str, datos: PagoIn):
     empresa_completa = bool(datos.empresa and datos.empresa.cif and datos.empresa.razon_social and datos.empresa.direccion)
     if exp["viaja_por_trabajo"] and not empresa_completa:
         raise HTTPException(422, {"problemas": ["Viaja por trabajo: faltan razón social, CIF o dirección de la empresa"]})
+    if datos.empresa and datos.empresa.email.strip() and not plantillas.email_valido(datos.empresa.email.strip()):
+        raise HTTPException(422, {"problemas": ["El correo de la empresa no es válido"]})
     exp["pago"] = {"medio": datos.medio.strip().upper()}
     hecho(exp, "pago", "Recepción")
     if empresa_completa:
-        exp["empresa"] = datos.empresa.model_dump()
+        exp["empresa"] = {**datos.empresa.model_dump(), "email": datos.empresa.email.strip()}
         hecho(exp, "empresa", "Recepción", "Datos fiscales recogidos en el check-in")
     store.guardar()
     return {"ok": True, "pendientes": pendientes(exp)}
@@ -481,12 +490,19 @@ def _propuesta(pid: str) -> dict:
 @app.post("/api/propuestas/{pid}/aprobar")
 def aprobar(pid: str, datos: ActorIn):
     prop = _propuesta(pid)
-    try:  # se vuelve a validar al aprobar, por si los datos cambiaron desde que se propuso
-        prop["texto"] = plantillas.renderizar(prop["plantilla"], prop["slots"])
-    except ValueError as error:
-        raise HTTPException(422, {"problemas": [str(error)]})
+    # Se vuelve a validar al aprobar, por si los datos cambiaron desde que se propuso: variables y contexto (que el
+    # expediente o el documento existan, que el documento siga emitido y que el destinatario siga siendo conocido).
+    problemas = hub.problemas_de_propuesta(store, prop["plantilla"], prop["slots"])
+    if problemas:
+        raise HTTPException(422, {"problemas": problemas})
+    prop["texto"] = plantillas.renderizar(prop["plantilla"], prop["slots"])
+    anterior = {campo: prop[campo] for campo in ("estado", "decidido_por", "hora_decision")}
     prop.update(estado="aprobada", decidido_por=datos.actor, hora_decision=store.ahora().isoformat(timespec="minutes"))
-    hub.ejecutar_propuesta(store, prop, datos.actor)
+    try:
+        hub.ejecutar_propuesta(store, prop, datos.actor)
+    except hub.ErrorNegocio as error:  # si la ejecución falla, la propuesta sigue pendiente y recepción ve el motivo
+        prop.update(anterior)
+        raise http_de(error)
     store.guardar()
     return prop
 
@@ -497,3 +513,14 @@ def rechazar(pid: str, datos: ActorIn):
     prop.update(estado="rechazada", decidido_por=datos.actor, hora_decision=store.ahora().isoformat(timespec="minutes"))
     store.guardar()
     return prop
+
+
+# ================================================================ routers de la interfaz nueva (bloque de la base)
+# Se incluyen al final para que puedan importar lo que define este módulo sin ciclos. Cada router vive en su fichero
+# y usa `deps.get_store`, que devuelve `main.store` en el momento de la llamada.
+from .routers import chat as router_chat  # noqa: E402
+from .routers import demo, hoy, integraciones, mensajes  # noqa: E402
+from .routers import documentos as router_documentos  # noqa: E402
+
+for _router in (hoy.router, integraciones.router, mensajes.router, router_documentos.router, router_chat.router, demo.router):
+    app.include_router(_router)
