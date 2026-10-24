@@ -55,7 +55,7 @@ export default {
         confirmar: "Volver al inicio", tono: "critico",
       });
       if (!ok) return;
-      await ctx.api("/api/demo/semilla?nivel=completa", "POST");
+      await ctx.api("/api/demo/semilla?nivel=demo", "POST");
       ctx.avisar("La demo vuelve a su estado inicial.", "ok");
     }, "No se ha podido reiniciar la demo");
 
