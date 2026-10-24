@@ -28,14 +28,27 @@ def _estancias(db: dict) -> list[dict]:
 
 
 def asignar(db: dict) -> tuple[list[dict], dict[str, int | None]]:
-    """Devuelve las estancias y {clave: número}. Si un tipo está en overbooking, la estancia sobrante queda sin número (None)."""
+    """Devuelve las estancias y {clave: número}. Primero van las habitaciones fijadas por recepción (`habitacion_fija`) y después el reparto automático.
+
+    Si un tipo está en overbooking, la estancia sobrante queda sin número (None)."""
     estancias = _estancias(db)
-    libre_desde = {tipo: {n: "" for n in numeros} for tipo, numeros in NUMEROS.items()}
+    ocupadas: dict[int, list[tuple[str, str]]] = {n: [] for numeros in NUMEROS.values() for n in numeros}
     asignadas: dict[str, int | None] = {}
+
+    def libre(n: int, desde: str, hasta: str) -> bool:
+        return all(hasta <= d or h <= desde for d, h in ocupadas[n])
+
     for s in estancias:
-        sitio = next((n for n, hasta in libre_desde.get(s["tipo"], {}).items() if hasta <= s["desde"]), None)
+        fija = db["expedientes"].get(s["id"] or "", {}).get("habitacion_fija") if s["clave"].endswith("#0") else None
+        if fija in ocupadas and fija in NUMEROS.get(s["tipo"], []) and libre(fija, s["desde"], s["hasta"]):
+            ocupadas[fija].append((s["desde"], s["hasta"]))
+            asignadas[s["clave"]] = fija
+    for s in estancias:
+        if s["clave"] in asignadas:
+            continue
+        sitio = next((n for n in NUMEROS.get(s["tipo"], []) if libre(n, s["desde"], s["hasta"])), None)
         if sitio is not None:
-            libre_desde[s["tipo"]][sitio] = s["hasta"]
+            ocupadas[sitio].append((s["desde"], s["hasta"]))
         asignadas[s["clave"]] = sitio
     return estancias, asignadas
 
@@ -63,3 +76,11 @@ def vista(store, dia: str | None = None) -> dict:
     return {"fecha": dia, "habitaciones": todas,
             "resumen": {"habitaciones": len(todas), "ocupadas": sum(1 for h in todas if h["noche"]), "libres": sum(1 for h in todas if not h["noche"]),
                         "llegan": sum(1 for h in todas if h["noche"] and h["noche"]["estado"] == "llega_hoy"), "salen": sum(1 for h in todas if h["sale"])}}
+
+
+def quien_ocupa(store, numero: int, dia: str | None = None) -> dict | None:
+    """La ficha de una habitación un día: tipo, quién duerme y quién sale. None si el número no existe."""
+    for h in vista(store, dia)["habitaciones"]:
+        if h["numero"] == numero:
+            return h
+    return None

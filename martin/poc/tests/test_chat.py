@@ -13,7 +13,7 @@ from app.store import Store  # noqa: E402
 
 ANA = "1-BK-4471920"
 HERRAMIENTAS = {"resumen_dia", "estancias", "estancia", "comunicaciones", "comunicacion", "fuentes", "prioridades", "cola", "conflictos",
-                "ocupacion", "mostrar_proceso", "abrir_pantalla", "mostrar_formulario", "propuestas_pendientes", "proponer_accion", "redactar_mensaje", "preparar_accion", "consultar_datos", "editar_borrador", "modificar_estancia"}
+                "ocupacion", "mostrar_proceso", "abrir_pantalla", "mostrar_formulario", "propuestas_pendientes", "proponer_accion", "redactar_mensaje", "preparar_accion", "consultar_datos", "editar_borrador", "modificar_estancia", "habitacion", "asignar_habitacion"}
 
 
 @pytest.fixture()
@@ -27,6 +27,21 @@ def cliente(tmp_path, monkeypatch):
 
 def tipos(r):
     return [b["tipo"] for b in r["bloques"]]
+
+
+def test_dar_una_habitacion_exige_confirmar_y_despues_aparece_en_hoy(cliente):
+    r, bloques = chat.ejecutar_con_bloques(main.store, "asignar_habitacion", {"consulta": "Marcos Vilas", "numero": 102})
+    accion = bloques[0]["acciones"][0]
+    assert accion["tipo"] == "asignar_habitacion" and accion["numero"] == 102 and r["estado"] == "espera el botón"
+    antes = cliente.get("/api/habitaciones").json()["habitaciones"]
+    assert next(h for h in antes if h["numero"] == 102)["noche"] is None
+    ok = cliente.put(f"/api/expedientes/{accion['id']}/habitacion", json={"numero": 102, "actor": "Flor"})
+    assert ok.status_code == 200, ok.text
+    despues = cliente.get("/api/habitaciones").json()["habitaciones"]
+    assert next(h for h in despues if h["numero"] == 102)["noche"]["nombre"] == "Marcos Vilas"
+    assert cliente.put(f"/api/expedientes/{accion['id']}/habitacion", json={"numero": 301}).status_code == 422
+    quien = chat.ejecutar(main.store, "habitacion", {"numero": 102})
+    assert quien["duerme_esta_noche"]["nombre"] == "Marcos Vilas" and "error" in chat.ejecutar(main.store, "habitacion", {"numero": 999})
 
 
 def test_aprobar_un_mensaje_redactado_por_el_asistente_lo_envia_simulado(cliente):

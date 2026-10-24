@@ -179,3 +179,33 @@ def cambiar_fechas(exp_id: str, datos: FechasIn, store=Depends(get_store)):
     hub.revisar_ocupacion(store)
     store.guardar()
     return main.resumen(exp)
+
+
+class HabitacionIn(BaseModel):
+    numero: int
+    actor: str = "Recepción"
+
+
+@router.put("/expedientes/{exp_id}/habitacion")
+def fijar_habitacion(exp_id: str, datos: HabitacionIn, store=Depends(get_store)):
+    """Fija el número de habitación de una estancia. El número tiene que ser de su tipo y estar libre en sus fechas."""
+    from fastapi import HTTPException
+    from .. import main
+    exp = store.db["expedientes"].get(exp_id)
+    if not exp:
+        raise HTTPException(404, "Estancia no encontrada")
+    tipo = exp["habitaciones"][0]["tipo"]
+    if datos.numero not in habitaciones.NUMEROS.get(tipo, []):
+        raise HTTPException(422, {"problemas": [f"La habitación {datos.numero} no es de tipo {tipo}"]})
+    antes = exp.get("habitacion_fija")
+    exp["habitacion_fija"] = datos.numero
+    _, asignadas = habitaciones.asignar(store.db)
+    if asignadas.get(f"{exp_id}#0") != datos.numero:
+        exp["habitacion_fija"] = antes
+        if antes is None:
+            exp.pop("habitacion_fija", None)
+        raise HTTPException(409, {"problemas": [f"La habitación {datos.numero} ya está ocupada otra de esas noches por una habitación fijada"]})
+    main.anotar(exp, f"Habitación {datos.numero} asignada", datos.actor)
+    hub.registrar_evento(store, "recepcion", "habitacion_asignada", estados.nombre_de(exp), f"{estados.nombre_de(exp)}: habitación {datos.numero}", exp_id)
+    store.guardar()
+    return {"id": exp_id, "habitacion": datos.numero}

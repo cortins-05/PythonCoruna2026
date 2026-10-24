@@ -488,6 +488,17 @@ export default {
       });
     }
 
+    async function asignarHabitacion(accion) {
+      const ok = await ctx.confirmar({ titulo: `Dar la habitación ${accion.numero}`, texto: "La estancia queda en esa habitación y se verá en la pestaña Hoy.", confirmar: `Sí, dar la ${accion.numero}`, contenido: el("span") });
+      if (!ok) return resultado(false, "No se ha asignado nada", "cancelado");
+      const r = await ctx.api(`/api/expedientes/${encodeURIComponent(accion.id)}/habitacion`, "PUT", { numero: accion.numero, actor: ACTOR });
+      mensajeResumen(`Hecho: la estancia está en la habitación ${accion.numero}.`, ["Enséñame las habitaciones de hoy", `¿Quién hay en la @${accion.numero}?`]);
+      return resultado(true, `Habitación ${accion.numero} asignada`, "asignada", r, {
+        titulo: `Habitación ${accion.numero} asignada`, simulado: false, filas: [{ etiqueta: "Quién", valor: ACTOR }],
+        acciones: [{ tipo: "abrir_seccion", etiqueta: "Ver Hoy", seccion: "hoy" }, { tipo: "abrir_estancia", etiqueta: "Abrir la estancia", id: accion.id }],
+      });
+    }
+
     async function modificarEstancia(accion) {
       const ok = await ctx.confirmar({ titulo: "Cambiar las fechas", texto: `Las fechas de la estancia pasan a ser del ${accion.entrada} al ${accion.salida}.`, confirmar: "Sí, cambiar", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha cambiado nada", "cancelado");
@@ -520,6 +531,7 @@ export default {
           case "simular_roomcloud": return await simularRoomcloud(accion);
           case "marcar_ofihotel": return await marcarOfihotel(accion);
           case "modificar_estancia": return await modificarEstancia(accion);
+          case "asignar_habitacion": return await asignarHabitacion(accion);
           default: return resultado(false, "Esta acción no se puede ejecutar desde el chat", "error");
         }
       } catch (e) {
