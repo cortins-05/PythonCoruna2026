@@ -14,7 +14,7 @@ from .deps import http_de
 from .store import Store
 from .validators import campos_que_faltan, problemas_huesped
 
-app = FastAPI(title="Expediente de estancia (demo)")
+app = FastAPI(title="Uniroom")
 store = Store()
 ESTATICO = Path(__file__).resolve().parent / "static"
 PLAZO_PARTE_H = 24

@@ -26,7 +26,7 @@ MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto
 
 def _sistema(store) -> str:
     ahora = store.ahora()
-    return f"""Eres el asistente de recepción de un hotel familiar de Galicia. Hoy es {DIAS[ahora.weekday()]} {ahora.day} de {MESES[ahora.month - 1]} de {ahora.year}, son las {ahora:%H:%M}.
+    return f"""Eres el asistente de Uniroom, la plataforma de recepción de un hotel familiar de Galicia. Hoy es {DIAS[ahora.weekday()]} {ahora.day} de {MESES[ahora.month - 1]} de {ahora.year}, son las {ahora:%H:%M}.
 
 La aplicación bebe de cinco fuentes y las unifica en una sola plataforma, que hace de fuente única de verdad: RoomCloud (reservas de Booking, Expedia y la web, prioridad 1), OfiHotel (el programa del hotel, solo lectura y con los datos de ayer, prioridad 2), recepción (walk-ins y peticiones que ya ha confirmado, prioridad 3), correo (petición sin confirmar, prioridad 4) y WhatsApp (petición sin confirmar, prioridad 5). Lo firme (niveles 1 a 3) bloquea la habitación y una petición nunca lo desplaza. Entre peticiones gana el nivel más alto y, a igual nivel, la que llegó antes. Si entra una reserva de RoomCloud que ocupa el hueco de una petición, esa petición pasa a no disponible. El check-out se hace en OfiHotel y no en esta aplicación. No hay facturas ni albaranes en esta versión.
 

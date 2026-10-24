@@ -1,6 +1,6 @@
-﻿# POC: hub de recepción, una sola plataforma que bebe de todas las fuentes
+# Uniroom: una sola plataforma que bebe de todas las fuentes
 
-Demo de una capa que se sitúa por encima de OfiHotel y RoomCloud, lee todo lo que entra al hotel (reservas de canal, el programa del hotel, reservas físicas, correo y WhatsApp), lo unifica y lo deja en un único sitio que hace de fuente única de verdad. Recepción solo confirma: cada petición llega ya contrastada con las demás fuentes y la respuesta sale por el mismo canal por el que llegó. Contexto, decisiones y el giro del 24/10 en `martin/martin_investigacion.md`.
+Uniroom es una capa que se sitúa por encima de OfiHotel y RoomCloud, lee todo lo que entra al hotel (reservas de canal, el programa del hotel, reservas físicas, correo y WhatsApp), lo unifica y lo deja en un único sitio que hace de fuente única de verdad. Recepción solo confirma: cada petición llega ya contrastada con las demás fuentes y la respuesta sale por el mismo canal por el que llegó. Contexto, decisiones y el giro del 24/10 en `martin/martin_investigacion.md`.
 
 ## Qué se ve
 

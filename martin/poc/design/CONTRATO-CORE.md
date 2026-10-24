@@ -1,4 +1,4 @@
-# Contrato del núcleo de la demo
+# Contrato del núcleo de la demo de Uniroom
 
 Este documento manda sobre `CONTRATO.md` en todo lo que dice. De `CONTRATO.md` siguen vigentes el apartado 2 (la interfaz `ctx` de una sección) y el 6 (plantillas). Si algo de aquí no te basta, no lo cambies por tu cuenta: sigue con lo que haya y apunta la petición en `peticiones_a_base` de tu informe.
 
