@@ -2,6 +2,12 @@
 .sec-asistente { display: flex; flex-direction: column; gap: var(--s-6); max-width: 940px; margin: 0 auto; padding-bottom: var(--s-4); }
 
 /* Bienvenida: fondo de puntos, dos sugerencias pequeñas encima y una ventana de texto grande, todo centrado */
+.sec-asistente {
+  min-height: calc(100vh - 96px); max-width: none; padding: var(--s-4) var(--s-4) var(--s-4);
+  background-image: radial-gradient(var(--c-borde-fuerte) 1px, transparent 1.3px); background-size: 22px 22px;
+}
+.sec-asistente > * { width: min(780px, 100%); margin-inline: auto; }
+.sec-asistente:not(.es-vacio) .asi__caja { background: transparent; }
 .sec-asistente.es-vacio {
   max-width: none; min-height: calc(100vh - 96px); justify-content: center; align-items: center; gap: var(--s-4);
   background-image: radial-gradient(var(--c-borde-fuerte) 1px, transparent 1.3px); background-size: 22px 22px;
