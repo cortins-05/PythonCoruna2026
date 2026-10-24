@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import chat, conversaciones, disponibilidad, estados, hub, lector, plantillas, prioridades
+from . import chat, conversaciones, disponibilidad, estados, hub, habitaciones, lector, plantillas, prioridades
 from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
 from .deps import http_de
 from .store import Store
@@ -159,6 +159,7 @@ def resumen(exp: dict, lista_conflictos: list[dict] | None = None) -> dict:
             "parte": exp["tramites"]["parte"]["estado"], "parte_restante_h": parte_restante_h(exp),
             "viaja_por_trabajo": exp["viaja_por_trabajo"], "tipo": estados.tipo_de(exp), "origen": exp["origen"], "personas": exp["personas"],
             "prioridad": prioridades.nivel_de_origen(exp["origen"]),
+            "habitacion": habitaciones.habitacion_de(store.db, exp["id"]),
             "sistemas": sistemas, "semaforo": estados.semaforo_de(store.db, exp, ahora, sistemas, lista_conflictos)}
 
 

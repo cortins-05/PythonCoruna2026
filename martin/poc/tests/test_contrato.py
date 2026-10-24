@@ -81,7 +81,7 @@ def test_la_funcion_de_formas_detecta_lo_que_debe():
 
 SEMAFORO = {"color": {"rojo", "naranja", "amarillo", "azul", "gris", "verde"}, "tono": TONO_BLOQUE, "motivo": str, "accion_sugerida": str}
 RESUMEN_EXPEDIENTE = {"id": str, "huesped": str, "estado": str, "checkin": str, "checkout": str, "pendientes": [str], "parte": str,
-                      "parte_restante_h": (float, None), "viaja_por_trabajo": bool, "tipo": str, "origen": str, "personas": int,
+                      "parte_restante_h": (float, None), "habitacion": (int, None), "viaja_por_trabajo": bool, "tipo": str, "origen": str, "personas": int,
                       "prioridad": {"nivel": int, "fuente": str, "id": str, "tipo": {"firme", "peticion"}}, "sistemas": dict, "semaforo": SEMAFORO}
 KPI = {"id": str, "etiqueta": str, "valor": (int, str), "detalle": str, "tono": TONO, "ruta": SECCIONES}
 HOY = {"reloj": str, "kpis": [KPI],
@@ -132,7 +132,7 @@ SISTEMA = {"estado": str, "detalle": str, "?habitacion": (str, None), "?inferida
 SISTEMAS = {"roomcloud": SISTEMA, "ofihotel": SISTEMA, "documentacion": SISTEMA}
 SEMAFORO_ESTANCIA = {"color": COLORES, "tono": TONO_BLOQUE, "motivo": str, "accion_sugerida": str}
 ESTANCIA = {"id": str, "huesped": str, "estado": str, "checkin": str, "checkout": str, "pendientes": [str], "parte": str,
-            "parte_restante_h": (int, float, None), "viaja_por_trabajo": bool, "tipo": str, "origen": str, "personas": int,
+            "parte_restante_h": (int, float, None), "habitacion": (int, None), "viaja_por_trabajo": bool, "tipo": str, "origen": str, "personas": int,
             "prioridad": PRIORIDAD, "sistemas": SISTEMAS, "semaforo": SEMAFORO_ESTANCIA}
 CONFLICTO = {"id": str, "tipo": str, "nivel": str, "expediente_id": (str, None), "sistemas": [str], "texto": str}
 VEREDICTOS = {"disponible", "ajustado", "en_competencia", "no_disponible", "sin_datos"}

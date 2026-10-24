@@ -100,6 +100,52 @@ export default {
     botonDetener.hidden = true;
     const caja = el("div", { class: "asi__caja" }, irAlFinal, el("div", { class: "asi__caja-interior" }, entrada, botonDetener, botonEnviar));
 
+    /* ---------- menciones: escribir @ y el número de una habitación */
+    const TIPOS_HAB = { "SGL-STD": "Individual", "DBL-STD": "Doble", "TPL-STD": "Triple", "FAM-STD": "Familiar", "SUI-STD": "Suite" };
+    const menuMenciones = el("div", { class: "asi__menciones", role: "listbox", aria: { label: "Habitaciones" } });
+    menuMenciones.hidden = true;
+    caja.append(menuMenciones);
+    let habitacionesMencion = null;
+    let opcionesMencion = [];
+    let activaMencion = 0;
+    function cerrarMenciones() { menuMenciones.hidden = true; opcionesMencion = []; }
+    function pintarMenciones() {
+      menuMenciones.hidden = false;
+      menuMenciones.replaceChildren(...opcionesMencion.map((h, i) => el("button", {
+        type: "button", role: "option", class: `asi__mencion${i === activaMencion ? " is-activa" : ""}`,
+        onmousedown: (ev) => { ev.preventDefault(); insertarMencion(h); },
+      }, el("b", null, `@${h.numero}`), el("span", null, `${TIPOS_HAB[h.tipo] ?? h.tipo} · ${h.noche ? h.noche.nombre : "libre"}`))));
+    }
+    function insertarMencion(h) {
+      const pos = entrada.selectionStart;
+      const antes = entrada.value.slice(0, pos).replace(/@\d*$/, `@${h.numero} `);
+      entrada.value = antes + entrada.value.slice(pos);
+      entrada.setSelectionRange(antes.length, antes.length);
+      cerrarMenciones();
+      entrada.focus();
+    }
+    entrada.addEventListener("input", async () => {
+      const m = entrada.value.slice(0, entrada.selectionStart).match(/@(\d*)$/);
+      if (!m) { cerrarMenciones(); return; }
+      if (!habitacionesMencion) {
+        try { habitacionesMencion = (await ctx.api("/api/habitaciones")).habitaciones; } catch { habitacionesMencion = []; }
+      }
+      opcionesMencion = habitacionesMencion.filter((h) => String(h.numero).startsWith(m[1])).slice(0, 8);
+      activaMencion = 0;
+      if (opcionesMencion.length) pintarMenciones(); else cerrarMenciones();
+    });
+    entrada.addEventListener("keydown", (e) => {
+      if (menuMenciones.hidden) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        activaMencion = (activaMencion + (e.key === "ArrowDown" ? 1 : -1) + opcionesMencion.length) % opcionesMencion.length;
+        pintarMenciones();
+      } else if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault(); e.stopImmediatePropagation();
+        insertarMencion(opcionesMencion[activaMencion]);
+      } else if (e.key === "Escape") { cerrarMenciones(); }
+    }, true);
+
     /* ---------- scroll */
     const distanciaAlFinal = () => document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
     function bajar(forzar = false) {

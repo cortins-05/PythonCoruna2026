@@ -22,6 +22,13 @@
 .sec-asistente.es-vacio .asi__entrada { min-height: 88px; }
 .sec-asistente .asi__caja-interior { border-radius: var(--r-card); box-shadow: none; }
 
+/* Menciones: @ y número de habitación */
+.sec-asistente .asi__menciones { position: absolute; left: 0; bottom: calc(100% + var(--s-1)); width: min(340px, 100%); z-index: 20; background: var(--c-surface); border: 1px solid var(--c-borde-fuerte); box-shadow: var(--sombra-2); }
+.sec-asistente .asi__mencion { display: flex; gap: var(--s-3); align-items: baseline; width: 100%; padding: var(--s-2) var(--s-3); text-align: left; background: none; border: 0; cursor: pointer; color: var(--c-texto); font: inherit; }
+.sec-asistente .asi__mencion b { font-family: var(--f-titulo); min-width: 48px; }
+.sec-asistente .asi__mencion span { font-size: var(--t-sm); color: var(--c-texto-2); }
+.sec-asistente .asi__mencion.is-activa, .sec-asistente .asi__mencion:hover { background: var(--c-surface-3); }
+
 /* Animaciones: entradas suaves, puntos de escritura, cursor al hilar el texto y progreso de herramientas */
 @keyframes asi-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes asi-entra-der { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
