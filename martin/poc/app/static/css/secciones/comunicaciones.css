@@ -82,3 +82,7 @@
   .sec-comunicaciones .is-oculta-movil { display: none; }
   .sec-comunicaciones .com__volver { display: block; }
 }
+
+.sec-comunicaciones .com__tabla { table-layout: auto; min-width: 0; width: 100%; }
+.sec-comunicaciones .com__tabla th, .sec-comunicaciones .com__tabla td { padding: var(--s-2); font-size: var(--t-sm); white-space: normal; }
+.sec-comunicaciones .com__tabla thead th { font-size: var(--t-xs); line-height: 1.25; }

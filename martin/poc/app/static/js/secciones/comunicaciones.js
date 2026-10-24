@@ -275,8 +275,8 @@ export default {
       const burbuja = el("div", { class: `com__burbuja com__burbuja--${c.canal}` }, cabeceraMsg, area, el("div", { class: "com__burbuja-pie" }, contador));
 
       const hijos = [burbuja];
-      if (cerrada) hijos.push(resultado(c));
-      else {
+      if (cerrada || c.resultado) hijos.push(resultado(c));
+      if (!cerrada) {
         const etiqueta = `Confirmar y enviar ${porCanal(c.canal)}`;
         hijos.push(el("div", { class: "com__acciones" },
           ui.boton({ texto: etiqueta, icono: "send", variante: "cta", onclick: () => confirmar(c, area) }),
