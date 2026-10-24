@@ -65,9 +65,10 @@ def construir_mensaje_gmail(de: str, nombre: str, asunto: str, cuerpo: str, ahor
 
 
 def _decodificar(datos: str) -> str:
+    """Decodifica base64url con o sin relleno y rechaza cualquier carácter que no sea del alfabeto (`validate=True`)."""
     try:
-        return base64.urlsafe_b64decode(datos + "=" * (-len(datos) % 4)).decode("utf-8", errors="replace")
-    except (binascii.Error, ValueError) as error:
+        return base64.b64decode(datos + "=" * (-len(datos) % 4), altchars=b"-_", validate=True).decode("utf-8", errors="replace")
+    except (binascii.Error, ValueError, TypeError) as error:
         raise ValueError("El cuerpo del mensaje no se puede decodificar") from error
 
 

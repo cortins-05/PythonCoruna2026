@@ -155,7 +155,7 @@ def proponer_para_mensaje(store, evento: dict, expediente: dict | None, nombre_p
     """
     contacto = contacto if contacto is not None else wa_id
     intencion = evento["datos"]["interpretacion"]["intencion"]
-    nombre = (expediente["reserva"]["nombre"] if expediente else nombre_perfil) or ""
+    nombre = ((expediente["reserva"]["nombre"] if expediente else nombre_perfil) or "").strip()
     exp_id = expediente["id"] if expediente else None
     if intencion == "pregunta_checkin_horario":
         if canal == "correo":
