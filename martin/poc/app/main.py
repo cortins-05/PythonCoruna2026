@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from . import chat, disponibilidad, hub, lector, plantillas
 from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
-from .adapters.ocr import leer_documento
 from .deps import http_de
 from .store import Store
 from .validators import campos_que_faltan, problemas_huesped
@@ -20,7 +19,7 @@ store = Store()
 ESTATICO = Path(__file__).resolve().parent / "static"
 PLAZO_PARTE_H = 24
 HORA_AVISO = 20
-TRAMITES_MARCABLES = {"ofihotel_alta", "factura", "habitacion_liberada"}
+TRAMITES_MARCABLES = {"ofihotel_alta"}
 CAMPOS_HUESPED = ["nombre", "apellido1", "apellido2", "sexo", "fecha_nacimiento", "nacionalidad",
                   "tipo_documento", "numero_documento", "numero_soporte", "direccion", "localidad",
                   "codigo_postal", "pais", "telefono", "email"]
@@ -56,11 +55,6 @@ class PagoIn(BaseModel):
     empresa: EmpresaIn | None = None
 
 
-class OcrIn(BaseModel):
-    imagen_b64: str | None = None
-    tipo_mime: str = "image/png"
-
-
 class ActorIn(BaseModel):
     actor: str = "Recepción"
     nota: str = ""
@@ -71,7 +65,9 @@ class RelojIn(BaseModel):
 
 
 def requeridos(exp: dict) -> list[str]:
-    base = ["huesped", "pago", "parte", "ofihotel_alta", "factura", "habitacion_liberada"]
+    """Trámites que recepción hace en esta aplicación. El check-out, la factura y la liberación de la habitación se hacen
+    en OfiHotel, y el paso a OfiHotel se vigila aparte con el estado por sistema (ver estados.py)."""
+    base = ["huesped", "pago", "parte"]
     if exp["viaja_por_trabajo"]:
         base.insert(2, "empresa")
     return base
@@ -93,7 +89,7 @@ def hecho(exp: dict, tramite: str, actor: str, nota: str = "") -> None:
 
 def nuevo_expediente(r: dict) -> dict:
     notas = r["notas"].lower()
-    nombres = [t for t in ("huesped", "pago", "empresa", "parte", "ofihotel_alta", "factura", "habitacion_liberada")]
+    nombres = ["huesped", "pago", "empresa", "parte", "ofihotel_alta"]
     exp = {
         "id": f"{r['portal_id']}-{r['id_canal']}",
         "referencia": f"{r['portal_id']}-{r['id_canal']}",
@@ -167,24 +163,16 @@ app.mount("/static", StaticFiles(directory=ESTATICO), name="static")
 
 @app.get("/")
 def portada():
-    nueva = ESTATICO / "index.html"
-    return FileResponse(nueva if nueva.exists() else ESTATICO / "legacy.html")
-
-
-@app.get("/legacy")
-def interfaz_antigua():
-    return FileResponse(ESTATICO / "legacy.html")
+    return FileResponse(ESTATICO / "index.html")
 
 
 @app.get("/api/estado")
 def estado():
-    con_clave = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    modo_claude = "real" if con_clave else "simulado"
+    modo_llm = "real" if os.environ.get("OPENAI_API_KEY") else "simulado"
     return {"reloj": store.ahora().isoformat(timespec="minutes"),
-            "ocr": "en vivo" if con_clave else "simulado",
-            "ses": "simulado", "roomcloud": "XML grabado", "ofihotel": "copia asistida",
-            # Añadido por la interfaz nueva: el modo de cada integración, con los mismos ids que /api/integraciones.
-            "modos": {**hub.MODOS, "ocr": modo_claude, "lector": modo_claude, "chat": modo_claude}}
+            "ses": "simulado", "roomcloud": "XML grabado", "ofihotel": "lectura de ayer",
+            # El modo de cada integración, con los mismos ids que /api/integraciones.
+            "modos": {**hub.MODOS, "lector": modo_llm, "chat": modo_llm}}
 
 
 @app.post("/api/reiniciar")
@@ -241,7 +229,7 @@ def panel():
         "reloj": store.ahora().isoformat(timespec="minutes"),
         "llegadas_hoy": [resumen(e) for e in exps if e["checkin_prevista"] == hoy],
         "en_casa": [resumen(e) for e in exps if e["estado"] == "en_curso"],
-        "salidas_hoy": [resumen(e) for e in exps if e["checkout_prevista"] == hoy and e["estado"] != "cerrado"],
+        "salidas_hoy": [resumen(e) for e in exps if e["checkout_prevista"] == hoy],
         "partes": {"enviados": sum(e["tramites"]["parte"]["estado"] == "hecho" for e in exps),
                    "pendientes": sum(e["estado"] == "en_curso" and e["tramites"]["parte"]["estado"] != "hecho" for e in exps)},
         "alertas": alertas(),
@@ -257,15 +245,6 @@ def listar():
 def detalle(exp_id: str):
     exp = obtener(exp_id)
     return {**exp, "pendientes": pendientes(exp), "parte_restante_h": parte_restante_h(exp)}
-
-
-@app.post("/api/expedientes/{exp_id}/ocr")
-def ocr(exp_id: str, datos: OcrIn):
-    obtener(exp_id)
-    lectura = leer_documento(datos.imagen_b64, datos.tipo_mime)
-    lectura["problemas"] = problemas_huesped(lectura["campos"], store.ahora().date())
-    lectura["dudosos"] = [c for c, v in lectura["confianza"].items() if v < 0.85]
-    return lectura
 
 
 @app.put("/api/expedientes/{exp_id}/huesped")
@@ -342,23 +321,9 @@ def marcar(exp_id: str, tramite: str, datos: ActorIn):
         raise HTTPException(404, "Trámite no marcable a mano")
     if exp["estado"] != "en_curso":
         raise HTTPException(409, "El huésped no ha hecho el check-in")
-    if tramite == "factura" and exp["viaja_por_trabajo"] and exp["tramites"]["empresa"]["estado"] != "hecho":
-        raise HTTPException(409, "Faltan los datos fiscales de la empresa")
     hecho(exp, tramite, datos.actor, datos.nota)
     store.guardar()
     return {"ok": True, "pendientes": pendientes(exp)}
-
-
-@app.post("/api/expedientes/{exp_id}/cerrar")
-def cerrar(exp_id: str, datos: ActorIn):
-    exp = obtener(exp_id)
-    falta = pendientes(exp)
-    if falta:
-        raise HTTPException(409, {"pendientes": falta})
-    exp["estado"] = "cerrado"
-    anotar(exp, "Expediente cerrado", datos.actor)
-    store.guardar()
-    return {"ok": True}
 
 
 # ---------------------------------------------------------------- hub: ocupación, WhatsApp, aprobaciones

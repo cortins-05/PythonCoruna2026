@@ -13,7 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import documentos, hub, main  # noqa: E402
 from app.adapters import correo  # noqa: E402
-from app.store import Store  # noqa: E402
+from app.store import Store
+from app.routers.demo import HUESPED_ANA  # noqa: E402  # noqa: E402
 
 ANA, MARCOS, CLAIRE = "1-BK-4471920", "0-WEB-90112", "2-EX-7730021"
 AHORA = datetime(2026, 10, 24, 9, 0)
@@ -23,7 +24,7 @@ AHORA = datetime(2026, 10, 24, 9, 0)
 def cliente(tmp_path, monkeypatch):
     """Solo las reservas de RoomCloud, sin check-ins, mensajes ni documentos."""
     monkeypatch.setattr(main, "store", Store(tmp_path / "db.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     c = TestClient(main.app)
     c.post("/api/demo/semilla", params={"nivel": "basica"})
     return c
@@ -32,7 +33,7 @@ def cliente(tmp_path, monkeypatch):
 @pytest.fixture()
 def completa(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "store", Store(tmp_path / "db.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     c = TestClient(main.app)
     c.post("/api/demo/semilla", params={"nivel": "completa"})
     return c
@@ -40,8 +41,7 @@ def completa(tmp_path, monkeypatch):
 
 def tras_el_checkin_de(c, exp_id: str, email: str = "huesped@example.com") -> None:
     """Deja al huésped con el check-in hecho y el correo que se indique."""
-    lectura = c.post(f"/api/expedientes/{exp_id}/ocr", json={}).json()["campos"]
-    assert c.put(f"/api/expedientes/{exp_id}/huesped", json={**lectura, "telefono": "+34600000000", "email": email}).status_code == 200
+    assert c.put(f"/api/expedientes/{exp_id}/huesped", json={**HUESPED_ANA, "telefono": "+34600000000", "email": email}).status_code == 200
 
 
 # ================================================================ correo con la forma de Gmail

@@ -19,9 +19,8 @@ ORIGENES = {"roomcloud": "RoomCloud", "walk-in": "Reserva física"}
 ESTADOS_EXPEDIENTE = {"pendiente_llegada": ("pendiente de llegada", "aviso"), "en_curso": ("en casa", "ok"),
                       "cerrado": ("cerrada", "neutro"), "cancelada": ("cancelada", "critico")}
 MAX_TARJETAS = 5
-PASOS = [("huesped", "Documento y datos", "documento"), ("pago", "Pago", "pago"), ("empresa", "Datos de la empresa", "pago"),
-         ("parte", "Parte de viajeros", "parte"), ("ofihotel_alta", "Alta en OfiHotel", "ofihotel"),
-         ("factura", "Factura", "checkout"), ("habitacion_liberada", "Habitación liberada", "checkout")]
+PASOS = [("huesped", "Datos del huésped", "documento"), ("pago", "Pago", "pago"), ("empresa", "Datos de la empresa", "pago"),
+         ("parte", "Parte de viajeros", "parte"), ("ofihotel_alta", "Alta en OfiHotel", "ofihotel")]
 
 # El orden importa: gana el primer tema que encaje, de lo más concreto a lo más general.
 TEMAS = [
@@ -137,7 +136,7 @@ def _detalle_paso(store, exp: dict, paso: str) -> str:
     hecho = exp["tramites"][paso]["estado"] == "hecho"
     h, pago = exp["huesped"], exp["pago"]
     if paso == "huesped":
-        return f"{h['tipo_documento']} {h['numero_documento']}" if hecho else "Leer el documento y confirmar los datos"
+        return f"{h['tipo_documento']} {h['numero_documento']}" if hecho else "Teclear los datos del huésped"
     if paso == "pago":
         return pago.get("medio", "") if hecho else "Elegir el medio de pago"
     if paso == "empresa":
@@ -149,20 +148,14 @@ def _detalle_paso(store, exp: dict, paso: str) -> str:
         return f"Quedan {restante} h para enviarlo" if restante is not None else "Se envía después del check-in"
     if paso == "ofihotel_alta":
         return "Datos copiados a OfiHotel" if hecho else "Copiar los datos a OfiHotel"
-    if paso == "factura":
-        doc = _documento_vigente(store, exp["id"], "factura")
-        if doc and doc["numero"]:
-            return f"{documentos.rotulo(doc)}, {documentos.estado_texto(doc)} (sin validez fiscal)"
-        return "Factura hecha" if hecho else "Emitir o marcar la factura"
-    return "Habitación liberada" if hecho else "Liberar la habitación al salir"
+    return ""
 
 
 def bloque_flujo(store, exp: dict) -> dict:
     """Pasos de la estancia. El primero pendiente y sin bloqueo es el actual; un paso bloqueado espera a otro."""
     t = exp["tramites"]
     bloqueos = {"parte": t["huesped"]["estado"] != "hecho" or t["pago"]["estado"] != "hecho",
-                "ofihotel_alta": t["huesped"]["estado"] != "hecho",
-                "factura": exp["viaja_por_trabajo"] and t["empresa"]["estado"] != "hecho"}
+                "ofihotel_alta": t["huesped"]["estado"] != "hecho"}
     hay_actual, pasos = False, []
     for paso, titulo, ruta in PASOS:
         if paso == "empresa" and not exp["viaja_por_trabajo"]:

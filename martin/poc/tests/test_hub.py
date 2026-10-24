@@ -18,7 +18,7 @@ TEL_ANA = "34600111222"
 @pytest.fixture()
 def cliente(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "store", Store(tmp_path / "db.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     c = TestClient(main.app)
     c.post("/api/sync/roomcloud")
     return c

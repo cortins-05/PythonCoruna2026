@@ -486,7 +486,8 @@ async def esperar_estado(base: str, proceso: subprocess.Popen | None, registro: 
 async def arrancar_servidor(tmp: Path, limpieza: Limpieza, informe: Informe) -> str:
     """Lanza uvicorn desde martin/poc en un puerto libre con HOTEL_DB apuntando a un JSON temporal propio, y reintenta si otro proceso le roba el puerto."""
     entorno = dict(os.environ)
-    entorno.pop("ANTHROPIC_API_KEY", None)  # sin clave el OCR y el chat son deterministas, gratuitos y no salen a Internet
+    for clave in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"):  # sin clave el chat y el lector son deterministas, gratuitos y no salen a Internet
+        entorno.pop(clave, None)
     entorno.update({"HOTEL_DB": str(tmp / "db.json"), "DEMO_START": FECHA_DEMO, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8",
                     "PYTHONUNBUFFERED": "1"})
     registro = tmp / "servidor.log"

@@ -135,7 +135,7 @@ def test_cada_motivo_de_revision_se_explica_en_castellano():
     ("Gracias", "otro"),
 ])
 def test_el_lector_por_reglas_reconoce_cada_intencion(texto, intencion, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     resultado = lector.interpretar(texto)
     assert resultado["intencion"] == intencion and resultado["modo"] == "reglas", texto
 
@@ -152,12 +152,12 @@ def test_el_lector_por_reglas_reconoce_cada_intencion(texto, intencion, monkeypa
     ("Quiero cambiar la fecha y pedir factura", "solicita_cambio_fechas"),
 ])
 def test_prioridad_entre_intenciones(texto, intencion, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     assert lector.interpretar(texto)["intencion"] == intencion, texto
 
 
 def test_una_palabra_dentro_de_otra_no_dispara_la_regla(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     assert lector.interpretar("Visitamos la manufactura de Ourense")["intencion"] != "solicita_factura"
 
 

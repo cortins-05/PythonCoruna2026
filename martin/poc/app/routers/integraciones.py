@@ -1,6 +1,6 @@
 """Integraciones: qué está conectado, qué es simulado y qué límites tiene cada pieza.
 
-Versión de la base en la que el modo de cada integración sale de `hub.MODOS` y de la variable `ANTHROPIC_API_KEY`, igual que en
+Versión de la base en la que el modo de cada integración sale de `hub.MODOS` y de la variable `OPENAI_API_KEY`, igual que en
 `/api/estado`, y en la que el agente back-hoy puede afinar los textos y los estados sin cambiar la forma de la respuesta.
 """
 import os
@@ -32,8 +32,8 @@ def _integracion(id_: str, nombre: str, tipo: str, modo: str, estado: str, resum
 
 
 def calcular(store) -> dict:
-    con_clave = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    modo_claude = "real" if con_clave else "simulado"
+    con_clave = bool(os.environ.get("OPENAI_API_KEY"))
+    modo_llm = "real" if con_clave else "simulado"
     sync_roomcloud = _ultima(store, "roomcloud", EVENTOS_ROOMCLOUD)
     sync_ofihotel = _ultima(store, "ofihotel", {"instantanea_lectura"})
     entrantes = [m for m in (_ultima(store, canal, {"mensaje_entrante"}) for canal in ("whatsapp", "correo")) if m]
@@ -81,28 +81,21 @@ def calcular(store) -> dict:
              "El envío es simulado y el justificante empieza por SIM-",
              "El servicio real exige credenciales técnicas propias del hotel"]),
         _integracion(
-            "ocr", "Lectura de documentos", "OCR con Claude vision", modo_claude, "ok",
-            "Lee el documento con Claude, camino sin probar con la API real" if con_clave else "Devuelve un documento de muestra",
-            None,
-            ["Leer DNI, NIE y pasaporte", "Marcar los campos dudosos para que recepción los revise"],
-            ["La imagen solo se usa para leer el documento y no se guarda",
-             "Sin ANTHROPIC_API_KEY devuelve siempre la misma muestra"]),
-        _integracion(
-            "lector", "Lector de mensajes", "Clasificador de intenciones", modo_claude, "ok",
-            "Clasifica con Claude, sin herramientas" if con_clave
+            "lector", "Lector de mensajes", "Clasificador de intenciones", modo_llm, "ok",
+            "Clasifica con un modelo de OpenAI, sin herramientas" if con_clave
             else "Clasifica con reglas de palabras clave en español, inglés y francés",
             max(entrantes) if entrantes else None,
             ["Clasificar cada mensaje en una intención de una lista cerrada", "Detectar las peticiones de factura y de albarán"],
             ["No tiene herramientas ni toca expedientes: solo devuelve una intención",
              "Con reglas solo acierta con las palabras clave previstas"]),
         _integracion(
-            "chat", "Asistente", "Chat con la información del hotel", modo_claude, "ok",
-            "Responde con Claude y herramientas de lectura" if con_clave else "Responde con reglas fijas y lo indica en pantalla",
+            "chat", "Asistente", "Chat con la información del hotel", modo_llm, "ok",
+            "Responde con OpenAI y herramientas de lectura" if con_clave else "Responde con reglas fijas y lo indica en pantalla",
             None,
             ["Responder sobre llegadas, ocupación, partes, mensajes y documentos", "Mostrar bloques con datos reales del hotel",
              "Proponer acciones con plantillas, siempre pendientes de aprobación"],
             ["Solo puede leer y proponer: nada se ejecuta sin que recepción lo apruebe",
-             "Sin ANTHROPIC_API_KEY solo contesta a las preguntas que reconocen sus reglas"]),
+             "Sin OPENAI_API_KEY solo contesta a las preguntas que reconocen sus reglas"]),
     ]
     return {"reloj": store.ahora().isoformat(timespec="minutes"), "integraciones": integraciones,
             "avisos_globales": ["Todo lo marcado como simulado no sale de este equipo.",

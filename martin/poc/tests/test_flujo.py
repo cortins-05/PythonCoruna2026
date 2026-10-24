@@ -8,7 +8,8 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import main  # noqa: E402
-from app.adapters import ocr, roomcloud  # noqa: E402
+from app.adapters import roomcloud  # noqa: E402
+from app.routers.demo import HUESPED_ANA  # noqa: E402
 from app.store import Store  # noqa: E402
 from app.validators import validar_documento  # noqa: E402
 
@@ -18,15 +19,14 @@ ANA = "1-BK-4471920"
 @pytest.fixture()
 def cliente(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "store", Store(tmp_path / "db.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     c = TestClient(main.app)
     c.post("/api/sync/roomcloud")
     return c
 
 
-def datos_ana(c):
-    lectura = c.post(f"/api/expedientes/{ANA}/ocr", json={}).json()
-    return {**lectura["campos"], "telefono": "+34600111222", "email": "ana.pereira@example.com"}
+def datos_ana(**cambios):
+    return {**HUESPED_ANA, **cambios}
 
 
 def test_documento_letra_de_control():
@@ -52,34 +52,28 @@ def test_sync_es_idempotente_y_no_guarda_tarjetas(cliente):
     assert len(cliente.get("/api/expedientes").json()) == 3  # la cancelada no crea expediente
 
 
-def test_ocr_simulado_marca_dudosos(cliente):
-    lectura = cliente.post(f"/api/expedientes/{ANA}/ocr", json={}).json()
-    assert lectura["modo"] == "simulado"
-    assert "apellido2" in lectura["dudosos"]
-
-
-def test_extraer_json_tolera_texto_alrededor():
-    bruto = 'Aquí tienes: {"campos": {"nombre": "Ana"}, "confianza": {"nombre": 0.9}} Listo.'
-    limpio = ocr.extraer_json(bruto)
-    assert limpio["campos"]["nombre"] == "Ana" and limpio["campos"]["apellido1"] == ""
+def test_la_aplicacion_ya_no_tiene_ocr_ni_check_out(cliente):
+    assert cliente.post(f"/api/expedientes/{ANA}/ocr", json={}).status_code in (404, 405)
+    assert cliente.post(f"/api/expedientes/{ANA}/cerrar", json={}).status_code in (404, 405)
+    assert cliente.post(f"/api/expedientes/{ANA}/tramites/factura", json={}).status_code == 404
+    assert cliente.post(f"/api/expedientes/{ANA}/tramites/habitacion_liberada", json={}).status_code == 404
+    assert main.requeridos(main.store.db["expedientes"][ANA]) == ["huesped", "pago", "empresa", "parte"]
 
 
 def test_letra_mala_bloquea_el_guardado(cliente):
-    datos = datos_ana(cliente)
-    datos["numero_documento"] = "12345678A"
-    r = cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos)
+    r = cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana(numero_documento="12345678A"))
     assert r.status_code == 422
 
 
 def test_viaje_de_trabajo_exige_empresa_antes_de_seguir(cliente):
-    cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana(cliente))
+    cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana())
     r = cliente.put(f"/api/expedientes/{ANA}/pago", json={"medio": "tarjeta"})
     assert r.status_code == 422
     assert cliente.get(f"/api/expedientes/{ANA}").json()["tramites"]["pago"]["estado"] == "pendiente"
 
 
-def test_flujo_completo_y_cierre_bloqueado_hasta_que_todo_este_hecho(cliente):
-    assert cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana(cliente)).status_code == 200
+def test_flujo_completo_hasta_el_parte_y_el_paso_a_ofihotel(cliente):
+    assert cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana()).status_code == 200
     pago = {"medio": "tarjeta", "empresa": {"razon_social": "Atlántico Consultores SL", "cif": "B15000000", "direccion": "Rúa Real 1, A Coruña"}}
     assert cliente.put(f"/api/expedientes/{ANA}/pago", json=pago).status_code == 200
 
@@ -90,34 +84,28 @@ def test_flujo_completo_y_cierre_bloqueado_hasta_que_todo_este_hecho(cliente):
     assert enviado["simulado"] is True and enviado["justificante"].startswith("SIM-")
     assert cliente.post(f"/api/expedientes/{ANA}/parte/confirmar", json={}).status_code == 409
 
-    cierre = cliente.post(f"/api/expedientes/{ANA}/cerrar", json={})
-    assert cierre.status_code == 409
-    assert set(cierre.json()["detail"]["pendientes"]) == {"ofihotel_alta", "factura", "habitacion_liberada"}
-
-    for tramite in ["ofihotel_alta", "factura", "habitacion_liberada"]:
-        assert cliente.post(f"/api/expedientes/{ANA}/tramites/{tramite}", json={"actor": "Flor"}).status_code == 200
-    assert cliente.post(f"/api/expedientes/{ANA}/cerrar", json={}).status_code == 200
-    assert cliente.get(f"/api/expedientes/{ANA}").json()["estado"] == "cerrado"
+    detalle = cliente.get(f"/api/expedientes/{ANA}").json()
+    assert detalle["pendientes"] == []  # lo que se hace aquí está hecho: el check-out y la factura son de OfiHotel
+    assert detalle["tramites"]["ofihotel_alta"]["estado"] == "pendiente"
+    assert cliente.post(f"/api/expedientes/{ANA}/tramites/ofihotel_alta", json={"actor": "Flor"}).status_code == 200
+    assert cliente.get(f"/api/expedientes/{ANA}").json()["tramites"]["ofihotel_alta"]["estado"] == "hecho"
 
 
 def test_parte_sin_medio_de_pago_no_se_puede_confirmar(cliente):
     otro = "0-WEB-90112"
-    datos = {**datos_ana(cliente), "nombre": "Marcos", "apellido1": "Vilas", "apellido2": ""}
-    assert cliente.put(f"/api/expedientes/{otro}/huesped", json=datos).status_code == 200
+    assert cliente.put(f"/api/expedientes/{otro}/huesped", json=datos_ana(nombre="Marcos", apellido1="Vilas", apellido2="")).status_code == 200
     main.store.db["expedientes"][otro]["pago"]["medio"] = ""  # la reserva traía un medio de pago, aquí lo quitamos
     r = cliente.post(f"/api/expedientes/{otro}/parte/confirmar", json={})
     assert r.status_code == 409 and "Medio de pago" in r.json()["detail"]["faltan"]
 
 
 def test_alerta_de_parte_fuera_de_plazo_con_el_reloj(cliente):
-    cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana(cliente))
+    cliente.put(f"/api/expedientes/{ANA}/huesped", json=datos_ana())
     assert cliente.get("/api/panel").json()["alertas"] == []
     cliente.post("/api/reloj", json={"horas": 12})  # 21:00, pasadas las 20 h
-    niveles = [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]
-    assert niveles == ["aviso"]
+    assert [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]] == ["aviso"]
     cliente.post("/api/reloj", json={"horas": 6})  # 03:00, el aviso no puede desaparecer de madrugada
     niveles = [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]
     assert "aviso" in niveles and "critico" not in niveles
     cliente.post("/api/reloj", json={"horas": 7})  # 34 h después del check-in
-    niveles = [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]
-    assert "critico" in niveles
+    assert "critico" in [a["nivel"] for a in cliente.get("/api/panel").json()["alertas"]]

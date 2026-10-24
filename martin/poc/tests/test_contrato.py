@@ -87,7 +87,7 @@ HOY = {"reloj": str, "kpis": [KPI],
        "llegadas": [RESUMEN_EXPEDIENTE], "salidas": [RESUMEN_EXPEDIENTE],
        "proximas_acciones": [{"texto": str, "ruta": SECCIONES, "params": dict}],
        "insignias": {"bandeja": int, "mensajes": int, "recepcion": int, "documentos": int}}
-INTEGRACION = {"id": {"roomcloud", "ofihotel", "whatsapp", "correo", "ses", "ocr", "lector", "chat"}, "nombre": str, "tipo": str,
+INTEGRACION = {"id": {"roomcloud", "ofihotel", "whatsapp", "correo", "ses", "lector", "chat"}, "nombre": str, "tipo": str,
                "modo": {"simulado", "real", "supuesto"}, "estado": {"ok", "aviso", "error", "desconectado"}, "resumen": str,
                "ultima_sync": (str, None), "capacidades": [str], "limites": [str],
                "acciones": [{"id": str, "etiqueta": str, "metodo": {"GET", "POST"}, "ruta": str}]}
@@ -116,8 +116,8 @@ DOCUMENTOS = {"documentos": [{"id": str, "tipo": {"factura", "albaran"}, "estado
                               "enviado": bool, "fiscal": bool, "origen": {"generado", "subido"}}]}
 SUGERENCIAS = {"categorias": [{"id": str, "titulo": str, "icono": str, "preguntas": [str]}],
                "flujos": [{"id": str, "titulo": str, "descripcion": str, "icono": str, "pregunta": str}]}
-ESTADO = {"reloj": str, "ocr": str, "ses": str, "roomcloud": str, "ofihotel": str,
-          "modos": {"roomcloud": str, "ofihotel": str, "whatsapp": str, "correo": str, "ses": str, "ocr": str, "lector": str, "chat": str}}
+ESTADO = {"reloj": str, "ses": str, "roomcloud": str, "ofihotel": str,
+          "modos": {"roomcloud": str, "ofihotel": str, "whatsapp": str, "correo": str, "ses": str, "lector": str, "chat": str}}
 
 ACCION_BASE = {"tipo": str, "etiqueta": str}
 CHIP = {"texto": str, "tono": TONO_BLOQUE}
@@ -179,7 +179,7 @@ def comprobar_bloque(bloque: dict):
 @pytest.fixture()
 def cliente(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "store", Store(tmp_path / "db.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     c = TestClient(main.app)
     c.post("/api/demo/semilla", params={"nivel": "completa"})
     return c
@@ -211,22 +211,22 @@ def test_hoy_tiene_la_forma_del_contrato_y_cuadra_con_el_almacen(cliente):
     assert {x["id"] for x in datos["llegadas"]} == {ANA, MARCOS, CLAIRE}
 
 
-def test_integraciones_tiene_las_ocho_con_su_modo(cliente):
+def test_integraciones_tiene_las_siete_con_su_modo(cliente):
     datos = ver(cliente, "/api/integraciones")
     exigir(INTEGRACIONES, datos)
     por_id = {i["id"]: i for i in datos["integraciones"]}
-    assert list(por_id) == ["roomcloud", "ofihotel", "whatsapp", "correo", "ses", "ocr", "lector", "chat"]
+    assert list(por_id) == ["roomcloud", "ofihotel", "whatsapp", "correo", "ses", "lector", "chat"]
     assert {i: por_id[i]["modo"] for i in por_id} == {"roomcloud": "simulado", "ofihotel": "supuesto", "whatsapp": "simulado", "correo": "simulado",
-                                                       "ses": "simulado", "ocr": "simulado", "lector": "simulado", "chat": "simulado"}
-    assert por_id["roomcloud"]["ultima_sync"] == "2026-10-24T09:00" and por_id["ocr"]["ultima_sync"] is None
+                                                       "ses": "simulado", "lector": "simulado", "chat": "simulado"}
+    assert por_id["roomcloud"]["ultima_sync"] == "2026-10-24T09:00" and por_id["chat"]["ultima_sync"] is None
     assert all(i["capacidades"] and i["limites"] for i in por_id.values())
 
 
-def test_integraciones_con_clave_marca_ocr_lector_y_chat_como_reales(cliente, monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "clave-de-prueba")
+def test_integraciones_con_clave_marca_lector_y_chat_como_reales(cliente, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "clave-de-prueba")
     por_id = {i["id"]: i for i in ver(cliente, "/api/integraciones")["integraciones"]}
-    assert {por_id[i]["modo"] for i in ("ocr", "lector", "chat")} == {"real"}
-    assert ver(cliente, "/api/estado")["modos"]["ocr"] == "real"
+    assert {por_id[i]["modo"] for i in ("lector", "chat")} == {"real"}
+    assert ver(cliente, "/api/estado")["modos"]["chat"] == "real"
 
 
 def test_integraciones_sin_datos_avisa_de_que_no_se_ha_leido_nada(tmp_path, monkeypatch):
@@ -522,7 +522,7 @@ def test_ninguna_respuesta_de_la_api_contiene_los_numeros_de_tarjeta(cliente):
 
 def test_con_el_almacen_vacio_todo_responde_con_su_forma(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "store", Store(tmp_path / "vacio.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     c = TestClient(main.app)
     hoy = ver(c, "/api/hoy")
     exigir(HOY, hoy)

@@ -20,7 +20,7 @@ CLAVES_NUEVAS = {"documentos": {}, "outbox": [], "series": {"factura": 0, "albar
 @pytest.fixture()
 def cliente(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "store", Store(tmp_path / "db.json"))
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     return TestClient(main.app)
 
 

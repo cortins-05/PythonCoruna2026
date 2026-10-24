@@ -11,7 +11,6 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 
 from .. import documentos
-from ..adapters.ocr import leer_documento
 from ..deps import get_store
 from ..store import INICIO_DEMO
 
@@ -26,6 +25,12 @@ TELEFONO_ANA = "34600111222"
 CORREO_CLAIRE = "claire.dubois@example.com"
 EMPRESA_ANA = {"razon_social": "Atlántico Consultores SL", "cif": "B15000000", "direccion": "Rúa Real 1, A Coruña",
                "email": "facturas@atlantico.example"}
+HUESPED_ANA = {
+    "nombre": "Ana", "apellido1": "Pereira", "apellido2": "Lage", "sexo": "M", "fecha_nacimiento": "1988-04-17",
+    "nacionalidad": "ESP", "tipo_documento": "NIF", "numero_documento": "12345678Z", "numero_soporte": "BAB123456",
+    "direccion": "Rúa do Orzán 12, 3º B", "localidad": "A Coruña", "codigo_postal": "15003", "pais": "ESP",
+    "telefono": "+34600111222", "email": "ana.pereira@example.com",
+}
 HUESPED_MARCOS = {
     "nombre": "Marcos", "apellido1": "Vilas", "apellido2": "Souto", "sexo": "H", "fecha_nacimiento": "1990-03-12",
     "nacionalidad": "ESP", "tipo_documento": "NIF", "numero_documento": "87654321X", "numero_soporte": "CAA654321",
@@ -50,9 +55,7 @@ def _leer_reservas(principal) -> None:
 
 
 def _checkin_de_ana(principal) -> None:
-    lectura = leer_documento(None)  # sin imagen devuelve siempre el documento de muestra, haya clave o no
-    huesped = principal.HuespedIn(**{**lectura["campos"], "telefono": "+34600111222", "email": "ana.pereira@example.com"})
-    principal.guardar_huesped(ANA, huesped)
+    principal.guardar_huesped(ANA, principal.HuespedIn(**HUESPED_ANA))
     principal.guardar_pago(ANA, principal.PagoIn(medio="tarjeta", empresa=principal.EmpresaIn(**EMPRESA_ANA)))
     principal.confirmar_parte(ANA, principal.ActorIn(actor="Flor"))
 

@@ -133,8 +133,6 @@ function construirLateral() {
       { texto: "Tema claro", icono: "sun", onclick: () => aplicarTema("claro") },
       { texto: "Tema oscuro", icono: "moon", onclick: () => aplicarTema("oscuro") },
       { texto: "Tema del sistema", icono: "panel-left", onclick: () => aplicarTema("auto") },
-      { separador: true },
-      { texto: "Interfaz antigua", icono: "external-link", onclick: () => { location.href = "/legacy"; } },
     ],
   });
   botonUsuario.addEventListener("click", () => menuUsuario.alternar());
