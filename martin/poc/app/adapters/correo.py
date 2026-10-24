@@ -144,7 +144,7 @@ def ejecutar(store, propuesta: dict, actor: str):
     if plantilla == "enviar_documento":
         from .. import documentos  # import perezoso: documentos importa este módulo
         return documentos.ejecutar(store, propuesta, actor)
-    if plantilla == "correo_info_llegada":
+    if plantilla in ("correo_info_llegada", "mensaje_correo"):
         return enviar_simulado(store, propuesta["slots"]["destinatario"], plantillas.asunto(plantilla), propuesta["texto"],
                                expediente_id=propuesta.get("expediente_id"),
                                datos={"plantilla": plantilla, "aprobado_por": actor})

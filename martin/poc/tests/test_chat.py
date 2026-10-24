@@ -29,6 +29,16 @@ def tipos(r):
     return [b["tipo"] for b in r["bloques"]]
 
 
+def test_aprobar_un_mensaje_redactado_por_el_asistente_lo_envia_simulado(cliente):
+    r = chat.ejecutar(main.store, "redactar_mensaje", {"consulta": "Claire Dubois", "canal": "correo", "texto": "Hola Claire, revisamos las fechas de tu reserva."})
+    assert r["estado"].startswith("pendiente")
+    ok = cliente.post(f"/api/propuestas/{r['propuesta']}/aprobar", json={"actor": "Flor"})
+    assert ok.status_code == 200, ok.text
+    assert [m["para"] for m in main.store.db["outbox"]] == ["claire.dubois@example.com"]
+    w = chat.ejecutar(main.store, "redactar_mensaje", {"consulta": "Ana Pereira", "canal": "whatsapp", "texto": "Hola Ana, tu habitación está lista."})
+    assert cliente.post(f"/api/propuestas/{w['propuesta']}/aprobar", json={"actor": "Flor"}).status_code == 200
+
+
 def eventos_sse(texto):
     salida = []
     for trozo in texto.strip().split("\n\n"):
