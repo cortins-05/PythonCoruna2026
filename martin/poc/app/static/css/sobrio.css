@@ -1,0 +1,22 @@
+/*
+  Capa sobria, se carga la última: casi todo en gris y negro. Solo lo que es un problema (tono critico) conserva color de fondo,
+  y el resto de estados se lee por el texto y por un punto pequeño. Un solo acento (el amarillo de la acción principal).
+*/
+.ui-chip--ok, .ui-chip--aviso, .ui-chip--info, .ui-chip--neutro, .ui-chip--naranja {
+  background: transparent; border-color: transparent; color: var(--c-texto-2); padding-inline: 0;
+}
+.ui-chip--ok .ui-chip__punto, .ui-chip--aviso .ui-chip__punto, .ui-chip--info .ui-chip__punto,
+.ui-chip--neutro .ui-chip__punto, .ui-chip--naranja .ui-chip__punto { width: 6px; height: 6px; }
+.ui-chip--ok .ui-chip__punto { background: var(--c-texto-3); }
+.ui-chip--info .ui-chip__punto, .ui-chip--neutro .ui-chip__punto { background: var(--c-borde-control); }
+
+.ui-insignia, .ui-insignia--aviso, .ui-insignia--acento {
+  background: var(--c-surface-3); color: var(--c-texto-2); border-color: transparent;
+}
+
+.escalera__grupo--firme, .escalera__grupo--firme .escalera__cabecera { background: var(--c-surface); border-color: var(--c-borde); }
+.escalera__cabecera { background: var(--c-surface); }
+.escalera__fila.is-resaltada { background: var(--c-surface-3); }
+.escalera__numero, .pastilla-nivel__n { background: transparent; color: var(--c-texto); border: 1px solid var(--c-borde-fuerte); }
+
+.ui-panel, .ui-tarjeta { box-shadow: none; }
