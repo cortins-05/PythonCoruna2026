@@ -5,3 +5,6 @@ lxml
 pytest
 httpx
 pillow
+fpdf2
+jinja2
+websockets
