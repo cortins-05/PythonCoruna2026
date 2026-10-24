@@ -1,0 +1,32 @@
+{
+  "campos": {
+    "nombre": "Ana",
+    "apellido1": "Pereira",
+    "apellido2": "Lage",
+    "sexo": "M",
+    "fecha_nacimiento": "1988-04-17",
+    "nacionalidad": "ESP",
+    "tipo_documento": "NIF",
+    "numero_documento": "12345678Z",
+    "numero_soporte": "BAB123456",
+    "direccion": "Rúa do Orzán 12, 3º B",
+    "localidad": "A Coruña",
+    "codigo_postal": "15003",
+    "pais": "ESP"
+  },
+  "confianza": {
+    "nombre": 0.99,
+    "apellido1": 0.98,
+    "apellido2": 0.62,
+    "sexo": 0.99,
+    "fecha_nacimiento": 0.97,
+    "nacionalidad": 0.95,
+    "tipo_documento": 0.99,
+    "numero_documento": 0.96,
+    "numero_soporte": 0.70,
+    "direccion": 0.81,
+    "localidad": 0.93,
+    "codigo_postal": 0.90,
+    "pais": 0.95
+  }
+}
