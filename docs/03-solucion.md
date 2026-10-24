@@ -177,6 +177,51 @@ check-in online ya integradas con OfiHotel, como **Civitfun**. La firma con vali
 
 ---
 
+## Rama C: sustituir OfiHotel por una app propia
+
+> Decisión del equipo del 24 de octubre de 2026. Detalle y fuentes en `05-funciones-a-clonar.md`.
+> Cambia el planteamiento de las fases 0 a 2: ya no se busca activar módulos de Ofimática
+> ni construir un puente, sino reemplazar el PMS.
+
+**Qué cambia:**
+
+- Desaparecen el problema 1 (OfiHotel sin API), la dependencia de Ofimática y el riesgo de
+  duplicar OfiChannel.
+- Aparecen la facturación y Verifactu, el RGPD de los documentos guardados, la migración de
+  datos y el cambio de PMS en un hotel que no puede parar (problema 17).
+
+**El principio rector sigue, con otro sentido:** construir el núcleo y **delegar lo regulado**.
+
+| Se construye | Se delega |
+|---|---|
+| Reservas y disponibilidad | Facturación: proveedor Verifactu certificado con API |
+| Sincronización con RoomCloud | Pagos con tarjeta: Redsys o similar, sin tocar datos de tarjeta |
+| Check-in digital con firma táctil | |
+| Parte a SES.Hospedajes con alerta de 24 h | |
+| Check-out en una acción | |
+| Vista diaria de llegadas, salidas y ocupación | |
+
+**Reglas de la rama B que se mantienen:** descartar `ccData` al parsear, idempotencia por
+`portalId` + `id` + `dlm`, un solo consumidor del cursor `useDLM`, desarrollo contra
+`apitest.roomcloud.net`, modo simulación al principio, avisos a una persona si algo falla,
+logs sin datos personales, documentación para que otra persona pueda mantenerlo, y proceso
+manual siempre posible.
+
+**Migración sin parar el hotel:** funcionar en paralelo con OfiHotel durante un periodo
+(la app propia en modo lectura o simulación) y cortar solo cuando los resultados coincidan
+varios días seguidos. Con vuelta atrás. *Cómo se extraen los datos históricos de OfiHotel
+sin tocar su SQL Server está sin resolver.*
+
+**Por verificar antes de construir, por orden:**
+
+1. El calendario de Verifactu en el BOE.
+2. Si el hotel comunica a SES.Hospedajes o a los Mossos d'Esquadra.
+3. Cómo da de alta RoomCloud un PMS propio y qué permisos concede.
+4. Un proveedor de facturación Verifactu con API y declaración responsable por escrito.
+5. Una revisión específica del RGPD.
+
+---
+
 ## Criterios de éxito
 
 Comparados con la línea base de la fase 0:
