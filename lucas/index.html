@@ -16,30 +16,32 @@
    Tinta azul marino para el problema, latón de recepción para la acción,
    blanco de folio para la solución. Cambia las variables para cambiar todo.
    =========================================== */
+@font-face { font-family: "Manrope"; font-weight: 400 700; font-display: swap; src: url("../martin/poc/app/static/fonts/manrope-latin.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 500 800; font-display: swap; src: url("../martin/poc/app/static/fonts/fraunces-latin.woff2") format("woff2"); }
 :root {
-  --tinta: #0E1B33;
-  --tinta-2: #17294B;
+  --tinta: #0E0F10;
+  --tinta-2: #1B1C1E;
   --tinta-3: #22386300;
   --linea: rgba(255, 255, 255, 0.16);
   --linea-fuerte: rgba(255, 255, 255, 0.34);
-  --folio: #F3F5F9;
+  --folio: #F5F5F3;
   --folio-2: #FFFFFF;
-  --texto: #F3F5F9;
-  --texto-2: #B4C0D8;
-  --texto-oscuro: #0E1B33;
-  --texto-oscuro-2: #4A5878;
-  --laton: #F2B632;
-  --laton-fuerte: #FFC845;
-  --boli: #7FA2FF;
-  --boli-oscuro: #2B4FD0;
+  --texto: #F5F5F3;
+  --texto-2: #B5B5B1;
+  --texto-oscuro: #111111;
+  --texto-oscuro-2: #565652;
+  --laton: #FFD21F;
+  --laton-fuerte: #FFE055;
+  --boli: #6F95F7;
+  --boli-oscuro: #2860F0;
   --rojo: #FF6B5B;
   --rojo-oscuro: #B3261E;
   --verde: #1C8A5B;
   --menta: #CDEFDD;
   --menta-borde: #8FD0AE;
 
-  --f-titulo: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --f-texto: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-titulo: "Fraunces", Georgia, serif;
+  --f-texto: "Manrope", "Segoe UI", system-ui, sans-serif;
   --f-mano: "Caveat", "Segoe Print", "Bradley Hand", cursive;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -75,7 +77,7 @@ img, video, canvas, svg { max-width: 100%; max-height: 100%; }
 .slide { color: var(--texto); font-family: var(--f-texto); font-size: 34px; line-height: 1.4; padding: 96px 120px; display: flex; flex-direction: column; justify-content: center; gap: 44px; }
 .slide::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1.5px, transparent 2px) 0 0 / 28px 28px; pointer-events: none; }
 .slide > * { position: relative; }
-h1, h2, h3 { font-family: var(--f-titulo); font-weight: 800; letter-spacing: -0.012em; line-height: 1.02; }
+h1, h2, h3 { font-family: var(--f-titulo); font-weight: 600; letter-spacing: -0.012em; line-height: 1.02; }
 h1 { font-size: 132px; }
 h2 { font-size: 92px; max-width: 1680px; }
 h3 { font-size: 44px; line-height: 1.1; letter-spacing: -0.015em; font-weight: 700; }
