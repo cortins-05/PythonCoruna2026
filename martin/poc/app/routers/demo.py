@@ -1,11 +1,15 @@
-"""Datos de demostración: `POST /api/demo/semilla?nivel=vacia|basica|completa`.
+"""Datos de demostración: `POST /api/demo/semilla?nivel=vacia|basica|completa|demo`.
 
 La semilla `completa` deja siempre el mismo estado con el reloj en 2026-10-24T09:00, para que todos los agentes
 capturen pantallas comparables. El estado se construye llamando a las mismas funciones que usa la API (sincronizar,
 guardar el huésped, confirmar el parte, simular un mensaje...), así que pasa por las mismas validaciones y deja el mismo
 rastro en el registro y en los eventos que dejaría una persona. Los ids salen de un contador que se reinicia con el
 almacén, y el orden de los pasos es fijo, por eso son siempre los mismos.
+
+El nivel `demo` es `completa` más un relleno determinista (`demo_datos.py`) para que las pantallas no se vean vacías. Con la variable de
+entorno `HOTEL_AUTOSEMILLA=demo` (o cualquier otro nivel) la aplicación siembra ese nivel al arrancar, pero solo si el almacén está vacío.
 """
+import os
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,7 +20,7 @@ from ..deps import get_store
 from ..store import INICIO_DEMO
 
 router = APIRouter(prefix="/api/demo", tags=["demo"])
-NIVELES = ("vacia", "basica", "completa")
+NIVELES = ("vacia", "basica", "completa", "demo")
 RELOJ_DEMO = datetime.fromisoformat("2026-10-24T09:00:00")
 
 ANA = "1-BK-4471920"
@@ -146,6 +150,27 @@ def sembrar_estado(store, nivel: str) -> None:
     _documentos(store)
     _desajustes_de_ofihotel(store)
     _comunicaciones(store)
+    if nivel == "demo":
+        from .. import demo_datos
+        demo_datos.rellenar(principal, store)
+
+
+def _autosembrar() -> None:
+    """Arranque con `HOTEL_AUTOSEMILLA=<nivel>`: siembra ese nivel solo si el almacén está vacío. Sin la variable no hace nada."""
+    nivel = os.environ.get("HOTEL_AUTOSEMILLA", "").strip().lower()
+    if not nivel:
+        return
+    if nivel not in NIVELES:
+        raise RuntimeError(f"HOTEL_AUTOSEMILLA tiene que ser uno de: {', '.join(NIVELES)}")
+    store = get_store()
+    with store.lock:
+        if store.db["expedientes"] or store.db.get("comunicaciones") or store.db["eventos"]:
+            return
+        sembrar_estado(store, nivel)
+        store.guardar()
+
+
+router.on_startup.append(_autosembrar)
 
 
 @router.post("/semilla")
