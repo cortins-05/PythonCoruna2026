@@ -152,12 +152,12 @@ function pintarInsignias(nuevas = {}) {
   document.querySelectorAll(".nav-item").forEach((a) => {
     a.querySelector(".ui-insignia")?.remove();
     const n = insignias[a.dataset.seccion];
-    if (n > 0) a.append(ui.insignia(n, { tono: a.dataset.seccion === "bandeja" ? "aviso" : "neutro" }));
+    if (n > 0) a.append(ui.insignia(n, { tono: a.dataset.seccion === "comunicaciones" ? "aviso" : "neutro" }));
   });
 }
 
 async function cargarInsignias() {
-  try { pintarInsignias((await api("/api/hoy")).insignias ?? {}); } catch { /* el resumen aún no existe */ }
+  try { pintarInsignias((await api("/api/insignias")).insignias ?? {}); } catch { /* el resumen aún no existe */ }
 }
 
 /* ------------------------------------------------------------------ barra superior */

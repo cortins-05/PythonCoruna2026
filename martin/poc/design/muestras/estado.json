@@ -1,0 +1,15 @@
+{
+ "reloj": "2026-10-24T09:00",
+ "ses": "simulado",
+ "roomcloud": "XML grabado",
+ "ofihotel": "lectura de ayer",
+ "modos": {
+  "roomcloud": "simulado",
+  "ofihotel": "supuesto",
+  "whatsapp": "simulado",
+  "correo": "simulado",
+  "ses": "simulado",
+  "lector": "simulado",
+  "chat": "simulado"
+ }
+}

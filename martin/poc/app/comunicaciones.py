@@ -539,6 +539,19 @@ def cola(store) -> list[dict]:
     return items
 
 
+def peticiones_abiertas(store) -> list[dict]:
+    """Peticiones de habitación por confirmar, para pintarlas encima del mapa de ocupación."""
+    salida = []
+    for c in _db(store):
+        if c["estado"] in ABIERTAS and c.get("peticion"):
+            v = vista(store, c)
+            p = c["peticion"]
+            salida.append({"id": c["id"], "canal": c["canal"], "prioridad": c["prioridad"], "de": c["de"]["nombre"], "hora": c["ts"][11:16],
+                           "tipo_habitacion": p["tipo_habitacion"], "desde": p["desde"], "hasta": p["hasta"], "habitaciones": p["habitaciones"],
+                           "veredicto": v["contraste"]["veredicto"] if v["contraste"] else "sin_datos"})
+    return sorted(salida, key=lambda x: (x["prioridad"]["nivel"], x["hora"]))
+
+
 def actividad(store, limite: int = 14) -> list[dict]:
     """Lo último que ha entrado de cualquier fuente, ya normalizado."""
     salida = []

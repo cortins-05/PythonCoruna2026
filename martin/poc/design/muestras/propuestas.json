@@ -1,0 +1,55 @@
+[
+ {
+  "id": "pr-0005",
+  "ts": "2026-10-24T09:00",
+  "plantilla": "cerrar_disponibilidad",
+  "destino": "roomcloud",
+  "slots": {
+   "tipo": "DBL-STD",
+   "entrada": "2026-10-24",
+   "salida": "2026-10-25"
+  },
+  "texto": "Cerrar la venta de DBL-STD del 2026-10-24 al 2026-10-25 en RoomCloud",
+  "expediente_id": null,
+  "destinatario": "",
+  "origen_evento": null,
+  "origen": "ocupación",
+  "estado": "pendiente",
+  "decidido_por": null,
+  "hora_decision": null
+ },
+ {
+  "id": "pr-0008",
+  "ts": "2026-10-24T09:00",
+  "plantilla": "info_llegada",
+  "destino": "whatsapp",
+  "slots": {
+   "nombre": "Ana"
+  },
+  "texto": "Hola Ana, el check-in empieza a las 14:00 y el check-out termina a las 12:00. ¿A qué hora prevés llegar?",
+  "expediente_id": "1-BK-4471920",
+  "destinatario": "34600111222",
+  "origen_evento": "ev-0007",
+  "origen": "enrutador",
+  "estado": "pendiente",
+  "decidido_por": null,
+  "hora_decision": null
+ },
+ {
+  "id": "pr-0010",
+  "ts": "2026-10-24T09:00",
+  "plantilla": "emitir_factura",
+  "destino": "documentos",
+  "slots": {
+   "expediente": "2-EX-7730021"
+  },
+  "texto": "Emitir la factura de la estancia 2-EX-7730021",
+  "expediente_id": "2-EX-7730021",
+  "destinatario": "",
+  "origen_evento": "ev-0009",
+  "origen": "enrutador",
+  "estado": "pendiente",
+  "decidido_por": null,
+  "hora_decision": null
+ }
+]

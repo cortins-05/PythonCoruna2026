@@ -7,6 +7,8 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
+from . import prioridades
+
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "habitaciones.json"
 
 
@@ -44,9 +46,13 @@ def mapa(db: dict, desde: str, dias: int = 7) -> dict:
     for tipo, cap in capacidad().items():
         casillas = []
         for f in fechas:
-            ocupadas = sum(1 for o in filas if o["tipo"] == tipo and o["desde"] <= f < o["hasta"])
+            del_dia = [o for o in filas if o["tipo"] == tipo and o["desde"] <= f < o["hasta"]]
+            por_fuente = {"roomcloud": 0, "ofihotel": 0, "recepcion": 0}
+            for o in del_dia:
+                por_fuente[prioridades.grupo_de_origen(o["fuente"])] += 1
             cerrado = any(c["tipo"] == tipo and c["entrada"] <= f < c["salida"] for c in cierres)
-            casillas.append({"fecha": f, "ocupadas": ocupadas, "libres": cap - ocupadas, "cerrado_en_roomcloud": cerrado})
+            casillas.append({"fecha": f, "ocupadas": len(del_dia), "libres": cap - len(del_dia), "cerrado_en_roomcloud": cerrado,
+                             "por_fuente": por_fuente})
         tipos[tipo] = {"capacidad": cap, "dias": casillas}
     return {"fechas": fechas, "tipos": tipos}
 

@@ -2,10 +2,12 @@
 
 FACHADA DE DEMO: todo se calcula sobre los datos del almacén, pero los envíos son simulados y la comprensión de los mensajes usa reglas.
 """
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .. import comunicaciones, estados, hub, prioridades
+from .. import comunicaciones, disponibilidad, estados, hub, prioridades
 from ..deps import get_store, http_de
 
 router = APIRouter(prefix="/api", tags=["comunicaciones"])
@@ -111,3 +113,24 @@ def fuente_unica(store=Depends(get_store)):
             "totales": {"estancias": len(resumen["estancias"]), "comunicaciones_pendientes": cuenta["pendientes"] + cuenta["en_espera"],
                         "conflictos": len(resumen["conflictos"]), "por_color": resumen["contadores"]},
             "datos_ofihotel": resumen["datos_ofihotel"], "leyenda": estados.LEYENDA}
+
+
+@router.get("/ocupacion")
+def ocupacion(dias: int = 14, store=Depends(get_store)):
+    """Mapa de ocupación con el desglose por fuente de cada casilla y las peticiones que todavía compiten por habitaciones."""
+    desde = store.ahora().date().isoformat()
+    dias = max(1, min(dias, 30))
+    return {"reloj": store.ahora().isoformat(timespec="minutes"), "desde": desde, "dias": dias,
+            "mapa": disponibilidad.mapa(store.db, desde, dias), "conflictos": disponibilidad.conflictos(store.db, desde, dias),
+            "peticiones": comunicaciones.peticiones_abiertas(store), "fuentes": prioridades.NIVELES[:3]}
+
+
+@router.get("/insignias")
+def insignias(store=Depends(get_store)):
+    """Contadores del menú lateral: peticiones por confirmar, estancias con algo pendiente y elementos en la cola de trabajo."""
+    from .. import main
+    resumen = main.estancias(filtro="todas")
+    cuenta = _contadores(store)
+    pendientes = sum(n for color, n in resumen["contadores"].items() if color != "verde")
+    return {"insignias": {"comunicaciones": cuenta["pendientes"] + cuenta["en_espera"], "estancias": pendientes,
+                          "fuente": len(comunicaciones.cola(store))}}

@@ -1,0 +1,116 @@
+{
+ "id": "2-EX-7730021",
+ "referencia": "2-EX-7730021",
+ "origen": "roomcloud",
+ "dlm": "2026-10-23 21:15:40",
+ "estado": "pendiente_llegada",
+ "checkin_prevista": "2026-10-24",
+ "checkout_prevista": "2026-10-27",
+ "personas": 2,
+ "habitaciones": [
+  {
+   "tipo": "DBL-STD",
+   "tarifa": "BAR",
+   "adultos": "2",
+   "ninos": "0"
+  }
+ ],
+ "importe": "318.00",
+ "reserva": {
+  "nombre": "Claire",
+  "apellidos": "Dubois",
+  "pais": "FR",
+  "telefono": "+33612345678",
+  "email": "claire.dubois@example.com"
+ },
+ "huesped": {
+  "nombre": "",
+  "apellido1": "",
+  "apellido2": "",
+  "sexo": "",
+  "fecha_nacimiento": "",
+  "nacionalidad": "",
+  "tipo_documento": "",
+  "numero_documento": "",
+  "numero_soporte": "",
+  "direccion": "",
+  "localidad": "",
+  "codigo_postal": "",
+  "pais": "",
+  "telefono": "+33612345678",
+  "email": "claire.dubois@example.com"
+ },
+ "pago": {
+  "medio": "TARJETA"
+ },
+ "empresa": {},
+ "viaja_por_trabajo": false,
+ "tramites": {
+  "huesped": {
+   "estado": "pendiente"
+  },
+  "pago": {
+   "estado": "pendiente"
+  },
+  "empresa": {
+   "estado": "pendiente"
+  },
+  "parte": {
+   "estado": "pendiente"
+  },
+  "ofihotel_alta": {
+   "estado": "pendiente"
+  }
+ },
+ "parte": null,
+ "checkin_hora": null,
+ "registro": [
+  {
+   "hora": "2026-10-24T09:00",
+   "actor": "Sistema",
+   "accion": "Expediente creado desde RoomCloud"
+  }
+ ],
+ "pendientes": [
+  "huesped",
+  "pago",
+  "parte"
+ ],
+ "parte_restante_h": null,
+ "tipo": "DBL-STD",
+ "sistemas": {
+  "roomcloud": {
+   "estado": "sincronizado",
+   "detalle": "Leída de RoomCloud"
+  },
+  "ofihotel": {
+   "estado": "migrado",
+   "detalle": "Está en OfiHotel (hab. 105), según los datos de ayer",
+   "habitacion": "105",
+   "inferida": false
+  },
+  "documentacion": {
+   "estado": "sin_datos",
+   "detalle": "Faltan los datos del huésped"
+  }
+ },
+ "semaforo": {
+  "color": "rojo",
+  "tono": "critico",
+  "motivo": "Claire Dubois: RoomCloud dice del 24/10 al 27/10 y OfiHotel del 24/10 al 26/10",
+  "accion_sugerida": "Revisar el conflicto"
+ },
+ "conflictos": [
+  {
+   "tipo": "fechas_distintas",
+   "nivel": "rojo",
+   "expediente_id": "2-EX-7730021",
+   "sistemas": [
+    "roomcloud",
+    "ofihotel"
+   ],
+   "texto": "Claire Dubois: RoomCloud dice del 24/10 al 27/10 y OfiHotel del 24/10 al 26/10",
+   "id": "cf-1"
+  }
+ ]
+}

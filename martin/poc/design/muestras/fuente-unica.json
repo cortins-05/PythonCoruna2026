@@ -1,0 +1,488 @@
+{
+ "reloj": "2026-10-24T09:00",
+ "prioridades": {
+  "niveles": [
+   {
+    "nivel": 1,
+    "id": "roomcloud",
+    "nombre": "RoomCloud",
+    "tipo": "firme",
+    "icono": "refresh",
+    "descripcion": "Reservas de Booking, Expedia y la web: confirmadas y con garantía de pago. Bloquean la habitación siempre."
+   },
+   {
+    "nivel": 2,
+    "id": "ofihotel",
+    "nombre": "OfiHotel",
+    "tipo": "firme",
+    "icono": "building",
+    "descripcion": "Lo que ya está registrado en el programa del hotel, con los datos de ayer."
+   },
+   {
+    "nivel": 3,
+    "id": "recepcion",
+    "nombre": "Recepción",
+    "tipo": "firme",
+    "icono": "door",
+    "descripcion": "Reservas físicas y peticiones que recepción ya ha confirmado desde la aplicación."
+   },
+   {
+    "nivel": 4,
+    "id": "correo",
+    "nombre": "Correo",
+    "tipo": "peticion",
+    "icono": "mail",
+    "descripcion": "Petición de fechas por correo, sin confirmar. Suele traer los datos completos."
+   },
+   {
+    "nivel": 5,
+    "id": "whatsapp",
+    "nombre": "WhatsApp",
+    "tipo": "peticion",
+    "icono": "message",
+    "descripcion": "Petición de fechas por WhatsApp, sin confirmar. Va la última de la cola."
+   }
+  ],
+  "reglas": [
+   "Gana la fuente de mayor prioridad: lo firme (niveles 1 a 3) bloquea la habitación y una petición (niveles 4 y 5) nunca la desplaza.",
+   "Entre dos peticiones por la misma habitación gana la de nivel más alto, y a igual nivel la que llegó antes.",
+   "Si entra una reserva de RoomCloud que ocupa el hueco de una petición, la petición pasa a «no disponible» y se avisa."
+  ]
+ },
+ "fuentes": [
+  {
+   "id": "roomcloud",
+   "nivel": 1,
+   "tipo": "firme",
+   "nombre": "RoomCloud",
+   "icono": "refresh",
+   "estado": "simulado",
+   "recibido": 4,
+   "detalle": "4 reservas de canal leídas",
+   "ultima": "09:00",
+   "entra": "Reservas de Booking, Expedia y la web, con cancelaciones y cambios",
+   "hoy": "2026-10-24"
+  },
+  {
+   "id": "ofihotel",
+   "nivel": 2,
+   "tipo": "firme",
+   "nombre": "OfiHotel",
+   "icono": "building",
+   "estado": "simulado",
+   "recibido": 7,
+   "detalle": "7 estancias, datos hasta 23:59 de ayer",
+   "ultima": "09:00",
+   "entra": "La copia diaria de SQL Server: quién está, quién llega y qué ya se pasó",
+   "hoy": "2026-10-24"
+  },
+  {
+   "id": "recepcion",
+   "nivel": 3,
+   "tipo": "firme",
+   "nombre": "Recepción",
+   "icono": "door",
+   "estado": "real",
+   "recibido": 0,
+   "detalle": "Walk-ins y peticiones confirmadas",
+   "ultima": null,
+   "entra": "Lo que recepción teclea o confirma desde la aplicación",
+   "hoy": "2026-10-24"
+  },
+  {
+   "id": "correo",
+   "nivel": 4,
+   "tipo": "peticion",
+   "nombre": "Correo",
+   "icono": "mail",
+   "estado": "simulado",
+   "recibido": 3,
+   "detalle": "3 por confirmar de 3 recibidos",
+   "ultima": "08:57",
+   "entra": "Correos con peticiones de habitación y consultas",
+   "hoy": "2026-10-24"
+  },
+  {
+   "id": "whatsapp",
+   "nivel": 5,
+   "tipo": "peticion",
+   "nombre": "WhatsApp",
+   "icono": "message",
+   "estado": "simulado",
+   "recibido": 3,
+   "detalle": "3 por confirmar de 3 recibidos",
+   "ultima": "08:52",
+   "entra": "Mensajes con peticiones de habitación y consultas",
+   "hoy": "2026-10-24"
+  },
+  {
+   "id": "ses",
+   "nivel": null,
+   "tipo": "salida",
+   "nombre": "SES.Hospedajes",
+   "icono": "shield",
+   "estado": "simulado",
+   "recibido": 1,
+   "detalle": "1 partes de viajeros enviados (simulado)",
+   "ultima": "09:00",
+   "entra": "No entra información: aquí sale el parte de viajeros de cada llegada",
+   "hoy": "2026-10-24"
+  }
+ ],
+ "cola": [
+  {
+   "id": "est-2-EX-7730021",
+   "tipo": "conflicto",
+   "color": "rojo",
+   "titulo": "Claire Dubois: RoomCloud dice del 24/10 al 27/10 y OfiHotel del 24/10 al 26/10",
+   "detalle": "Revisar el conflicto",
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "ts": "2026-10-24",
+   "ruta": "estancias",
+   "params": {
+    "id": "2-EX-7730021"
+   }
+  },
+  {
+   "id": "est-0-WEB-90112",
+   "tipo": "parte",
+   "color": "naranja",
+   "titulo": "Marcos Vilas: Quedan 24.0 h para enviar el parte",
+   "detalle": "Completar y enviar el parte",
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "ts": "2026-10-24T09:00",
+   "ruta": "estancias",
+   "params": {
+    "id": "0-WEB-90112"
+   }
+  },
+  {
+   "id": "est-1-BK-4471920",
+   "tipo": "migrar",
+   "color": "amarillo",
+   "titulo": "Ana Pereira: Falta pasarla a OfiHotel",
+   "detalle": "Pasarla a OfiHotel",
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "ts": "2026-10-24T09:00",
+   "ruta": "estancias",
+   "params": {
+    "id": "1-BK-4471920"
+   }
+  },
+  {
+   "id": "est-1-BK-4488003",
+   "tipo": "reflejar",
+   "color": "gris",
+   "titulo": "Luis Otero: cancelada en RoomCloud pero todavía viva en OfiHotel",
+   "detalle": "Anularla en OfiHotel",
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "ts": "2026-10-24",
+   "ruta": "estancias",
+   "params": {
+    "id": "1-BK-4488003"
+   }
+  },
+  {
+   "id": "com-cm-0001",
+   "tipo": "comunicacion",
+   "color": "azul",
+   "titulo": "Petición por correo de Sophie Martin",
+   "detalle": "El 24 de octubre no queda ninguna habitación doble libre: lo ocupan RoomCloud (2) y OfiHotel (1), con más prioridad que esta petición.",
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "ts": "2026-10-24T07:58",
+   "ruta": "comunicaciones",
+   "params": {
+    "id": "cm-0001"
+   }
+  },
+  {
+   "id": "com-cm-0002",
+   "tipo": "comunicacion",
+   "color": "azul",
+   "titulo": "Petición por correo de Carlos Meijide",
+   "detalle": "Confirmar y responder",
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "ts": "2026-10-24T08:31",
+   "ruta": "comunicaciones",
+   "params": {
+    "id": "cm-0002"
+   }
+  },
+  {
+   "id": "com-cm-0006",
+   "tipo": "comunicacion",
+   "color": "azul",
+   "titulo": "Petición por correo de Pablo Rey",
+   "detalle": "Confirmar y responder",
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "ts": "2026-10-24T08:57",
+   "ruta": "comunicaciones",
+   "params": {
+    "id": "cm-0006"
+   }
+  },
+  {
+   "id": "com-cm-0003",
+   "tipo": "comunicacion",
+   "color": "azul",
+   "titulo": "Mensaje por whatsapp de Ana Pereira",
+   "detalle": "Confirmar y responder",
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "ts": "2026-10-24T08:40",
+   "ruta": "comunicaciones",
+   "params": {
+    "id": "cm-0003"
+   }
+  },
+  {
+   "id": "com-cm-0004",
+   "tipo": "comunicacion",
+   "color": "azul",
+   "titulo": "Petición por whatsapp de Marta Souto",
+   "detalle": "La petición por correo de Pablo Rey (08:57) tiene más prioridad (nivel 4 frente a 5) y se queda con la última habitación.",
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "ts": "2026-10-24T08:49",
+   "ruta": "comunicaciones",
+   "params": {
+    "id": "cm-0004"
+   }
+  },
+  {
+   "id": "com-cm-0005",
+   "tipo": "comunicacion",
+   "color": "azul",
+   "titulo": "Petición por whatsapp de Lucía Fernández",
+   "detalle": "Confirmar y responder",
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "ts": "2026-10-24T08:52",
+   "ruta": "comunicaciones",
+   "params": {
+    "id": "cm-0005"
+   }
+  }
+ ],
+ "actividad": [
+  {
+   "id": "ev-0001",
+   "ts": "2026-10-24T09:00",
+   "hora": "09:00",
+   "fuente": "roomcloud",
+   "icono": "refresh",
+   "titulo": "Reserva nueva",
+   "detalle": "Reserva 1-BK-4471920: 2026-10-24 a 2026-10-26",
+   "nivel": 1,
+   "expediente_id": "1-BK-4471920"
+  },
+  {
+   "id": "ev-0002",
+   "ts": "2026-10-24T09:00",
+   "hora": "09:00",
+   "fuente": "roomcloud",
+   "icono": "refresh",
+   "titulo": "Reserva nueva",
+   "detalle": "Reserva 0-WEB-90112: 2026-10-24 a 2026-10-25",
+   "nivel": 1,
+   "expediente_id": "0-WEB-90112"
+  },
+  {
+   "id": "ev-0003",
+   "ts": "2026-10-24T09:00",
+   "hora": "09:00",
+   "fuente": "roomcloud",
+   "icono": "refresh",
+   "titulo": "Reserva nueva",
+   "detalle": "Reserva 2-EX-7730021: 2026-10-24 a 2026-10-27",
+   "nivel": 1,
+   "expediente_id": "2-EX-7730021"
+  },
+  {
+   "id": "ev-0004",
+   "ts": "2026-10-24T09:00",
+   "hora": "09:00",
+   "fuente": "ofihotel",
+   "icono": "building",
+   "titulo": "Lectura de OfiHotel",
+   "detalle": "6 estancias leídas, con datos hasta 2026-10-23T23:59 (solo lectura)",
+   "nivel": 2,
+   "expediente_id": null
+  },
+  {
+   "id": "ev-0006",
+   "ts": "2026-10-24T09:00",
+   "hora": "09:00",
+   "fuente": "sistema",
+   "icono": "alert",
+   "titulo": "Aviso de ocupación",
+   "detalle": "DBL-STD completo el 2026-10-24",
+   "nivel": null,
+   "expediente_id": null
+  },
+  {
+   "id": "cm-0006",
+   "ts": "2026-10-24T08:57",
+   "hora": "08:57",
+   "fuente": "correo",
+   "icono": "mail",
+   "titulo": "Petición de habitación por correo",
+   "detalle": "Pablo Rey: Buenas, ¿tenéis una individual libre esta noche? Llegaría sobre las 19:00.",
+   "nivel": 4,
+   "expediente_id": null
+  },
+  {
+   "id": "cm-0005",
+   "ts": "2026-10-24T08:52",
+   "hora": "08:52",
+   "fuente": "whatsapp",
+   "icono": "message",
+   "titulo": "Petición de habitación por whatsapp",
+   "detalle": "Lucía Fernández: Hola, ¿tenéis una doble libre del 28 al 30 de octubre? Somos 2 personas.",
+   "nivel": 5,
+   "expediente_id": null
+  },
+  {
+   "id": "cm-0004",
+   "ts": "2026-10-24T08:49",
+   "hora": "08:49",
+   "fuente": "whatsapp",
+   "icono": "message",
+   "titulo": "Petición de habitación por whatsapp",
+   "detalle": "Marta Souto: Buenas, necesito una individual para esta noche, ¿hay algo?",
+   "nivel": 5,
+   "expediente_id": null
+  },
+  {
+   "id": "cm-0003",
+   "ts": "2026-10-24T08:40",
+   "hora": "08:40",
+   "fuente": "whatsapp",
+   "icono": "message",
+   "titulo": "Mensaje por whatsapp",
+   "detalle": "Ana Pereira: Hola, ¿a qué hora es el check-in?",
+   "nivel": 5,
+   "expediente_id": "1-BK-4471920"
+  },
+  {
+   "id": "cm-0002",
+   "ts": "2026-10-24T08:31",
+   "hora": "08:31",
+   "fuente": "correo",
+   "icono": "mail",
+   "titulo": "Petición de habitación por correo",
+   "detalle": "Carlos Meijide: Buenos días. Necesitamos 3 habitaciones dobles del 1 al 3 de noviembre para un equipo de 6 personas. ¿Tenéis d",
+   "nivel": 4,
+   "expediente_id": null
+  },
+  {
+   "id": "cm-0001",
+   "ts": "2026-10-24T07:58",
+   "hora": "07:58",
+   "fuente": "correo",
+   "icono": "mail",
+   "titulo": "Petición de habitación por correo",
+   "detalle": "Sophie Martin: Bonjour, avez-vous une chambre double de libre du 24 au 27 octobre pour 2 personnes ? Merci d'avance.",
+   "nivel": 4,
+   "expediente_id": null
+  }
+ ],
+ "totales": {
+  "estancias": 4,
+  "comunicaciones_pendientes": 6,
+  "conflictos": 2,
+  "por_color": {
+   "rojo": 1,
+   "naranja": 1,
+   "amarillo": 1,
+   "azul": 0,
+   "gris": 1,
+   "verde": 0
+  }
+ },
+ "datos_ofihotel": {
+  "disponible": true,
+  "datos_hasta": "2026-10-23T23:59",
+  "leido_el": "2026-10-24T09:00",
+  "fuente": "fixture"
+ },
+ "leyenda": [
+  {
+   "color": "rojo",
+   "titulo": "Conflicto",
+   "descripcion": "Orígenes que no coinciden, habitación doble, overbooking o parte fuera de plazo"
+  },
+  {
+   "color": "naranja",
+   "titulo": "Parte pendiente",
+   "descripcion": "El parte de viajeros no se ha enviado y el plazo de 24 horas corre"
+  },
+  {
+   "color": "amarillo",
+   "titulo": "Por pasar a OfiHotel",
+   "descripcion": "Falta pasar la estancia a OfiHotel y la llegada es hoy o antes"
+  },
+  {
+   "color": "azul",
+   "titulo": "Por atender",
+   "descripcion": "Llegada de hoy sin check-in o mensaje nuevo sin enlazar con ninguna estancia"
+  },
+  {
+   "color": "gris",
+   "titulo": "Por reflejar",
+   "descripcion": "Cancelada en RoomCloud pero todavía viva en OfiHotel"
+  },
+  {
+   "color": "verde",
+   "titulo": "Todo cuadrado",
+   "descripcion": "Nada pendiente"
+  }
+ ]
+}

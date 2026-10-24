@@ -1,0 +1,581 @@
+{
+ "reloj": "2026-10-24T09:00",
+ "fuentes_consultadas": [
+  {
+   "id": "roomcloud",
+   "nombre": "RoomCloud",
+   "nivel": 1,
+   "tipo": "firme"
+  },
+  {
+   "id": "ofihotel",
+   "nombre": "OfiHotel",
+   "nivel": 2,
+   "tipo": "firme"
+  },
+  {
+   "id": "recepcion",
+   "nombre": "Recepción",
+   "nivel": 3,
+   "tipo": "firme"
+  }
+ ],
+ "comunicaciones": [
+  {
+   "id": "cm-0001",
+   "ts": "2026-10-24T07:58",
+   "hora": "07:58",
+   "canal": "correo",
+   "de": {
+    "nombre": "Sophie Martin",
+    "contacto": "sophie.martin@example.fr"
+   },
+   "asunto": "Demande de chambre du 24 au 27 octobre",
+   "texto": "Bonjour, avez-vous une chambre double de libre du 24 au 27 octobre pour 2 personnes ? Merci d'avance.",
+   "tipo": "peticion_habitacion",
+   "idioma": "fr",
+   "peticion": {
+    "tipo_habitacion": "DBL-STD",
+    "desde": "2026-10-24",
+    "hasta": "2026-10-27",
+    "noches": 3,
+    "personas": 2,
+    "habitaciones": 1
+   },
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "estado": "pendiente",
+   "expediente_id": null,
+   "contraste": {
+    "veredicto": "no_disponible",
+    "motivo": "El 24 de octubre no queda ninguna habitación doble libre: lo ocupan RoomCloud (2) y OfiHotel (1), con más prioridad que esta petición.",
+    "noches": [
+     {
+      "fecha": "2026-10-24",
+      "capacidad": 3,
+      "ocupadas": 3,
+      "libres": 0,
+      "retenidas": 0,
+      "libres_para_esta": 0,
+      "por_fuente": {
+       "roomcloud": 2,
+       "ofihotel": 1,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [
+        "Ana Pereira",
+        "Claire Dubois"
+       ],
+       "ofihotel": [
+        "García"
+       ],
+       "recepcion": []
+      },
+      "retenida_por": []
+     },
+     {
+      "fecha": "2026-10-25",
+      "capacidad": 3,
+      "ocupadas": 2,
+      "libres": 1,
+      "retenidas": 0,
+      "libres_para_esta": 1,
+      "por_fuente": {
+       "roomcloud": 2,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [
+        "Ana Pereira",
+        "Claire Dubois"
+       ],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": []
+     },
+     {
+      "fecha": "2026-10-26",
+      "capacidad": 3,
+      "ocupadas": 2,
+      "libres": 1,
+      "retenidas": 0,
+      "libres_para_esta": 1,
+      "por_fuente": {
+       "roomcloud": 1,
+       "ofihotel": 1,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [
+        "Claire Dubois"
+       ],
+       "ofihotel": [
+        "Rey"
+       ],
+       "recepcion": []
+      },
+      "retenida_por": []
+     }
+    ],
+    "bloqueada_por": [
+     {
+      "fuente": "RoomCloud",
+      "id": "roomcloud",
+      "nivel": 1,
+      "cantidad": 2,
+      "ocupantes": [
+       "Ana Pereira",
+       "Claire Dubois"
+      ]
+     },
+     {
+      "fuente": "OfiHotel",
+      "id": "ofihotel",
+      "nivel": 2,
+      "cantidad": 1,
+      "ocupantes": [
+       "García"
+      ]
+     }
+    ],
+    "retenida_por": [],
+    "alternativa": {
+     "desde": "2026-10-25",
+     "hasta": "2026-10-28",
+     "noches": 3
+    }
+   },
+   "respuesta": {
+    "canal": "correo",
+    "destinatario": "sophie.martin@example.fr",
+    "asunto": "Re: Demande de chambre du 24 au 27 octobre",
+    "texto": "Bonjour Sophie, nous sommes désolés : du 24 octobre au 27 octobre nous n'avons plus de chambre double libre. Nous avons une chambre double de libre du 25 octobre au 28 octobre. Souhaitez-vous la réserver ?\n\nCordialement,\nLa réception",
+    "idioma": "fr"
+   },
+   "alerta": null,
+   "resultado": null
+  },
+  {
+   "id": "cm-0002",
+   "ts": "2026-10-24T08:31",
+   "hora": "08:31",
+   "canal": "correo",
+   "de": {
+    "nombre": "Carlos Meijide",
+    "contacto": "carlos.meijide@meijide-consulting.example"
+   },
+   "asunto": "Reserva para un evento de empresa",
+   "texto": "Buenos días. Necesitamos 3 habitaciones dobles del 1 al 3 de noviembre para un equipo de 6 personas. ¿Tenéis disponibilidad?",
+   "tipo": "peticion_habitacion",
+   "idioma": "es",
+   "peticion": {
+    "tipo_habitacion": "DBL-STD",
+    "desde": "2026-11-01",
+    "hasta": "2026-11-03",
+    "noches": 2,
+    "personas": 6,
+    "habitaciones": 3
+   },
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "estado": "pendiente",
+   "expediente_id": null,
+   "contraste": {
+    "veredicto": "ajustado",
+    "motivo": "Queda libre justo lo que pide: después no sobrará ninguna habitación doble.",
+    "noches": [
+     {
+      "fecha": "2026-11-01",
+      "capacidad": 3,
+      "ocupadas": 0,
+      "libres": 3,
+      "retenidas": 0,
+      "libres_para_esta": 3,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": []
+     },
+     {
+      "fecha": "2026-11-02",
+      "capacidad": 3,
+      "ocupadas": 0,
+      "libres": 3,
+      "retenidas": 0,
+      "libres_para_esta": 3,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": []
+     }
+    ],
+    "bloqueada_por": [],
+    "retenida_por": [],
+    "alternativa": null
+   },
+   "respuesta": {
+    "canal": "correo",
+    "destinatario": "carlos.meijide@meijide-consulting.example",
+    "asunto": "Re: Reserva para un evento de empresa",
+    "texto": "Hola Carlos, buenos días. Sí tenemos 3 habitaciones dobles libre del 1 de noviembre al 3 de noviembre (2 noches). Te la dejamos reservada a tu nombre; si necesitas cualquier cambio, dínoslo por aquí. ¡Te esperamos!\n\nUn saludo,\nRecepción",
+    "idioma": "es"
+   },
+   "alerta": null,
+   "resultado": null
+  },
+  {
+   "id": "cm-0006",
+   "ts": "2026-10-24T08:57",
+   "hora": "08:57",
+   "canal": "correo",
+   "de": {
+    "nombre": "Pablo Rey",
+    "contacto": "pablo.rey@example.com"
+   },
+   "asunto": "Habitación individual esta noche",
+   "texto": "Buenas, ¿tenéis una individual libre esta noche? Llegaría sobre las 19:00.",
+   "tipo": "peticion_habitacion",
+   "idioma": "es",
+   "peticion": {
+    "tipo_habitacion": "SGL-STD",
+    "desde": "2026-10-24",
+    "hasta": "2026-10-25",
+    "noches": 1,
+    "personas": 2,
+    "habitaciones": 1
+   },
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "estado": "pendiente",
+   "expediente_id": null,
+   "contraste": {
+    "veredicto": "ajustado",
+    "motivo": "Queda libre justo lo que pide: después no sobrará ninguna habitación individual.",
+    "noches": [
+     {
+      "fecha": "2026-10-24",
+      "capacidad": 2,
+      "ocupadas": 1,
+      "libres": 1,
+      "retenidas": 0,
+      "libres_para_esta": 1,
+      "por_fuente": {
+       "roomcloud": 1,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [
+        "Marcos Vilas"
+       ],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": []
+     }
+    ],
+    "bloqueada_por": [],
+    "retenida_por": [],
+    "alternativa": null
+   },
+   "respuesta": {
+    "canal": "correo",
+    "destinatario": "pablo.rey@example.com",
+    "asunto": "Re: Habitación individual esta noche",
+    "texto": "Hola Pablo, buenos días. Sí tenemos una habitación individual libre del 24 de octubre al 25 de octubre (1 noche). Te la dejamos reservada a tu nombre; si necesitas cualquier cambio, dínoslo por aquí. ¡Te esperamos!\n\nUn saludo,\nRecepción",
+    "idioma": "es"
+   },
+   "alerta": null,
+   "resultado": null
+  },
+  {
+   "id": "cm-0003",
+   "ts": "2026-10-24T08:40",
+   "hora": "08:40",
+   "canal": "whatsapp",
+   "de": {
+    "nombre": "Ana Pereira",
+    "contacto": "34600111222"
+   },
+   "asunto": "",
+   "texto": "Hola, ¿a qué hora es el check-in?",
+   "tipo": "pregunta",
+   "idioma": "es",
+   "peticion": null,
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "estado": "pendiente",
+   "expediente_id": "1-BK-4471920",
+   "contraste": null,
+   "respuesta": {
+    "canal": "whatsapp",
+    "destinatario": "34600111222",
+    "asunto": "",
+    "texto": "Hola Ana, el check-in empieza a las 14:00 y el check-out termina a las 12:00. ¿A qué hora prevés llegar?",
+    "idioma": "es"
+   },
+   "alerta": null,
+   "resultado": null
+  },
+  {
+   "id": "cm-0004",
+   "ts": "2026-10-24T08:49",
+   "hora": "08:49",
+   "canal": "whatsapp",
+   "de": {
+    "nombre": "Marta Souto",
+    "contacto": "34622334455"
+   },
+   "asunto": "",
+   "texto": "Buenas, necesito una individual para esta noche, ¿hay algo?",
+   "tipo": "peticion_habitacion",
+   "idioma": "es",
+   "peticion": {
+    "tipo_habitacion": "SGL-STD",
+    "desde": "2026-10-24",
+    "hasta": "2026-10-25",
+    "noches": 1,
+    "personas": 2,
+    "habitaciones": 1
+   },
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "estado": "pendiente",
+   "expediente_id": null,
+   "contraste": {
+    "veredicto": "en_competencia",
+    "motivo": "La petición por correo de Pablo Rey (08:57) tiene más prioridad (nivel 4 frente a 5) y se queda con la última habitación.",
+    "noches": [
+     {
+      "fecha": "2026-10-24",
+      "capacidad": 2,
+      "ocupadas": 1,
+      "libres": 1,
+      "retenidas": 1,
+      "libres_para_esta": 0,
+      "por_fuente": {
+       "roomcloud": 1,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [
+        "Marcos Vilas"
+       ],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": [
+       "cm-0006"
+      ]
+     }
+    ],
+    "bloqueada_por": [],
+    "retenida_por": [
+     {
+      "comunicacion": "cm-0006",
+      "de": "Pablo Rey",
+      "canal": "correo",
+      "nivel": 4,
+      "fuente": "Correo",
+      "hora": "08:57"
+     }
+    ],
+    "alternativa": {
+     "desde": "2026-10-25",
+     "hasta": "2026-10-26",
+     "noches": 1
+    }
+   },
+   "respuesta": {
+    "canal": "whatsapp",
+    "destinatario": "34622334455",
+    "asunto": "",
+    "texto": "Hola Marta, estamos terminando de confirmar otra consulta para esas fechas. En unos minutos te decimos si podemos dejártela reservada.",
+    "idioma": "es"
+   },
+   "alerta": null,
+   "resultado": null
+  },
+  {
+   "id": "cm-0005",
+   "ts": "2026-10-24T08:52",
+   "hora": "08:52",
+   "canal": "whatsapp",
+   "de": {
+    "nombre": "Lucía Fernández",
+    "contacto": "34655123123"
+   },
+   "asunto": "",
+   "texto": "Hola, ¿tenéis una doble libre del 28 al 30 de octubre? Somos 2 personas.",
+   "tipo": "peticion_habitacion",
+   "idioma": "es",
+   "peticion": {
+    "tipo_habitacion": "DBL-STD",
+    "desde": "2026-10-28",
+    "hasta": "2026-10-30",
+    "noches": 2,
+    "personas": 2,
+    "habitaciones": 1
+   },
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "estado": "pendiente",
+   "expediente_id": null,
+   "contraste": {
+    "veredicto": "disponible",
+    "motivo": "Hay 3 libres todas las noches.",
+    "noches": [
+     {
+      "fecha": "2026-10-28",
+      "capacidad": 3,
+      "ocupadas": 0,
+      "libres": 3,
+      "retenidas": 0,
+      "libres_para_esta": 3,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": []
+     },
+     {
+      "fecha": "2026-10-29",
+      "capacidad": 3,
+      "ocupadas": 0,
+      "libres": 3,
+      "retenidas": 0,
+      "libres_para_esta": 3,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      },
+      "ocupantes": {
+       "roomcloud": [],
+       "ofihotel": [],
+       "recepcion": []
+      },
+      "retenida_por": []
+     }
+    ],
+    "bloqueada_por": [],
+    "retenida_por": [],
+    "alternativa": null
+   },
+   "respuesta": {
+    "canal": "whatsapp",
+    "destinatario": "34655123123",
+    "asunto": "",
+    "texto": "Hola Lucía, buenos días. Sí tenemos una habitación doble libre del 28 de octubre al 30 de octubre (2 noches). Te la dejamos reservada a tu nombre; si necesitas cualquier cambio, dínoslo por aquí. ¡Te esperamos!",
+    "idioma": "es"
+   },
+   "alerta": null,
+   "resultado": null
+  }
+ ],
+ "contadores": {
+  "pendientes": 6,
+  "en_espera": 0,
+  "respondidas": 0,
+  "total": 6,
+  "whatsapp": 3,
+  "correo": 3
+ },
+ "prioridades": {
+  "niveles": [
+   {
+    "nivel": 1,
+    "id": "roomcloud",
+    "nombre": "RoomCloud",
+    "tipo": "firme",
+    "icono": "refresh",
+    "descripcion": "Reservas de Booking, Expedia y la web: confirmadas y con garantía de pago. Bloquean la habitación siempre."
+   },
+   {
+    "nivel": 2,
+    "id": "ofihotel",
+    "nombre": "OfiHotel",
+    "tipo": "firme",
+    "icono": "building",
+    "descripcion": "Lo que ya está registrado en el programa del hotel, con los datos de ayer."
+   },
+   {
+    "nivel": 3,
+    "id": "recepcion",
+    "nombre": "Recepción",
+    "tipo": "firme",
+    "icono": "door",
+    "descripcion": "Reservas físicas y peticiones que recepción ya ha confirmado desde la aplicación."
+   },
+   {
+    "nivel": 4,
+    "id": "correo",
+    "nombre": "Correo",
+    "tipo": "peticion",
+    "icono": "mail",
+    "descripcion": "Petición de fechas por correo, sin confirmar. Suele traer los datos completos."
+   },
+   {
+    "nivel": 5,
+    "id": "whatsapp",
+    "nombre": "WhatsApp",
+    "tipo": "peticion",
+    "icono": "message",
+    "descripcion": "Petición de fechas por WhatsApp, sin confirmar. Va la última de la cola."
+   }
+  ],
+  "reglas": [
+   "Gana la fuente de mayor prioridad: lo firme (niveles 1 a 3) bloquea la habitación y una petición (niveles 4 y 5) nunca la desplaza.",
+   "Entre dos peticiones por la misma habitación gana la de nivel más alto, y a igual nivel la que llegó antes.",
+   "Si entra una reserva de RoomCloud que ocupa el hueco de una petición, la petición pasa a «no disponible» y se avisa."
+  ]
+ }
+}

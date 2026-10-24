@@ -1,0 +1,246 @@
+{
+ "reloj": "2026-10-24T09:00",
+ "datos_ofihotel": {
+  "disponible": true,
+  "datos_hasta": "2026-10-23T23:59",
+  "leido_el": "2026-10-24T09:00",
+  "fuente": "fixture"
+ },
+ "leyenda": [
+  {
+   "color": "rojo",
+   "titulo": "Conflicto",
+   "descripcion": "Orígenes que no coinciden, habitación doble, overbooking o parte fuera de plazo"
+  },
+  {
+   "color": "naranja",
+   "titulo": "Parte pendiente",
+   "descripcion": "El parte de viajeros no se ha enviado y el plazo de 24 horas corre"
+  },
+  {
+   "color": "amarillo",
+   "titulo": "Por pasar a OfiHotel",
+   "descripcion": "Falta pasar la estancia a OfiHotel y la llegada es hoy o antes"
+  },
+  {
+   "color": "azul",
+   "titulo": "Por atender",
+   "descripcion": "Llegada de hoy sin check-in o mensaje nuevo sin enlazar con ninguna estancia"
+  },
+  {
+   "color": "gris",
+   "titulo": "Por reflejar",
+   "descripcion": "Cancelada en RoomCloud pero todavía viva en OfiHotel"
+  },
+  {
+   "color": "verde",
+   "titulo": "Todo cuadrado",
+   "descripcion": "Nada pendiente"
+  }
+ ],
+ "estancias": [
+  {
+   "id": "2-EX-7730021",
+   "huesped": "Claire Dubois",
+   "estado": "pendiente_llegada",
+   "checkin": "2026-10-24",
+   "checkout": "2026-10-27",
+   "pendientes": [
+    "huesped",
+    "pago",
+    "parte"
+   ],
+   "parte": "pendiente",
+   "parte_restante_h": null,
+   "viaja_por_trabajo": false,
+   "tipo": "DBL-STD",
+   "origen": "roomcloud",
+   "personas": 2,
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "sistemas": {
+    "roomcloud": {
+     "estado": "sincronizado",
+     "detalle": "Leída de RoomCloud"
+    },
+    "ofihotel": {
+     "estado": "migrado",
+     "detalle": "Está en OfiHotel (hab. 105), según los datos de ayer",
+     "habitacion": "105",
+     "inferida": false
+    },
+    "documentacion": {
+     "estado": "sin_datos",
+     "detalle": "Faltan los datos del huésped"
+    }
+   },
+   "semaforo": {
+    "color": "rojo",
+    "tono": "critico",
+    "motivo": "Claire Dubois: RoomCloud dice del 24/10 al 27/10 y OfiHotel del 24/10 al 26/10",
+    "accion_sugerida": "Revisar el conflicto"
+   }
+  },
+  {
+   "id": "0-WEB-90112",
+   "huesped": "Marcos Vilas",
+   "estado": "en_curso",
+   "checkin": "2026-10-24",
+   "checkout": "2026-10-25",
+   "pendientes": [
+    "parte"
+   ],
+   "parte": "pendiente",
+   "parte_restante_h": 24.0,
+   "viaja_por_trabajo": false,
+   "tipo": "SGL-STD",
+   "origen": "roomcloud",
+   "personas": 1,
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "sistemas": {
+    "roomcloud": {
+     "estado": "sincronizado",
+     "detalle": "Leída de RoomCloud"
+    },
+    "ofihotel": {
+     "estado": "por_migrar",
+     "detalle": "Todavía no está en OfiHotel"
+    },
+    "documentacion": {
+     "estado": "parte_pendiente",
+     "detalle": "Quedan 24.0 h para enviar el parte"
+    }
+   },
+   "semaforo": {
+    "color": "naranja",
+    "tono": "aviso",
+    "motivo": "Quedan 24.0 h para enviar el parte",
+    "accion_sugerida": "Completar y enviar el parte"
+   }
+  },
+  {
+   "id": "1-BK-4471920",
+   "huesped": "Ana Pereira",
+   "estado": "en_curso",
+   "checkin": "2026-10-24",
+   "checkout": "2026-10-26",
+   "pendientes": [],
+   "parte": "hecho",
+   "parte_restante_h": null,
+   "viaja_por_trabajo": true,
+   "tipo": "DBL-STD",
+   "origen": "roomcloud",
+   "personas": 1,
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "sistemas": {
+    "roomcloud": {
+     "estado": "sincronizado",
+     "detalle": "Leída de RoomCloud"
+    },
+    "ofihotel": {
+     "estado": "por_migrar",
+     "detalle": "Todavía no está en OfiHotel"
+    },
+    "documentacion": {
+     "estado": "parte_enviado",
+     "detalle": "Parte enviado, justificante SIM-2509C2E7AC87 (simulado)"
+    }
+   },
+   "semaforo": {
+    "color": "amarillo",
+    "tono": "aviso",
+    "motivo": "Falta pasarla a OfiHotel",
+    "accion_sugerida": "Pasarla a OfiHotel"
+   }
+  },
+  {
+   "id": "1-BK-4488003",
+   "huesped": "Luis Otero",
+   "estado": "cancelada",
+   "checkin": "2026-10-24",
+   "checkout": "2026-10-25",
+   "pendientes": [],
+   "parte": "pendiente",
+   "parte_restante_h": null,
+   "viaja_por_trabajo": false,
+   "tipo": "SGL-STD",
+   "origen": "roomcloud",
+   "personas": 1,
+   "prioridad": {
+    "nivel": 1,
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "tipo": "firme"
+   },
+   "sistemas": {
+    "roomcloud": {
+     "estado": "cancelada",
+     "detalle": "Cancelada en RoomCloud"
+    },
+    "ofihotel": {
+     "estado": "migrado",
+     "detalle": "Está en OfiHotel (hab. 112), según los datos de ayer",
+     "habitacion": "112",
+     "inferida": false
+    },
+    "documentacion": {
+     "estado": "no_aplica",
+     "detalle": "Sin documentación: la reserva está cancelada"
+    }
+   },
+   "semaforo": {
+    "color": "gris",
+    "tono": "neutro",
+    "motivo": "Luis Otero: cancelada en RoomCloud pero todavía viva en OfiHotel",
+    "accion_sugerida": "Anularla en OfiHotel"
+   }
+  }
+ ],
+ "conflictos": [
+  {
+   "tipo": "fechas_distintas",
+   "nivel": "rojo",
+   "expediente_id": "2-EX-7730021",
+   "sistemas": [
+    "roomcloud",
+    "ofihotel"
+   ],
+   "texto": "Claire Dubois: RoomCloud dice del 24/10 al 27/10 y OfiHotel del 24/10 al 26/10",
+   "id": "cf-1"
+  },
+  {
+   "tipo": "cancelada_activa_en_ofihotel",
+   "nivel": "gris",
+   "expediente_id": "1-BK-4488003",
+   "sistemas": [
+    "roomcloud",
+    "ofihotel"
+   ],
+   "texto": "Luis Otero: cancelada en RoomCloud pero todavía viva en OfiHotel",
+   "id": "cf-2"
+  }
+ ],
+ "entradas": [],
+ "contadores": {
+  "rojo": 1,
+  "naranja": 1,
+  "amarillo": 1,
+  "azul": 0,
+  "gris": 1,
+  "verde": 0
+ }
+}

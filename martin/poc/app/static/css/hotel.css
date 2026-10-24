@@ -1,0 +1,59 @@
+/*
+  Estilos de las piezas compartidas de js/ui-hotel.js: naranja del semáforo, pastilla de prioridad, escalera de prioridades y fila de chips.
+  Solo tokens. Los demás colores del semáforo reutilizan los tonos de tokens.css (rojo=critico, amarillo=aviso, azul=info, gris=neutro, verde=ok).
+*/
+:root {
+  --c-naranja-bg: #FFE8D2; --c-naranja-borde: #F5C79B; --c-naranja-texto: #8A3A00; --c-naranja-punto: #E8710A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --c-naranja-bg: #3B2210; --c-naranja-borde: #7A4A1E; --c-naranja-texto: #FFB877; --c-naranja-punto: #FF8A1F;
+  }
+}
+:root[data-tema="oscuro"] {
+  --c-naranja-bg: #3B2210; --c-naranja-borde: #7A4A1E; --c-naranja-texto: #FFB877; --c-naranja-punto: #FF8A1F;
+}
+.ui-chip--naranja { background: var(--c-naranja-bg); border-color: var(--c-naranja-borde); color: var(--c-naranja-texto); }
+.ui-chip--naranja .ui-chip__punto { background: var(--c-naranja-punto); }
+
+/* ------------------------------------------------------------------ pastilla de prioridad */
+.pastilla-nivel {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px 0 3px; border-radius: var(--r-pill);
+  border: 1px solid var(--c-borde-fuerte); background: var(--c-surface); color: var(--c-texto-2);
+  font-size: var(--t-xs); font-weight: var(--p-fuerte); white-space: nowrap;
+}
+.pastilla-nivel__n {
+  display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--c-fuerte); color: var(--c-fuerte-texto); font-size: 11px; line-height: 1;
+}
+.pastilla-nivel--peticion .pastilla-nivel__n { background: var(--c-surface-3); color: var(--c-texto); border: 1px solid var(--c-borde-fuerte); }
+.pastilla-nivel--compacta { padding: 0 3px; }
+
+/* ------------------------------------------------------------------ escalera de prioridades */
+.escalera { display: grid; gap: var(--s-3); }
+.escalera__grupo { border: 1px solid var(--c-borde); border-radius: var(--r-card); background: var(--c-surface); overflow: hidden; }
+.escalera__cabecera {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-1) var(--s-3); padding: 10px 14px;
+  background: var(--c-surface-2); border-bottom: 1px solid var(--c-borde); font-size: var(--t-sm); color: var(--c-texto-2);
+}
+.escalera__cabecera strong { color: var(--c-texto); }
+.escalera__grupo--firme { border-color: var(--c-acento-borde); }
+.escalera__grupo--firme .escalera__cabecera { background: var(--c-acento-suave); border-bottom-color: var(--c-acento-borde); }
+.escalera__lista { list-style: none; margin: 0; padding: 0; }
+.escalera__fila { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: var(--s-3); padding: 10px 14px; }
+.escalera__fila + .escalera__fila { border-top: 1px solid var(--c-borde); }
+.escalera__fila.is-resaltada { background: var(--c-acento-suave); }
+.escalera__numero {
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--c-fuerte); color: var(--c-fuerte-texto);
+  font-size: var(--t-sm); font-weight: var(--p-fuerte);
+}
+.escalera__grupo--peticion .escalera__numero { background: var(--c-surface-3); color: var(--c-texto); border: 1px solid var(--c-borde-fuerte); }
+.escalera__icono { color: var(--c-texto-2); display: grid; }
+.escalera__texto { display: grid; gap: 2px; min-width: 0; }
+.escalera__texto strong { font-size: var(--t-md); }
+.escalera__texto span { font-size: var(--t-sm); color: var(--c-texto-2); }
+.escalera__entre { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: var(--t-xs); color: var(--c-texto-2); }
+.escalera__reglas { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: var(--t-sm); color: var(--c-texto-2); }
+
+/* ------------------------------------------------------------------ varios */
+.chips-sistemas { display: flex; flex-wrap: wrap; gap: var(--s-2); }

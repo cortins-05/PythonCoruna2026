@@ -1,0 +1,465 @@
+{
+ "reloj": "2026-10-24T09:00",
+ "desde": "2026-10-24",
+ "dias": 14,
+ "mapa": {
+  "fechas": [
+   "2026-10-24",
+   "2026-10-25",
+   "2026-10-26",
+   "2026-10-27",
+   "2026-10-28",
+   "2026-10-29",
+   "2026-10-30",
+   "2026-10-31",
+   "2026-11-01",
+   "2026-11-02",
+   "2026-11-03",
+   "2026-11-04",
+   "2026-11-05",
+   "2026-11-06"
+  ],
+  "tipos": {
+   "DBL-STD": {
+    "capacidad": 3,
+    "dias": [
+     {
+      "fecha": "2026-10-24",
+      "ocupadas": 3,
+      "libres": 0,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 2,
+       "ofihotel": 1,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-25",
+      "ocupadas": 2,
+      "libres": 1,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 2,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-26",
+      "ocupadas": 2,
+      "libres": 1,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 1,
+       "ofihotel": 1,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-27",
+      "ocupadas": 1,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 1,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-28",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-29",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-30",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-31",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-01",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-02",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-03",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-04",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-05",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-06",
+      "ocupadas": 0,
+      "libres": 3,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     }
+    ]
+   },
+   "SGL-STD": {
+    "capacidad": 2,
+    "dias": [
+     {
+      "fecha": "2026-10-24",
+      "ocupadas": 1,
+      "libres": 1,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 1,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-25",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-26",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-27",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-28",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-29",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-30",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-10-31",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-01",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-02",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-03",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-04",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-05",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     },
+     {
+      "fecha": "2026-11-06",
+      "ocupadas": 0,
+      "libres": 2,
+      "cerrado_en_roomcloud": false,
+      "por_fuente": {
+       "roomcloud": 0,
+       "ofihotel": 0,
+       "recepcion": 0
+      }
+     }
+    ]
+   }
+  }
+ },
+ "conflictos": [
+  {
+   "tipo": "DBL-STD",
+   "fecha": "2026-10-24",
+   "ocupadas": 3,
+   "capacidad": 3,
+   "nivel": "lleno"
+  }
+ ],
+ "peticiones": [
+  {
+   "id": "cm-0001",
+   "canal": "correo",
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "de": "Sophie Martin",
+   "hora": "07:58",
+   "tipo_habitacion": "DBL-STD",
+   "desde": "2026-10-24",
+   "hasta": "2026-10-27",
+   "habitaciones": 1,
+   "veredicto": "no_disponible"
+  },
+  {
+   "id": "cm-0002",
+   "canal": "correo",
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "de": "Carlos Meijide",
+   "hora": "08:31",
+   "tipo_habitacion": "DBL-STD",
+   "desde": "2026-11-01",
+   "hasta": "2026-11-03",
+   "habitaciones": 3,
+   "veredicto": "ajustado"
+  },
+  {
+   "id": "cm-0006",
+   "canal": "correo",
+   "prioridad": {
+    "nivel": 4,
+    "fuente": "Correo",
+    "id": "correo",
+    "tipo": "peticion"
+   },
+   "de": "Pablo Rey",
+   "hora": "08:57",
+   "tipo_habitacion": "SGL-STD",
+   "desde": "2026-10-24",
+   "hasta": "2026-10-25",
+   "habitaciones": 1,
+   "veredicto": "ajustado"
+  },
+  {
+   "id": "cm-0004",
+   "canal": "whatsapp",
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "de": "Marta Souto",
+   "hora": "08:49",
+   "tipo_habitacion": "SGL-STD",
+   "desde": "2026-10-24",
+   "hasta": "2026-10-25",
+   "habitaciones": 1,
+   "veredicto": "en_competencia"
+  },
+  {
+   "id": "cm-0005",
+   "canal": "whatsapp",
+   "prioridad": {
+    "nivel": 5,
+    "fuente": "WhatsApp",
+    "id": "whatsapp",
+    "tipo": "peticion"
+   },
+   "de": "Lucía Fernández",
+   "hora": "08:52",
+   "tipo_habitacion": "DBL-STD",
+   "desde": "2026-10-28",
+   "hasta": "2026-10-30",
+   "habitaciones": 1,
+   "veredicto": "disponible"
+  }
+ ],
+ "fuentes": [
+  {
+   "nivel": 1,
+   "id": "roomcloud",
+   "nombre": "RoomCloud",
+   "tipo": "firme",
+   "icono": "refresh",
+   "descripcion": "Reservas de Booking, Expedia y la web: confirmadas y con garantía de pago. Bloquean la habitación siempre."
+  },
+  {
+   "nivel": 2,
+   "id": "ofihotel",
+   "nombre": "OfiHotel",
+   "tipo": "firme",
+   "icono": "building",
+   "descripcion": "Lo que ya está registrado en el programa del hotel, con los datos de ayer."
+  },
+  {
+   "nivel": 3,
+   "id": "recepcion",
+   "nombre": "Recepción",
+   "tipo": "firme",
+   "icono": "door",
+   "descripcion": "Reservas físicas y peticiones que recepción ya ha confirmado desde la aplicación."
+  }
+ ]
+}

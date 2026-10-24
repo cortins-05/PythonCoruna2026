@@ -1,0 +1,141 @@
+{
+ "id": "cm-0001",
+ "ts": "2026-10-24T07:58",
+ "hora": "07:58",
+ "canal": "correo",
+ "de": {
+  "nombre": "Sophie Martin",
+  "contacto": "sophie.martin@example.fr"
+ },
+ "asunto": "Demande de chambre du 24 au 27 octobre",
+ "texto": "Bonjour, avez-vous une chambre double de libre du 24 au 27 octobre pour 2 personnes ? Merci d'avance.",
+ "tipo": "peticion_habitacion",
+ "idioma": "fr",
+ "peticion": {
+  "tipo_habitacion": "DBL-STD",
+  "desde": "2026-10-24",
+  "hasta": "2026-10-27",
+  "noches": 3,
+  "personas": 2,
+  "habitaciones": 1
+ },
+ "prioridad": {
+  "nivel": 4,
+  "fuente": "Correo",
+  "id": "correo",
+  "tipo": "peticion"
+ },
+ "estado": "pendiente",
+ "expediente_id": null,
+ "contraste": {
+  "veredicto": "no_disponible",
+  "motivo": "El 24 de octubre no queda ninguna habitación doble libre: lo ocupan RoomCloud (2) y OfiHotel (1), con más prioridad que esta petición.",
+  "noches": [
+   {
+    "fecha": "2026-10-24",
+    "capacidad": 3,
+    "ocupadas": 3,
+    "libres": 0,
+    "retenidas": 0,
+    "libres_para_esta": 0,
+    "por_fuente": {
+     "roomcloud": 2,
+     "ofihotel": 1,
+     "recepcion": 0
+    },
+    "ocupantes": {
+     "roomcloud": [
+      "Ana Pereira",
+      "Claire Dubois"
+     ],
+     "ofihotel": [
+      "García"
+     ],
+     "recepcion": []
+    },
+    "retenida_por": []
+   },
+   {
+    "fecha": "2026-10-25",
+    "capacidad": 3,
+    "ocupadas": 2,
+    "libres": 1,
+    "retenidas": 0,
+    "libres_para_esta": 1,
+    "por_fuente": {
+     "roomcloud": 2,
+     "ofihotel": 0,
+     "recepcion": 0
+    },
+    "ocupantes": {
+     "roomcloud": [
+      "Ana Pereira",
+      "Claire Dubois"
+     ],
+     "ofihotel": [],
+     "recepcion": []
+    },
+    "retenida_por": []
+   },
+   {
+    "fecha": "2026-10-26",
+    "capacidad": 3,
+    "ocupadas": 2,
+    "libres": 1,
+    "retenidas": 0,
+    "libres_para_esta": 1,
+    "por_fuente": {
+     "roomcloud": 1,
+     "ofihotel": 1,
+     "recepcion": 0
+    },
+    "ocupantes": {
+     "roomcloud": [
+      "Claire Dubois"
+     ],
+     "ofihotel": [
+      "Rey"
+     ],
+     "recepcion": []
+    },
+    "retenida_por": []
+   }
+  ],
+  "bloqueada_por": [
+   {
+    "fuente": "RoomCloud",
+    "id": "roomcloud",
+    "nivel": 1,
+    "cantidad": 2,
+    "ocupantes": [
+     "Ana Pereira",
+     "Claire Dubois"
+    ]
+   },
+   {
+    "fuente": "OfiHotel",
+    "id": "ofihotel",
+    "nivel": 2,
+    "cantidad": 1,
+    "ocupantes": [
+     "García"
+    ]
+   }
+  ],
+  "retenida_por": [],
+  "alternativa": {
+   "desde": "2026-10-25",
+   "hasta": "2026-10-28",
+   "noches": 3
+  }
+ },
+ "respuesta": {
+  "canal": "correo",
+  "destinatario": "sophie.martin@example.fr",
+  "asunto": "Re: Demande de chambre du 24 au 27 octobre",
+  "texto": "Bonjour Sophie, nous sommes désolés : du 24 octobre au 27 octobre nous n'avons plus de chambre double libre. Nous avons une chambre double de libre du 25 octobre au 28 octobre. Souhaitez-vous la réserver ?\n\nCordialement,\nLa réception",
+  "idioma": "fr"
+ },
+ "alerta": null,
+ "resultado": null
+}
