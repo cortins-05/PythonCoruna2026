@@ -1,13 +1,14 @@
 """Hub de expedientes: los datos de cada estancia viven aquí y salen por adaptadores."""
 import os
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from .adapters import ofihotel, roomcloud, ses
+from . import disponibilidad, hub, lector, plantillas
+from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
 from .adapters.ocr import leer_documento
 from .store import Store
 from .validators import campos_que_faltan, problemas_huesped
@@ -101,7 +102,7 @@ def nuevo_expediente(r: dict) -> dict:
         "personas": sum(int(h["adultos"] or 0) + int(h["ninos"] or 0) for h in r["habitaciones"]) or 1,
         "habitaciones": r["habitaciones"],
         "importe": r["importe"],
-        "reserva": {"nombre": r["nombre"], "apellidos": r["apellidos"], "pais": r["pais"]},
+        "reserva": {"nombre": r["nombre"], "apellidos": r["apellidos"], "pais": r["pais"], "telefono": r["telefono"]},
         "huesped": {c: "" for c in CAMPOS_HUESPED},
         "pago": {"medio": r["medio_pago"]},
         "empresa": {},
@@ -189,6 +190,7 @@ def sincronizar():
         ref = f"{r['portal_id']}-{r['id_canal']}"
         existente = store.db["expedientes"].get(ref)
         cancelada = r["estado_rc"] in roomcloud.ESTADOS_CANCELADOS
+        nombre = f"{r['nombre']} {r['apellidos']}".strip()
         if existente and r["dlm"] <= existente["dlm"]:
             cuenta["sin_cambios"] += 1
             continue
@@ -196,15 +198,20 @@ def sincronizar():
             if existente:
                 existente["estado"], existente["dlm"] = "cancelada", r["dlm"]
                 anotar(existente, "Reserva cancelada en RoomCloud", "Sistema")
+                hub.registrar_evento(store, "roomcloud", "reserva_cancelada", nombre, f"Reserva {ref} cancelada", ref)
             cuenta["canceladas"] += 1
             continue
         if existente:
             existente.update(dlm=r["dlm"], checkin_prevista=r["checkin"], checkout_prevista=r["checkout"])
             anotar(existente, "Reserva modificada en RoomCloud", "Sistema")
+            hub.registrar_evento(store, "roomcloud", "reserva_modificada", nombre, f"Reserva {ref} modificada", ref)
             cuenta["actualizadas"] += 1
         else:
             store.db["expedientes"][ref] = nuevo_expediente(r)
+            hub.registrar_evento(store, "roomcloud", "reserva_nueva", nombre,
+                                 f"Reserva {ref}: {r['checkin']} a {r['checkout']}", ref)
             cuenta["nuevas"] += 1
+    hub.revisar_ocupacion(store)
     store.guardar()
     return cuenta
 
@@ -333,3 +340,140 @@ def cerrar(exp_id: str, datos: ActorIn):
     anotar(exp, "Expediente cerrado", datos.actor)
     store.guardar()
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- hub: ocupación, WhatsApp, aprobaciones
+
+class WalkinIn(BaseModel):
+    nombre: str
+    apellidos: str = ""
+    telefono: str = ""
+    tipo: str
+    checkin: str
+    checkout: str
+    personas: int = 1
+    viaja_por_trabajo: bool = False
+    forzar: bool = False
+
+
+class WhatsappIn(BaseModel):
+    wa_id: str
+    nombre: str = ""
+    texto: str
+
+
+@app.get("/api/disponibilidad")
+def ver_disponibilidad(dias: int = 7):
+    desde = store.ahora().date().isoformat()
+    return {"mapa": disponibilidad.mapa(store.db, desde, dias), "conflictos": disponibilidad.conflictos(store.db, desde, dias)}
+
+
+@app.post("/api/sync/ofihotel")
+def sincronizar_ofihotel():
+    """Lectura SOLO LECTURA de OfiHotel (instantánea de ejemplo): nunca se escribe en OfiHotel."""
+    instantanea = ofihotel_lectura.leer_instantanea()
+    store.db["ofihotel"] = instantanea
+    hub.registrar_evento(store, "ofihotel", "instantanea_lectura",
+                         contenido=f"{len(instantanea['ocupaciones'])} ocupaciones leídas (solo lectura)")
+    hub.revisar_ocupacion(store)
+    store.guardar()
+    return {"ocupaciones": len(instantanea["ocupaciones"])}
+
+
+@app.post("/api/walkin")
+def nuevo_walkin(datos: WalkinIn):
+    try:
+        entrada, salida = date.fromisoformat(datos.checkin), date.fromisoformat(datos.checkout)
+    except ValueError:
+        raise HTTPException(422, {"problemas": ["Las fechas deben tener formato AAAA-MM-DD"]})
+    if salida <= entrada:
+        raise HTTPException(422, {"problemas": ["La salida debe ser posterior a la llegada"]})
+    if datos.tipo not in disponibilidad.capacidad():
+        raise HTTPException(422, {"problemas": [f"Tipo de habitación desconocido: {datos.tipo}"]})
+    numero = store.siguiente_id("w").split("-")[1]
+    r = {"portal_id": "W", "id_canal": numero, "dlm": store.ahora().isoformat(timespec="minutes"), "estado_rc": "4",
+         "checkin": datos.checkin, "checkout": datos.checkout, "nombre": datos.nombre, "apellidos": datos.apellidos,
+         "telefono": datos.telefono, "email": "", "pais": "", "importe": "", "medio_pago": "",
+         "notas": "trabajo" if datos.viaja_por_trabajo else "",
+         "habitaciones": [{"tipo": datos.tipo, "tarifa": "", "adultos": str(datos.personas), "ninos": "0"}]}
+    exp = nuevo_expediente(r)
+    exp["origen"] = "walk-in"
+    store.db["expedientes"][exp["id"]] = exp
+    choques = [c for c in disponibilidad.conflictos(store.db, store.ahora().date().isoformat(), 14)
+               if c["tipo"] == datos.tipo and c["nivel"] == "overbooking" and datos.checkin <= c["fecha"] < datos.checkout]
+    if choques and not datos.forzar:
+        del store.db["expedientes"][exp["id"]]
+        raise HTTPException(409, {"conflicto": choques})
+    hub.registrar_evento(store, "recepcion", "walk_in", f"{datos.nombre} {datos.apellidos}".strip(),
+                         f"Reserva física {datos.tipo} del {datos.checkin} al {datos.checkout}", exp["id"])
+    hub.revisar_ocupacion(store)
+    store.guardar()
+    return {"id": exp["id"], "conflicto": choques}
+
+
+def _procesar_whatsapp(payload: dict) -> list[dict]:
+    creados = []
+    for m in whatsapp.parsear(payload):
+        exp = hub.buscar_por_telefono(store.db, m["wa_id"])
+        ev = hub.registrar_evento(store, "whatsapp", "mensaje_entrante", m["nombre"] or m["wa_id"], m["texto"],
+                                  exp["id"] if exp else None, {"wa_id": m["wa_id"], "tipo_mensaje": m["tipo"]})
+        if m["tipo"] == "text":
+            ev["datos"]["interpretacion"] = lector.interpretar(m["texto"])
+        else:
+            ev["datos"]["interpretacion"] = {"intencion": "envia_documento" if m["tipo"] in ("image", "document") else "otro",
+                                             "confianza": 0.0, "modo": "tipo de mensaje"}
+        prop = hub.proponer_para_mensaje(store, ev, exp, m["nombre"], m["wa_id"])
+        creados.append({"evento": ev["id"], "propuesta": prop["id"] if prop else None})
+    store.guardar()
+    return creados
+
+
+@app.post("/api/webhook/whatsapp")
+def webhook_whatsapp(payload: dict):
+    return _procesar_whatsapp(payload)
+
+
+@app.post("/api/whatsapp/simular")
+def simular_whatsapp(datos: WhatsappIn):
+    return _procesar_whatsapp(whatsapp.construir_payload(datos.wa_id, datos.nombre, datos.texto, store.ahora()))
+
+
+@app.get("/api/bandeja")
+def bandeja():
+    return {"eventos": list(reversed(store.db["eventos"]))[:100],
+            "propuestas": [p for p in store.db["propuestas"] if p["estado"] == "pendiente"]}
+
+
+@app.get("/api/propuestas")
+def propuestas(estado: str | None = None):
+    return [p for p in store.db["propuestas"] if estado is None or p["estado"] == estado]
+
+
+def _propuesta(pid: str) -> dict:
+    prop = next((p for p in store.db["propuestas"] if p["id"] == pid), None)
+    if not prop:
+        raise HTTPException(404, "Propuesta no encontrada")
+    if prop["estado"] != "pendiente":
+        raise HTTPException(409, "La propuesta ya está decidida")
+    return prop
+
+
+@app.post("/api/propuestas/{pid}/aprobar")
+def aprobar(pid: str, datos: ActorIn):
+    prop = _propuesta(pid)
+    try:  # se vuelve a validar al aprobar, por si los datos cambiaron desde que se propuso
+        prop["texto"] = plantillas.renderizar(prop["plantilla"], prop["slots"])
+    except ValueError as error:
+        raise HTTPException(422, {"problemas": [str(error)]})
+    prop.update(estado="aprobada", decidido_por=datos.actor, hora_decision=store.ahora().isoformat(timespec="minutes"))
+    hub.ejecutar_propuesta(store, prop, datos.actor)
+    store.guardar()
+    return prop
+
+
+@app.post("/api/propuestas/{pid}/rechazar")
+def rechazar(pid: str, datos: ActorIn):
+    prop = _propuesta(pid)
+    prop.update(estado="rechazada", decidido_por=datos.actor, hora_decision=store.ahora().isoformat(timespec="minutes"))
+    store.guardar()
+    return prop
