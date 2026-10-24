@@ -1,0 +1,13 @@
+{
+  "_nota": "Datos inventados con la forma normalizada de la lectura de OfiHotel, como llegarían de la copia del día anterior. La estancia de Dubois lleva ref_externa y duplica una reserva que ya está en RoomCloud, así que sirve para probar que no se cuenta dos veces. Las estancias en estado salida son históricas y no ocupan los próximos siete días.",
+  "leido_el": "2026-10-24T09:00",
+  "datos_hasta": "2026-10-23T23:59",
+  "estancias": [
+    {"id_ofihotel": "OH-10231", "huesped": "García", "habitacion": "204", "tipo": "DBL-STD", "entrada": "2026-10-24", "salida": "2026-10-25", "estado": "reservada", "numero_externo": "", "ref_externa": "", "personas": 2},
+    {"id_ofihotel": "OH-10232", "huesped": "Dubois", "habitacion": "105", "tipo": "DBL-STD", "entrada": "2026-10-24", "salida": "2026-10-27", "estado": "reservada", "numero_externo": "EX-7730021-2", "ref_externa": "2-EX-7730021", "personas": 2},
+    {"id_ofihotel": "OH-10233", "huesped": "Rey", "habitacion": "201", "tipo": "DBL-STD", "entrada": "2026-10-26", "salida": "2026-10-28", "estado": "reservada", "numero_externo": "", "ref_externa": "", "personas": 1},
+    {"id_ofihotel": "OH-10190", "huesped": "Novak", "habitacion": "102", "tipo": "DBL-STD", "entrada": "2026-10-18", "salida": "2026-10-21", "estado": "salida", "numero_externo": "BK-4410233-1", "ref_externa": "1-BK-4410233", "personas": 2},
+    {"id_ofihotel": "OH-10201", "huesped": "Ferreiro", "habitacion": "303", "tipo": "SGL-STD", "entrada": "2026-10-20", "salida": "2026-10-22", "estado": "salida", "numero_externo": "", "ref_externa": "", "personas": 1},
+    {"id_ofihotel": "OH-10212", "huesped": "Lindqvist", "habitacion": "110", "tipo": "DBL-STD", "entrada": "2026-10-21", "salida": "2026-10-23", "estado": "salida", "numero_externo": "EX-7691140-2", "ref_externa": "2-EX-7691140", "personas": 2}
+  ]
+}

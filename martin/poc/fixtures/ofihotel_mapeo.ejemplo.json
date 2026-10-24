@@ -1,0 +1,10 @@
+{
+  "_comentario": "MAPEO DE EJEMPLO con nombres de tabla y columna MARCADOS como marcador de posición (TABLA_RESERVAS, COL_...), porque todavía no conocemos el esquema de OfiHotel. Quien tenga acceso a la base debe ejecutar scripts/ofihotel_explorar.py y sustituir esos nombres. Cada consulta debe ser un SELECT que devuelva exactamente estos alias: id_ofihotel, huesped, habitacion, tipo, entrada, salida, estado, numero_externo, personas. No se piden documentos ni direcciones.",
+  "consultas": {
+    "estancias": "SELECT r.COL_ID AS id_ofihotel, r.COL_APELLIDO AS huesped, r.COL_HABITACION AS habitacion, r.COL_TIPO AS tipo, r.COL_ENTRADA AS entrada, r.COL_SALIDA AS salida, r.COL_ESTADO AS estado, r.COL_NUM_RESERVA_EXTERNO AS numero_externo, r.COL_PERSONAS AS personas FROM TABLA_RESERVAS r WHERE r.COL_SALIDA >= DATEADD(day, -30, GETDATE())"
+  },
+  "tipos_habitacion": {"DB": "DBL-STD", "IN": "SGL-STD"},
+  "estados": {"R": "reservada", "I": "en_casa", "O": "salida", "A": "anulada"},
+  "formato_fecha": "%Y-%m-%d",
+  "regex_numero_externo": "^(?P<localizador>.+)-(?P<portal>\\d+)$"
+}
