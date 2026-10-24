@@ -178,7 +178,7 @@ function menuGlobal(ancla) {
       accion("Leer reservas de RoomCloud", "refresh", "/api/sync/roomcloud", (r) => `RoomCloud leído: ${r?.nuevas ?? 0} reservas nuevas`),
       accion("Leer OfiHotel (solo lectura)", "building", "/api/sync/ofihotel", "OfiHotel leído en solo lectura"),
       { texto: "Avanzar el reloj 6 horas", icono: "clock", onclick: async () => { await api("/api/reloj", "POST", { horas: 6 }); ui.toast("Reloj de la demo adelantado 6 horas", "ok"); } },
-      accion("Cargar datos de demostración", "sparkles", "/api/demo/semilla?nivel=completa", "Datos de demostración cargados"),
+      accion("Cargar datos de demostración", "sparkles", "/api/demo/semilla?nivel=demo", "Datos de demostración cargados"),
       { separador: true },
       {
         texto: "Reiniciar los datos", icono: "trash", peligro: true,

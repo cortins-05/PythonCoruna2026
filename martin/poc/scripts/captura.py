@@ -552,7 +552,7 @@ async def sembrar(base: str, nivel: str, informe: Informe) -> None:
         informe.servidor["semilla"] = "ninguna"
         return
     via = "endpoint"
-    if nivel in ("vacia", "completa"):
+    if nivel in ("vacia", "completa", "demo"):
         estado, datos = await http_async("POST", base + f"api/demo/semilla?nivel={nivel}", {}, timeout=60)
         if _ruta_inexistente(estado, datos):
             via = "respaldo"
@@ -1849,7 +1849,7 @@ def construir_parser() -> argparse.ArgumentParser:
     p.add_argument("--timeout", type=_entero(5, 3600), default=90, help="tiempo máximo de toda la ejecución en segundos (90)")
     p.add_argument("--permitir-errores", action="store_true", help="el informe cuenta los errores de página pero el código de salida es 0")
     p.add_argument("--permitir-404", action="append", default=[], metavar="RUTA", help="prefijo de ruta cuyo 404 no cuenta como fallo, repetible")
-    p.add_argument("--semilla", choices=("ninguna", "vacia", "basica", "completa"), default="completa", help="datos de demo antes de abrir (completa)")
+    p.add_argument("--semilla", choices=("ninguna", "vacia", "basica", "completa", "demo"), default="completa", help="datos de demo antes de abrir (completa; demo añade relleno)")
     p.add_argument("--servidor", default=None, metavar="URL", help="reutiliza un servidor ya arrancado en lugar de lanzar uno")
     p.add_argument("--sin-servidor", action="store_true", help="no arranca servidor ni siembra (para --url externas o data:)")
     p.add_argument("--continuar-tras-fallo", action="store_true", help="tras un paso fallido sigue con los demás en lugar de omitirlos")
