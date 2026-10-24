@@ -15,6 +15,7 @@ from . import disponibilidad, estados, hub, plantillas, prioridades
 
 ABIERTAS = ("pendiente", "en_espera")
 HORIZONTE_ALTERNATIVA = 14
+NOMBRE_CANAL = {"correo": "correo", "whatsapp": "WhatsApp"}
 TEXTO_MAX = 2000
 MESES = {
     "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6, "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9,
@@ -27,13 +28,20 @@ NUMEROS = {"un": 1, "una": 1, "uno": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco
 NOMBRE_MES = {"es": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
               "fr": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
               "en": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]}
-NOMBRE_TIPO = {"es": {"DBL-STD": "habitación doble", "SGL-STD": "habitación individual"},
-               "fr": {"DBL-STD": "chambre double", "SGL-STD": "chambre simple"},
-               "en": {"DBL-STD": "double room", "SGL-STD": "single room"}}
+NOMBRE_TIPO = {"es": {"DBL-STD": "habitación doble", "SGL-STD": "habitación individual", "TPL-STD": "habitación triple",
+                      "FAM-STD": "habitación familiar", "SUI-STD": "suite"},
+               "fr": {"DBL-STD": "chambre double", "SGL-STD": "chambre simple", "TPL-STD": "chambre triple",
+                      "FAM-STD": "chambre familiale", "SUI-STD": "suite"},
+               "en": {"DBL-STD": "double room", "SGL-STD": "single room", "TPL-STD": "triple room",
+                      "FAM-STD": "family room", "SUI-STD": "suite"}}
+PLURALES = {"habitación": "habitaciones", "individual": "individuales", "doble": "dobles", "triple": "triples", "familiar": "familiares",
+            "suite": "suites", "chambre": "chambres", "simple": "simples", "double": "doubles", "familiale": "familiales", "room": "rooms"}
 
 RANGO_MES = re.compile(r"(\d{1,2})(?:\s+de)?(?:\s+([a-z]{3,}))?\s+(?:al|au|to|hasta(?:\s+el)?|a)\s+(\d{1,2})(?:\s+de)?\s+([a-z]{3,})")
 RANGO_NUM = re.compile(r"(\d{1,2})[/-](\d{1,2})(?:[/-]\d{2,4})?\s*(?:al|a|-|to|au|hasta)\s*(\d{1,2})[/-](\d{1,2})")
-PALABRAS_PETICION = re.compile(r"habitaci|libre|disponib|reserv|room|chambre|doble|individual|single|double|alojamiento|noche|nuit|night|plaza")
+RANGO_DIAS_NUM = re.compile(r"(?<![\d/-])(\d{1,2})\s*(?:al|a|-|to|au|hasta)\s*(\d{1,2})[/-](\d{1,2})(?!\d)")
+RANGO_MES_PRIMERO = re.compile(r"([a-z]{3,})\s+(\d{1,2})(?:st|nd|rd|th)?\s*(?:to|-|until)\s*(?:([a-z]{3,})\s+)?(\d{1,2})(?:st|nd|rd|th)?")
+PALABRAS_PETICION = re.compile(r"habitaci|libre|disponib|reserv|room|chambre|doble|individual|single|double|triple|familiar|family|famille|suite|alojamiento|noche|nuit|night|plaza")
 PALABRAS_PREGUNTA = re.compile(r"check-?in|check-?out|hora|horario|parking|desayuno|wifi|direccion|como llegar|aparcamiento")
 PALABRAS_CAMBIO = re.compile(r"cancel|anular|cambiar|modificar|adelantar|retrasar|un dia antes|un dia despues")
 
@@ -60,6 +68,9 @@ def _fecha(dia: int, mes: int, hoy: date) -> date | None:
     return f if f >= hoy else date(hoy.year + 1, mes, dia)
 
 
+NUM_RE = r"\d+|un|una|uno|dos|tres|cuatro|cinco|seis|one|two|three|four|five|six|deux|trois|quatre"
+
+
 def _numero(token: str) -> int | None:
     return int(token) if token.isdigit() else NUMEROS.get(token)
 
@@ -81,6 +92,21 @@ def extraer_fechas(texto: str, hoy: date) -> tuple[str, str] | None:
         desde, hasta = _fecha(int(m.group(1)), int(m.group(2)), hoy), _fecha(int(m.group(3)), int(m.group(4)), hoy)
         if desde and hasta and hasta > desde:
             return desde.isoformat(), hasta.isoformat()
+    m = RANGO_DIAS_NUM.search(n)
+    if m:
+        mes = int(m.group(3))
+        desde, hasta = _fecha(int(m.group(1)), mes, hoy), _fecha(int(m.group(2)), mes, hoy)
+        if desde and hasta and hasta > desde:
+            return desde.isoformat(), hasta.isoformat()
+    m = RANGO_MES_PRIMERO.search(n)
+    if m and _mes(m.group(1)) and (not m.group(3) or _mes(m.group(3))):
+        mes1 = _mes(m.group(1))
+        mes2 = _mes(m.group(3)) if m.group(3) else mes1
+        desde, hasta = _fecha(int(m.group(2)), mes1, hoy), _fecha(int(m.group(4)), mes2, hoy)
+        if desde and hasta:
+            if hasta <= desde:
+                hasta = _fecha(int(m.group(4)), mes2, desde + timedelta(days=1)) or hasta
+            return desde.isoformat(), hasta.isoformat()
     if re.search(r"esta noche|tonight|ce soir|para hoy", n):
         return hoy.isoformat(), (hoy + timedelta(days=1)).isoformat()
     if re.search(r"(?<!esta )\bmanana\b|tomorrow|demain", n):
@@ -90,8 +116,9 @@ def extraer_fechas(texto: str, hoy: date) -> tuple[str, str] | None:
 
 def extraer_personas(texto: str) -> int | None:
     n = _sin_tildes(texto)
-    for patron in (r"(\d+|un|una|dos|tres|cuatro|cinco|seis|two|three|four|deux|trois)\s*(?:personas|pers\b|adultos|people|guests|personnes|pax)",
-                   r"somos\s+(\d+|dos|tres|cuatro|cinco|seis)", r"\bfor\s+(\d+|two|three|four)\b", r"\bpour\s+(\d+|deux|trois|quatre)\b"):
+    for patron in (r"\b(" + NUM_RE + r")\s*(?:personas?|pers|adultos?|people|persons?|guests?|personnes?|pax|adults?)\b",
+                   r"\bsomos\s+(" + NUM_RE + r")\b", r"\bfor\s+(" + NUM_RE + r")\b(?!\s*(?:nights?|nuits?|noches?|rooms?|habitaci))",
+                   r"\bpour\s+(" + NUM_RE + r")\b(?!\s*(?:nuits?|noches?|nights?|chambres?))"):
         m = re.search(patron, n)
         if m and _numero(m.group(1)):
             return _numero(m.group(1))
@@ -99,17 +126,29 @@ def extraer_personas(texto: str) -> int | None:
 
 
 def extraer_habitaciones(texto: str) -> int:
-    m = re.search(r"(\d+|un|una|dos|tres|cuatro|cinco|two|three|deux|trois)\s+(?:habitaciones|habitacion|rooms?|chambres?)", _sin_tildes(texto))
+    m = re.search(r"\b(" + NUM_RE + r")\s+(?:(?:double|single|triple|family|twin)\s+)?"
+                  r"(?:habitaciones|habitacion|rooms?|chambres?|dobles|individuales|triples|familiares|suites)\b", _sin_tildes(texto))
     return max(1, min(_numero(m.group(1)) or 1, 10)) if m else 1
+
+
+PERSONAS_POR_TIPO = {"SGL-STD": 1, "DBL-STD": 2, "TPL-STD": 3, "FAM-STD": 4, "SUI-STD": 2}
 
 
 def extraer_tipo(texto: str, personas: int | None) -> str:
     n = _sin_tildes(texto)
+    if re.search(r"\bsuite", n):
+        return "SUI-STD"
+    if re.search(r"familiar|family|familiale|\bfam\b", n):
+        return "FAM-STD"
+    if re.search(r"\btriple|\btpl\b", n):
+        return "TPL-STD"
     if re.search(r"individual|single|sencilla|simple|\bsgl\b|chambre simple", n):
         return "SGL-STD"
     if re.search(r"doble|double|matrimonio|twin|\bdbl\b", n):
         return "DBL-STD"
-    return "SGL-STD" if personas == 1 else "DBL-STD"
+    if personas is None:
+        return "DBL-STD"
+    return "SGL-STD" if personas <= 1 else "DBL-STD" if personas == 2 else "TPL-STD" if personas == 3 else "FAM-STD"
 
 
 def idioma_de(texto: str) -> str:
@@ -132,7 +171,7 @@ def analizar(texto: str, asunto: str, hoy: date) -> dict:
         desde, hasta = fechas
         return {"tipo": "peticion_habitacion", "idioma": idioma,
                 "peticion": {"tipo_habitacion": extraer_tipo(completo, personas), "desde": desde, "hasta": hasta,
-                             "noches": (date.fromisoformat(hasta) - date.fromisoformat(desde)).days, "personas": personas or 2,
+                             "noches": (date.fromisoformat(hasta) - date.fromisoformat(desde)).days, "personas": personas or PERSONAS_POR_TIPO.get(extraer_tipo(completo, personas), 2),
                              "habitaciones": extraer_habitaciones(completo)}}
     if PALABRAS_CAMBIO.search(n):
         return {"tipo": "cambio", "idioma": idioma, "peticion": None}
@@ -168,7 +207,9 @@ def contrastar(store, com: dict, peticion: dict | None = None) -> dict:
     tipo, n = p["tipo_habitacion"], p["habitaciones"]
     capacidad = disponibilidad.capacidad().get(tipo)
     if capacidad is None:
-        return {"veredicto": "sin_datos", "motivo": f"No conocemos el tipo de habitación {tipo}.", "noches": [], "bloqueada_por": [],
+        nombre_tipo = NOMBRE_TIPO["es"].get(tipo, tipo)
+        return {"veredicto": "sin_datos", "motivo": f"El inventario de la demo no incluye {nombre_tipo}, así que recepción tiene que comprobarlo a mano.",
+                "noches": [], "bloqueada_por": [],
                 "retenida_por": [], "alternativa": None}
     nombres, filas = _ids_de(store.db), disponibilidad.ocupaciones(store.db)
     noches = []
@@ -210,7 +251,9 @@ def contrastar(store, com: dict, peticion: dict | None = None) -> dict:
     elif peor_mia["libres_para_esta"] == n:
         veredicto, motivo = "ajustado", f"Queda libre justo lo que pide: después no sobrará ninguna {NOMBRE_TIPO['es'][tipo]}."
     else:
-        veredicto, motivo = "disponible", f"Hay {peor_mia['libres_para_esta']} libres todas las noches."
+        libres = peor_mia["libres_para_esta"]
+        veredicto, motivo = "disponible", (f"Queda{'n' if libres > 1 else ''} {_tipo_plural(tipo, libres, 'es')} libre{'s' if libres > 1 else ''} "
+                                           f"todas las noches.")
     alternativa = _alternativa(store, com, p, nombres) if veredicto in ("no_disponible", "en_competencia") else None
     return {"veredicto": veredicto, "motivo": motivo, "noches": noches, "bloqueada_por": bloqueada, "retenida_por": retenida,
             "alternativa": alternativa}
@@ -253,10 +296,14 @@ def _tipo_plural(tipo: str, n: int, idioma: str) -> str:
     base = NOMBRE_TIPO[idioma].get(tipo, tipo)
     if n == 1:
         return f"una {base}" if idioma == "es" else (f"une {base}" if idioma == "fr" else f"a {base}")
-    plural = {"es": base.replace("habitación", "habitaciones").replace("doble", "dobles").replace("individual", "individuales"),
-              "fr": base.replace("chambre", "chambres").replace("double", "doubles").replace("simple", "simples"),
-              "en": base + "s"}[idioma]
-    return f"{n} {plural}"
+    if base == tipo:  # tipo sin nombre conocido
+        return f"{n} × {tipo}"
+    palabras = [PLURALES.get(w, w) for w in base.split()]
+    if idioma == "en" and len(palabras) == 2 and palabras[1] == "rooms":
+        palabras = base.split()[:1] + ["rooms"]
+    elif idioma == "en" and base == "suite":
+        palabras = ["suites"]
+    return f"{n} {' '.join(palabras)}"
 
 
 def redactar(com: dict, contraste: dict | None) -> dict:
@@ -274,6 +321,10 @@ def redactar(com: dict, contraste: dict | None) -> dict:
                             "Nous vous la réservons à votre nom. À bientôt !",
                       "en": f"Hello {nombre}, yes, we have {cosa} available from {d1} to {d2} ({p['noches']} night{'s' if p['noches'] != 1 else ''}). "
                             "We will keep it booked in your name. See you soon!"}[idioma]
+        elif v == "sin_datos":
+            cuerpo = {"es": f"Hola {nombre}, gracias por tu consulta. Estamos comprobando si tenemos {cosa} del {d1} al {d2} y te respondemos en breve.",
+                      "fr": f"Bonjour {nombre}, merci pour votre demande. Nous vérifions si nous avons {cosa} du {d1} au {d2} et nous vous répondons rapidement.",
+                      "en": f"Hello {nombre}, thank you for your request. We are checking whether we have {cosa} from {d1} to {d2} and will reply shortly."}[idioma]
         elif v == "en_competencia":
             cuerpo = {"es": f"Hola {nombre}, estamos terminando de confirmar otra consulta para esas fechas. En unos minutos te decimos si podemos dejártela reservada.",
                       "fr": f"Bonjour {nombre}, nous terminons de confirmer une autre demande pour ces dates. Nous revenons vers vous dans quelques minutes.",
@@ -319,8 +370,8 @@ def registrar(store, canal: str, nombre: str, contacto: str, texto: str, asunto:
         exp = hub.buscar_por_correo(store.db, contacto)
     else:
         contacto = re.sub(r"\D", "", str(contacto or ""))
-        if len(contacto) < 9:
-            raise hub.ErrorNegocio("El teléfono tiene que tener al menos 9 cifras", 422)
+        if not 9 <= len(contacto) <= 15:
+            raise hub.ErrorNegocio("El teléfono tiene que tener entre 9 y 15 cifras", 422)
         exp = hub.buscar_por_telefono(store.db, contacto)
     ahora = store.ahora()
     analisis = analizar(texto, asunto, ahora.date())
@@ -343,10 +394,15 @@ def obtener(store, com_id: str) -> dict:
 
 def vista(store, com: dict) -> dict:
     """Lo que ve la interfaz: la comunicación con su contraste y su borrador calculados ahora, y no cuando llegó."""
-    contraste = contrastar(store, com) if com.get("peticion") else None
+    cerrada = com["estado"] not in ABIERTAS
+    if cerrada and com.get("contraste_final"):
+        contraste = com["contraste_final"]  # lo que se vio al responder: la reserva que se crea al confirmar ya no cuenta como competencia
+    else:
+        contraste = contrastar(store, com) if com.get("peticion") else None
     if com["estado"] in ABIERTAS and contraste:
         previo, ahora_v = com.get("veredicto_visto"), contraste["veredicto"]
-        if previo in ("disponible", "ajustado") and ahora_v in ("no_disponible", "en_competencia"):
+        if (previo in ("disponible", "ajustado") and ahora_v in ("no_disponible", "en_competencia")) or (
+                previo == "en_competencia" and ahora_v == "no_disponible"):
             com["alerta"] = {"hora": store.ahora().isoformat(timespec="minutes"),
                              "texto": f"Ha dejado de estar disponible desde que la leyó recepción: {contraste['motivo']}"}
         elif ahora_v in ("disponible", "ajustado"):
@@ -355,6 +411,8 @@ def vista(store, com: dict) -> dict:
     borrador = redactar(com, contraste)
     if com["texto_editado"] and com["estado"] in ABIERTAS:
         borrador["texto"] = com["texto_editado"]
+    elif cerrada and com.get("resultado") and com["resultado"].get("texto"):
+        borrador["texto"] = com["resultado"]["texto"]  # lo que se envió de verdad
     return {"id": com["id"], "ts": com["ts"], "hora": com["ts"][11:16], "canal": com["canal"], "de": com["de"], "asunto": com["asunto"],
             "texto": com["texto"], "tipo": com["tipo"], "idioma": com["idioma"], "peticion": com["peticion"], "prioridad": com["prioridad"],
             "estado": com["estado"], "expediente_id": com["expediente_id"], "contraste": contraste, "respuesta": borrador,
@@ -423,6 +481,8 @@ def confirmar(store, com_id: str, actor: str = "Recepción", texto: str | None =
         accion = "sin_hueco"
     _enviar(store, com, v["respuesta"], v["respuesta"]["texto"], actor, exp_id)
     com["estado"] = "en_espera" if accion == "en_espera" else "respondida"
+    if com["estado"] == "respondida":
+        com["contraste_final"] = v["contraste"]
     com["alerta"] = None
     com["resultado"] = {"hora": store.ahora().isoformat(timespec="minutes"), "canal": com["canal"], "destinatario": com["de"]["contacto"],
                         "texto": v["respuesta"]["texto"], "accion": accion, "reserva_id": exp_id, "actor": actor, "simulado": True}
@@ -434,7 +494,9 @@ def descartar(store, com_id: str, actor: str = "Recepción") -> dict:
     com = obtener(store, com_id)
     if com["estado"] not in ABIERTAS:
         raise hub.ErrorNegocio("Esta comunicación ya está respondida", 409)
+    com["contraste_final"] = vista(store, com)["contraste"]
     com["estado"] = "descartada"
+    com["alerta"] = None
     com["resultado"] = {"hora": store.ahora().isoformat(timespec="minutes"), "canal": com["canal"], "destinatario": com["de"]["contacto"],
                         "texto": "", "accion": "descartada", "reserva_id": None, "actor": actor, "simulado": True}
     return vista(store, com)
@@ -532,7 +594,7 @@ def cola(store) -> list[dict]:
             v = vista(store, c)
             hay_aviso = bool(v["alerta"]) or (v["contraste"] and v["contraste"]["veredicto"] in ("no_disponible", "en_competencia"))
             items.append({"id": f"com-{c['id']}", "tipo": "comunicacion", "color": "rojo" if v["alerta"] else "azul",
-                          "titulo": f"{'Petición' if c['tipo'] == 'peticion_habitacion' else 'Mensaje'} por {c['canal']} de {c['de']['nombre']}",
+                          "titulo": f"{'Petición' if c['tipo'] == 'peticion_habitacion' else 'Mensaje'} por {NOMBRE_CANAL[c['canal']]} de {c['de']['nombre']}",
                           "detalle": (v["contraste"]["motivo"] if v["contraste"] and hay_aviso else "Confirmar y responder"),
                           "prioridad": c["prioridad"], "ts": c["ts"], "ruta": "comunicaciones", "params": {"id": c["id"]}})
     items.sort(key=lambda i: (i["prioridad"]["nivel"], estados.COLORES.index(i["color"]), i["ts"]))
@@ -565,7 +627,7 @@ def actividad(store, limite: int = 14) -> list[dict]:
                        "detalle": (e["contenido"] or e["remitente"])[:140], "nivel": nombres.get(fuente), "expediente_id": e["expediente_id"]})
     for c in _db(store):
         salida.append({"id": c["id"], "ts": c["ts"], "hora": c["ts"][11:16], "fuente": c["canal"], "icono": ICONOS_EVENTO[c["canal"]],
-                       "titulo": f"{'Petición de habitación' if c['tipo'] == 'peticion_habitacion' else 'Mensaje'} por {c['canal']}",
+                       "titulo": f"{'Petición de habitación' if c['tipo'] == 'peticion_habitacion' else 'Mensaje'} por {NOMBRE_CANAL[c['canal']]}",
                        "detalle": f"{c['de']['nombre']}: {c['texto'][:110]}", "nivel": c["prioridad"]["nivel"], "expediente_id": c["expediente_id"]})
     salida.sort(key=lambda a: a["ts"], reverse=True)
     return salida[:limite]

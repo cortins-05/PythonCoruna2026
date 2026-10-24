@@ -43,6 +43,11 @@ def _corta(iso: str) -> str:
     return f"{iso[8:10]}/{iso[5:7]}"
 
 
+def _horas(h: float) -> str:
+    """Horas con coma decimal y sin ceros sobrantes: 24 y 23,5."""
+    return f"{h:g}".replace(".", ",")
+
+
 def _solapan(desde_a: str, hasta_a: str, desde_b: str, hasta_b: str) -> bool:
     return desde_a < hasta_b and desde_b < hasta_a
 
@@ -116,7 +121,7 @@ def sistemas_de(db: dict, exp: dict, ahora: datetime) -> dict:
     elif restante is not None and restante <= 0:
         documentacion = {"estado": "parte_vencido", "detalle": "El parte está fuera de plazo"}
     elif t["huesped"]["estado"] == "hecho" and t["pago"]["estado"] == "hecho":
-        documentacion = {"estado": "parte_pendiente", "detalle": f"Quedan {restante} h para enviar el parte" if restante is not None else "Falta enviar el parte"}
+        documentacion = {"estado": "parte_pendiente", "detalle": f"Quedan {_horas(restante)} h para enviar el parte" if restante is not None else "Falta enviar el parte"}
     elif t["huesped"]["estado"] == "hecho":
         documentacion = {"estado": "incompleta", "detalle": "Faltan el medio de pago o los datos de la empresa"}
     else:
