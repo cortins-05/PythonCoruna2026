@@ -470,9 +470,8 @@ export default {
 
     /* ---------- bienvenida */
     function pintarBienvenida(datos) {
-      return [el("div", { class: "asi__grupos" }, (datos?.categorias ?? []).map((c) => el("section", { class: "asi__grupo" },
-        el("h3", { class: "asi__subtitulo" }, ui.icono(c.icono, { tam: 16 }), c.titulo),
-        el("div", { class: "asi__preguntas" }, (c.preguntas ?? []).map((p) => ui.pastilla({ texto: p, onclick: () => enviar(p) }))))))];
+      const dos = (datos?.categorias ?? []).slice(0, 2).map((c) => (c.preguntas ?? [])[0]).filter(Boolean);
+      return dos.map((p) => el("button", { type: "button", class: "asi__pregunta", onclick: () => enviar(p) }, p));
     }
 
     const zonaSugerencias = el("div", { class: "asi__sugerencias" }, ui.esqueleto({ lineas: 3, alto: 16 }));
@@ -493,8 +492,7 @@ export default {
 
     bienvenida.append(
       el("div", { class: "asi__saludo" },
-        el("h2", null, "Hola, Flor"),
-        el("p", null, "Elige un atajo o escribe lo que necesites.")),
+        el("h2", null, "Hola, Flor")),
       zonaSugerencias);
     const panelBienvenida = ui.panel({ variante: "punteada", clase: "asi__panel-bienvenida", hijos: [bienvenida] });
     raiz.append(panelBienvenida, log);

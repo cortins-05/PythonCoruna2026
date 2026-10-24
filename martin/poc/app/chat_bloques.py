@@ -157,7 +157,9 @@ def bloque_lista_comunicaciones(store, estado: str = "pendientes", canal: str = 
               "descartada": "Comunicaciones descartadas"}.get(estado, "Comunicaciones")
     if canal in ("whatsapp", "correo"):
         titulo += " por WhatsApp" if canal == "whatsapp" else " por correo"
-    return {"tipo": "lista_comunicaciones", "titulo": titulo, "comunicaciones": lista,
+    if len(lista) > 6:
+        titulo += f" (6 de {len(lista)})"
+    return {"tipo": "lista_comunicaciones", "titulo": titulo, "comunicaciones": lista[:6],
             "acciones": [{"tipo": "abrir_seccion", "etiqueta": "Abrir las comunicaciones", "seccion": "comunicaciones",
                           "params": {"canal": canal} if canal in ("whatsapp", "correo") else {}}]}
 
@@ -189,7 +191,9 @@ def bloque_prioridades(resaltar: str | None = None) -> dict:
 
 
 def bloque_cola(store) -> dict:
-    return {"tipo": "cola", "titulo": "Qué atender primero", "items": comunicaciones.cola(store)}
+    items = comunicaciones.cola(store)
+    return {"tipo": "cola", "titulo": f"Qué atender primero ({min(len(items), 6)} de {len(items)})" if len(items) > 6 else "Qué atender primero",
+            "items": items[:6]}
 
 
 def bloque_conflictos(store) -> dict:

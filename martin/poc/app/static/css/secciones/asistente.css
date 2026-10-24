@@ -7,6 +7,21 @@
 .sec-asistente .asi__panel-bienvenida { width: 100%; max-width: 1000px; margin-inline: auto; }
 .sec-asistente .asi__asistente:not(:last-child) [data-bloque="sugerencias"] { display: none; }
 
+/* Fondo de puntos en toda la sección, y bienvenida centrada: dos sugerencias pequeñas encima y una ventana de texto grande */
+.app.es-asistente .contenido {
+  background-image: radial-gradient(var(--c-borde-fuerte) 1px, transparent 1.3px); background-size: 22px 22px;
+}
+.sec-asistente.es-vacio { justify-content: center; align-items: center; gap: var(--s-3); }
+.sec-asistente.es-vacio .asi__panel-bienvenida { order: 1; width: min(720px, 100%); background: transparent; border: 0; padding: 0; }
+.sec-asistente.es-vacio .asi__caja { order: 2; width: min(720px, 100%); }
+.sec-asistente.es-vacio .asi__bienvenida { align-items: center; gap: var(--s-3); }
+.sec-asistente.es-vacio .asi__saludo h2 { font-size: var(--t-xl); }
+.sec-asistente.es-vacio .asi__sugerencias { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--s-2); }
+.sec-asistente.es-vacio .asi__pregunta { font-size: var(--t-xs); padding: 4px 10px; border: 1px solid var(--c-borde-fuerte); background: var(--c-surface); color: var(--c-texto-2); cursor: pointer; }
+.sec-asistente.es-vacio .asi__caja-interior { min-height: 120px; }
+.sec-asistente.es-vacio .asi__entrada { min-height: 88px; }
+.sec-asistente .asi__caja-interior { border-radius: var(--r-card); box-shadow: none; }
+
 /* Bienvenida */
 .sec-asistente.es-vacio .asi__log { display: none; }
 .sec-asistente:not(.es-vacio) .asi__panel-bienvenida { display: none; }
