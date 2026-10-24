@@ -13,7 +13,7 @@ from app.store import Store  # noqa: E402
 
 ANA = "1-BK-4471920"
 HERRAMIENTAS = {"resumen_dia", "estancias", "estancia", "comunicaciones", "comunicacion", "fuentes", "prioridades", "cola", "conflictos",
-                "ocupacion", "mostrar_proceso", "abrir_pantalla", "mostrar_formulario", "propuestas_pendientes", "proponer_accion", "redactar_mensaje"}
+                "ocupacion", "mostrar_proceso", "abrir_pantalla", "mostrar_formulario", "propuestas_pendientes", "proponer_accion", "redactar_mensaje", "preparar_accion", "consultar_datos"}
 
 
 @pytest.fixture()
