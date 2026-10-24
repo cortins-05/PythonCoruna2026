@@ -2,60 +2,48 @@
 .sec-ocupacion { display: flex; flex-direction: column; gap: var(--s-5); max-width: var(--contenido-max); margin: 0 auto; min-width: 0; padding-bottom: var(--s-6); }
 .sec-ocupacion > * { min-width: 0; }
 
-/* Colores y patrones de cada fuente: el patrón repite la señal del color */
+/* Colores y patrones de cada fuente (desglose del día) */
 .sec-ocupacion .oc__seg--roomcloud { background: var(--c-info-punto); }
 .sec-ocupacion .oc__seg--ofihotel { background: repeating-linear-gradient(135deg, var(--c-ok-punto) 0 3px, var(--c-ok-bg) 3px 6px); }
 .sec-ocupacion .oc__seg--recepcion { background: radial-gradient(circle at 3px 3px, var(--c-aviso-texto) 1.3px, transparent 1.6px) 0 0 / 6px 6px, var(--c-aviso-borde); }
 .sec-ocupacion .oc__muestra { flex: none; width: 22px; height: 12px; border-radius: 3px; border: 1px solid var(--c-borde-control); }
-.sec-ocupacion .oc__muestra-pet { display: inline-block; vertical-align: -2px; width: 20px; height: 12px; border: 2px dashed var(--c-acento); border-radius: 3px; }
-
-/* Leyenda */
-.sec-ocupacion .oc__leyenda { display: flex; flex-wrap: wrap; gap: var(--s-3) var(--s-5); list-style: none; margin: 0 0 var(--s-3); padding: 0; }
-.sec-ocupacion .oc__leyenda-item { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-md); }
 .sec-ocupacion .oc__nota { margin: var(--s-1) 0 0; color: var(--c-texto-2); font-size: var(--t-sm); }
 
-/* Rejilla */
-.sec-ocupacion .oc__scroll { overflow-x: auto; border: 1px solid var(--c-borde); border-radius: var(--r-card); background: var(--c-surface); max-width: 100%; }
-.sec-ocupacion .oc__tabla { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1410px; table-layout: fixed; }
-.sec-ocupacion .oc__col-tipo { width: 120px; }
-.sec-ocupacion .oc__col-dia { width: 92px; }
-.sec-ocupacion .oc__caption { text-align: left; padding: var(--s-3) var(--s-4); color: var(--c-texto-2); font-size: var(--t-sm); caption-side: top; }
-.sec-ocupacion .oc__tabla th, .sec-ocupacion .oc__tabla td { border-bottom: 1px solid var(--c-borde); padding: var(--s-1); vertical-align: top; }
-.sec-ocupacion .oc__tabla tbody tr:last-child > * { border-bottom: 0; }
-.sec-ocupacion .oc__th-dia { font-weight: var(--p-medio); font-size: var(--t-xs); text-align: center; padding: var(--s-2) var(--s-1); background: var(--c-surface-2); }
-.sec-ocupacion .oc__th-dia.es-finde { color: var(--c-texto-2); background: var(--c-surface-3); }
-.sec-ocupacion .oc__dia-semana { display: block; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-texto-2); }
-.sec-ocupacion .oc__dia-num { display: block; color: var(--c-texto); font-weight: var(--p-fuerte); font-size: var(--t-sm); }
-.sec-ocupacion .oc__th-tipo { position: sticky; left: 0; z-index: 2; width: 120px; min-width: 120px; text-align: left; padding: var(--s-3); background: var(--c-surface-2); border-right: 1px solid var(--c-borde); font-weight: var(--p-normal); }
-.sec-ocupacion .oc__th-tipo strong { display: block; font-size: var(--t-md); }
-.sec-ocupacion .oc__th-tipo span { color: var(--c-texto-2); font-size: var(--t-xs); }
-.sec-ocupacion thead .oc__th-tipo { z-index: 3; font-weight: var(--p-medio); color: var(--c-texto-2); font-size: var(--t-xs); }
+/* Calendario mensual: 7 columnas siempre, sin scroll horizontal */
+.sec-ocupacion .oc__controles { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
+.sec-ocupacion .oc__select { min-height: 40px; padding: 0 var(--s-3); font: inherit; color: var(--c-texto); background: var(--c-surface); border: 1px solid var(--c-borde-control); border-radius: var(--r-ctl); max-width: 100%; }
+.sec-ocupacion .oc__nav { display: flex; align-items: center; gap: var(--s-2); }
+.sec-ocupacion .oc__mes { min-width: 9.5em; text-align: center; text-transform: capitalize; font-size: var(--t-lg); }
+.sec-ocupacion .oc__tabla { border-collapse: separate; border-spacing: 4px; width: 100%; table-layout: fixed; }
+.sec-ocupacion .oc__caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sec-ocupacion .oc__th-dia { font-weight: var(--p-medio); font-size: var(--t-xs); text-align: center; padding: var(--s-1); color: var(--c-texto-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.sec-ocupacion .oc__th-dia abbr { text-decoration: none; }
+.sec-ocupacion .oc__td { padding: 0; vertical-align: top; height: 88px; }
+.sec-ocupacion .oc__vacia { display: block; height: 100%; padding: 6px; color: var(--c-texto-2); opacity: 0.55; font-size: var(--t-sm); border: 1px dashed var(--c-borde); border-radius: var(--r-ctl); }
 
 .sec-ocupacion .oc__celda {
-  display: flex; flex-direction: column; gap: 5px; width: 100%; min-height: 84px; padding: 7px 6px; text-align: left;
+  display: flex; flex-direction: column; gap: 3px; width: 100%; height: 100%; min-height: 88px; padding: 6px; text-align: left;
   background: var(--c-surface); color: var(--c-texto); border: 1px solid var(--c-borde); border-radius: var(--r-ctl);
-  font: inherit; cursor: pointer; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  font: inherit; cursor: pointer; overflow: hidden; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 .sec-ocupacion .oc__celda:hover { border-color: var(--c-borde-control); background: var(--c-surface-2); }
 .sec-ocupacion .oc__celda:focus-visible { outline: 2px solid var(--c-acento); outline-offset: 1px; }
-.sec-ocupacion .oc__celda.is-activa { border-color: var(--c-acento); background: var(--c-acento-suave); }
-.sec-ocupacion .oc__celda--completo { background: var(--c-aviso-bg); border-color: var(--c-aviso-borde); }
-.sec-ocupacion .oc__celda--overbooking { background: var(--c-critico-bg); border-color: var(--c-critico-borde); }
-.sec-ocupacion .oc__celda.tiene-peticion { border: 2px dashed var(--c-acento); padding: 6px 5px; }
+.sec-ocupacion .oc__celda.is-activa { border-color: var(--c-acento); background: var(--c-acento-suave); box-shadow: inset 0 0 0 1px var(--c-acento); }
+.sec-ocupacion .oc__celda--completo { background: var(--c-aviso-bg); }
+.sec-ocupacion .oc__celda--overbooking { background: var(--c-critico-bg); }
+.sec-ocupacion .oc__celda.es-cerrado { background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--c-borde) 6px 7px); }
+.sec-ocupacion .oc__num { font-size: var(--t-sm); font-weight: var(--p-fuerte); color: var(--c-texto-2); }
 .sec-ocupacion .oc__cifra { font-size: var(--t-sm); color: var(--c-texto-2); }
 .sec-ocupacion .oc__cifra strong { font-size: var(--t-lg); color: var(--c-texto); }
-.sec-ocupacion .oc__barra { display: flex; width: 100%; height: 10px; border-radius: 3px; background: var(--c-surface-3); border: 1px solid var(--c-borde-control); overflow: hidden; }
-.sec-ocupacion .oc__seg { height: 100%; flex: none; }
-.sec-ocupacion .oc__marcas, .sec-ocupacion .oc__pets { display: flex; flex-wrap: wrap; gap: 3px; }
-.sec-ocupacion .oc__marca, .sec-ocupacion .oc__pet {
-  display: inline-flex; align-items: center; gap: 3px; max-width: 100%; padding: 1px 5px; border-radius: var(--r-chip);
+.sec-ocupacion .oc__marcas { display: flex; flex-wrap: wrap; gap: 3px; }
+.sec-ocupacion .oc__marca {
+  display: inline-flex; align-items: center; gap: 3px; max-width: 100%; padding: 1px 4px; border-radius: var(--r-chip);
   font-size: 11px; line-height: 1.3; white-space: nowrap; font-weight: var(--p-medio); border: 1px solid transparent;
 }
 .sec-ocupacion .oc__marca--critico { background: var(--c-critico-bg); color: var(--c-critico-texto); border-color: var(--c-critico-borde); }
 .sec-ocupacion .oc__marca--aviso { background: var(--c-aviso-bg); color: var(--c-aviso-texto); border-color: var(--c-aviso-borde); }
 .sec-ocupacion .oc__marca--info { background: var(--c-info-bg); color: var(--c-info-texto); border-color: var(--c-info-borde); }
-.sec-ocupacion .oc__pet { background: var(--c-surface); color: var(--c-texto); border-color: var(--c-acento-borde); }
-.sec-ocupacion .oc__pet span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sec-ocupacion .oc__marca--pet { background: var(--c-surface); color: var(--c-texto); border-color: var(--c-acento-borde); }
 
 /* Detalle de una noche */
 .sec-ocupacion .oc__detalle-caja { margin-top: var(--s-4); }
@@ -84,8 +72,15 @@
 }
 @media (max-width: 640px) {
   .sec-ocupacion { gap: var(--s-4); }
-  .sec-ocupacion .oc__tabla { min-width: 1380px; }
-  .sec-ocupacion .oc__th-tipo { width: 96px; min-width: 96px; padding: var(--s-2); }
+  .sec-ocupacion .oc__tabla { border-spacing: 2px; }
+  .sec-ocupacion .oc__td { height: 64px; }
+  .sec-ocupacion .oc__celda { min-height: 64px; padding: 3px; gap: 1px; }
+  .sec-ocupacion .oc__vacia { padding: 3px; }
+  .sec-ocupacion .oc__cifra strong { font-size: var(--t-md); }
+  .sec-ocupacion .oc__marca-txt { display: none; }
+  .sec-ocupacion .oc__marca { padding: 1px 2px; }
+  .sec-ocupacion .oc__controles { flex-direction: column; align-items: stretch; }
+  .sec-ocupacion .oc__nav { justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sec-ocupacion .oc__celda { transition: none; }

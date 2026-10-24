@@ -1,6 +1,6 @@
 /*
   Sección "Ocupación": lo que ocupa cada fuente cada noche y qué peticiones compiten por lo que queda.
-  Datos: GET /api/ocupacion?dias=14 y GET /api/propuestas?estado=pendiente (solo cerrar_disponibilidad).
+  Datos: GET /api/ocupacion?dias=30 y GET /api/propuestas?estado=pendiente (solo cerrar_disponibilidad).
 */
 import { chipVeredicto, pastillaNivel, ICONO_FUENTE, NOMBRE_FUENTE } from "../ui-hotel.js";
 
@@ -26,6 +26,8 @@ export default {
     let datos = null;
     let propuestas = [];
     let seleccion = null; // { tipo, fecha }
+    let tipo = null;
+    let mes = null;
     let ocupado = false;
 
     async function simular() {
@@ -40,7 +42,7 @@ export default {
     }
 
     ctx.barra({
-      titulo: "Ocupación", subtitulo: "Lo que ocupa cada fuente, noche a noche",
+      titulo: "Ocupación", subtitulo: "Calendario mensual por tipo de habitación",
       cta: { texto: "Simular reserva de Booking", icono: "plus", onclick: simular },
       acciones: [{ icono: "refresh", etiqueta: "Actualizar", onclick: () => cargar() }],
     });
@@ -52,27 +54,8 @@ export default {
       return f ? { nivel: f.nivel, fuente: f.nombre, id: f.id, tipo: f.tipo } : { nivel: 0, fuente: NOMBRE_FUENTE[id] ?? id, id, tipo: "firme" };
     };
 
-    function leyenda() {
-      return ui.panel({
-        titulo: "Fuentes", variante: "suave",
-        hijos: [
-          el("ul", { class: "oc__leyenda" }, FUENTES.map((id) => el("li", { class: "oc__leyenda-item" },
-            el("span", { class: `oc__muestra oc__seg--${id}`, aria: { hidden: "true" } }),
-            ui.icono(ICONO_FUENTE[id], { tam: 14 }),
-            el("strong", null, NOMBRE_FUENTE[id]),
-            pastillaNivel(prioridadDe(id), { compacta: true })))),
-          el("p", { class: "oc__nota" }, "Lo firme (niveles 1 a 3) bloquea la habitación; una petición solo ocupa lo que queda libre."),
-          el("p", { class: "oc__nota" }, el("span", { class: "oc__muestra-pet", aria: { hidden: "true" } }), " El contorno discontinuo marca las noches que ocuparía una petición pendiente."),
-        ],
-      });
-    }
-
-    function barraSegmentada(dia, capacidad) {
-      const total = Math.max(capacidad, dia.ocupadas, 1);
-      return el("span", { class: "oc__barra", aria: { hidden: "true" } },
-        FUENTES.filter((f) => dia.por_fuente[f] > 0).map((f) =>
-          el("span", { class: `oc__seg oc__seg--${f}`, estilo: { width: `${(dia.por_fuente[f] / total) * 100}%` } })));
-    }
+    const NOMBRE_MES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    const CABECERA = [["lun", "lunes"], ["mar", "martes"], ["mié", "miércoles"], ["jue", "jueves"], ["vie", "viernes"], ["sáb", "sábado"], ["dom", "domingo"]];
 
     function estadoDia(dia, capacidad) {
       if (dia.ocupadas > capacidad) return "overbooking";
@@ -80,64 +63,74 @@ export default {
       return "libre";
     }
 
-    function celda(tipo, capacidad, dia) {
+    const claveMes = (iso) => iso.slice(0, 7);
+    const sumaMes = (clave, n) => { const d = new Date(Number(clave.slice(0, 4)), Number(clave.slice(5, 7)) - 1 + n, 1, 12); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+    const isoDe = (y, m, d) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+    function celda(tipo, capacidad, dia, iso) {
+      if (!dia) {
+        return el("td", { class: "oc__td" }, el("span", { class: "oc__vacia" }, el("span", { class: "oc__num" }, String(numeroDia(iso)))));
+      }
       const pets = datos.peticiones.filter((p) => tocaNoche(p, tipo, dia.fecha));
       const est = estadoDia(dia, capacidad);
       const activa = seleccion?.tipo === tipo && seleccion?.fecha === dia.fecha;
-      const desglose = FUENTES.map((f) => `${NOMBRE_FUENTE[f]} ${dia.por_fuente[f]}`).join(", ");
-      const etiqueta = `${NOMBRE_TIPO[tipo] ?? tipo}, ${diaSemana(dia.fecha, DIAS_LARGOS)} ${numeroDia(dia.fecha)}: ${dia.ocupadas} de ${capacidad} ocupadas (${desglose})`
-        + `${est === "completo" ? ", completo" : est === "overbooking" ? ", overbooking" : ""}${dia.cerrado_en_roomcloud ? ", cerrado en RoomCloud" : ""}`
-        + `${pets.length ? `, ${plural(pets.length, "petición pendiente", "peticiones pendientes")}` : ""}`;
+      const estados = [est === "overbooking" && "overbooking", est === "completo" && "lleno", dia.cerrado_en_roomcloud && "cerrado"].filter(Boolean);
+      const etiqueta = `${diaSemana(dia.fecha, DIAS_LARGOS)} ${numeroDia(dia.fecha)}: ${dia.ocupadas} de ${capacidad} ocupadas`
+        + `${estados.length ? `, ${estados.join(", ")}` : ""}${pets.length ? `, ${plural(pets.length, "petición", "peticiones")}` : ""}`;
       const boton = el("button", {
-        type: "button", class: `oc__celda oc__celda--${est}${pets.length ? " tiene-peticion" : ""}${activa ? " is-activa" : ""}`,
+        type: "button", class: `oc__celda oc__celda--${est}${dia.cerrado_en_roomcloud ? " es-cerrado" : ""}${activa ? " is-activa" : ""}`,
         dataset: { tipo, fecha: dia.fecha }, aria: { pressed: String(activa), label: etiqueta },
         onclick: () => elegir(tipo, dia.fecha),
-        onkeydown: (e) => moverFoco(e, boton),
       },
+      el("span", { class: "oc__num" }, String(numeroDia(dia.fecha))),
       el("span", { class: "oc__cifra" }, el("strong", null, String(dia.ocupadas)), `/${capacidad}`),
-      barraSegmentada(dia, capacidad),
       el("span", { class: "oc__marcas" },
-        est === "overbooking" && el("span", { class: "oc__marca oc__marca--critico" }, ui.icono("alert", { tam: 11 }), "Overbooking"),
-        est === "completo" && el("span", { class: "oc__marca oc__marca--aviso" }, ui.icono("lock", { tam: 11 }), "Completo"),
-        dia.cerrado_en_roomcloud && el("span", { class: "oc__marca oc__marca--info" }, ui.icono("x", { tam: 11 }), "Cerrado")),
-      pets.length > 0 && el("span", { class: "oc__pets" }, pets.slice(0, 2).map((p) => el("span", { class: "oc__pet", title: `${p.de}, ${NOMBRE_FUENTE[p.canal] ?? p.canal}` },
-        ui.icono(ICONO_FUENTE[p.canal] ?? "dot", { tam: 11 }), el("span", null, primerNombre(p.de)))),
-      pets.length > 2 && el("span", { class: "oc__pet oc__pet--mas" }, `+${pets.length - 2}`)));
+        est === "overbooking" && el("span", { class: "oc__marca oc__marca--critico" }, ui.icono("alert", { tam: 12 }), el("span", { class: "oc__marca-txt" }, "Overbooking")),
+        est === "completo" && el("span", { class: "oc__marca oc__marca--aviso" }, ui.icono("lock", { tam: 12 }), el("span", { class: "oc__marca-txt" }, "Lleno")),
+        dia.cerrado_en_roomcloud && el("span", { class: "oc__marca oc__marca--info" }, ui.icono("x", { tam: 12 }), el("span", { class: "oc__marca-txt" }, "Cerrado")),
+        pets.length > 0 && el("span", { class: "oc__marca oc__marca--pet" }, ui.icono("inbox", { tam: 12 }), el("span", { class: "oc__marca-n" }, String(pets.length)))));
       return el("td", { class: "oc__td" }, boton);
     }
 
-    function moverFoco(e, actual) {
-      const delta = { ArrowRight: [0, 1], ArrowLeft: [0, -1], ArrowDown: [1, 0], ArrowUp: [-1, 0] }[e.key];
-      if (!delta) return;
-      const tabla = actual.closest("table");
-      const filas = [...tabla.querySelectorAll("tbody tr")];
-      const f = filas.findIndex((tr) => tr.contains(actual));
-      const botones = [...filas[f].querySelectorAll(".oc__celda")];
-      const c = botones.indexOf(actual);
-      const destino = filas[f + delta[0]]?.querySelectorAll(".oc__celda")[c + delta[1]];
-      const fin = delta[0] === 0 ? botones[c + delta[1]] : destino;
-      if (fin) { e.preventDefault(); fin.focus(); }
-    }
-
-    function rejilla() {
-      const { fechas, tipos } = datos.mapa;
-      const cabecera = el("thead", null, el("tr", null,
-        el("th", { scope: "col", class: "oc__th-tipo" }, "Habitación"),
-        fechas.map((f) => el("th", { scope: "col", class: `oc__th-dia${[0, 6].includes(new Date(`${f}T12:00:00`).getDay()) ? " es-finde" : ""}` },
-          el("span", { class: "oc__dia-semana" }, diaSemana(f)), el("span", { class: "oc__dia-num" }, ui.fechaCorta(f))))));
-      const cuerpo = el("tbody", null, Object.entries(tipos).map(([tipo, info]) => el("tr", null,
-        el("th", { scope: "row", class: "oc__th-tipo" }, el("strong", null, tipo), el("span", null, plural(info.capacidad, "habitación", "habitaciones"))),
-        info.dias.map((dia) => celda(tipo, info.capacidad, dia)))));
-      return el("div", { class: "oc__scroll", role: "region", tabindex: "0", aria: { label: "Rejilla de ocupación, se desplaza en horizontal" } },
+    function calendario() {
+      const tipos = datos.mapa.tipos;
+      if (!tipo || !tipos[tipo]) tipo = Object.keys(tipos)[0];
+      const info = tipos[tipo];
+      const fechas = datos.mapa.fechas;
+      const minMes = claveMes(fechas[0]);
+      const maxMes = claveMes(fechas[fechas.length - 1]);
+      if (!mes || mes < minMes || mes > maxMes) mes = minMes;
+      const [y, m] = mes.split("-").map(Number);
+      const porFecha = new Map(info.dias.map((d) => [d.fecha, d]));
+      const primero = (new Date(y, m - 1, 1, 12).getDay() + 6) % 7;
+      const nDias = new Date(y, m, 0).getDate();
+      const filas = [];
+      for (let i = 0, d = 1 - primero; i < Math.ceil((primero + nDias) / 7); i++) {
+        const tds = [];
+        for (let c = 0; c < 7; c++, d++) {
+          const f = new Date(y, m - 1, d, 12);
+          const iso = isoDe(f.getFullYear(), f.getMonth() + 1, f.getDate());
+          tds.push(d >= 1 && d <= nDias ? celda(tipo, info.capacidad, porFecha.get(iso), iso) : el("td", { class: "oc__td" }));
+        }
+        filas.push(el("tr", null, tds));
+      }
+      const selector = el("select", { class: "oc__select", aria: { label: "Tipo de habitación" }, onchange: (e) => { tipo = e.target.value; seleccion = null; pintar(); } },
+        Object.keys(tipos).map((t) => el("option", { value: t, selected: t === tipo }, `${NOMBRE_TIPO[t] ?? t} (${tipos[t].capacidad})`)));
+      const nav = el("div", { class: "oc__nav" },
+        ui.boton({ icono: "chevron-left", variante: "secundario", tam: "sm", etiqueta: "Mes anterior", desactivado: mes <= minMes, onclick: () => { mes = sumaMes(mes, -1); seleccion = null; pintar(); } }),
+        el("strong", { class: "oc__mes", aria: { live: "polite" } }, `${NOMBRE_MES[m - 1]} ${y}`),
+        ui.boton({ icono: "chevron-right", variante: "secundario", tam: "sm", etiqueta: "Mes siguiente", desactivado: mes >= maxMes, onclick: () => { mes = sumaMes(mes, 1); seleccion = null; pintar(); } }));
+      return el("div", { class: "oc__cal" },
+        el("div", { class: "oc__controles" }, selector, nav),
         el("table", { class: "oc__tabla" },
-          el("caption", { class: "oc__caption" }, `Habitaciones ocupadas sobre capacidad, por tipo y noche, durante los próximos ${datos.dias} días`),
-          el("colgroup", null, el("col", { class: "oc__col-tipo" }), fechas.map(() => el("col", { class: "oc__col-dia" }))),
-          cabecera, cuerpo));
+          el("caption", { class: "oc__caption" }, `Habitaciones ocupadas sobre capacidad, ${NOMBRE_TIPO[tipo] ?? tipo}, ${NOMBRE_MES[m - 1]} ${y}`),
+          el("thead", null, el("tr", null, CABECERA.map(([c, l]) => el("th", { scope: "col", class: "oc__th-dia" }, el("abbr", { title: l }, c))))),
+          el("tbody", null, filas)));
     }
 
     function detalle() {
       if (!seleccion) {
-        return el("p", { class: "oc__detalle-vacio" }, "Elige una casilla para ver el desglose de esa noche y las peticiones que la tocan.");
+        return el("p", { class: "oc__detalle-vacio" }, "Pulsa un día para ver el desglose por fuente y sus peticiones.");
       }
       const { tipo, fecha } = seleccion;
       const info = datos.mapa.tipos[tipo];
@@ -225,18 +218,14 @@ export default {
     function elegir(tipo, fecha) {
       seleccion = seleccion?.tipo === tipo && seleccion?.fecha === fecha ? null : { tipo, fecha };
       pintar();
-      const b = raiz.querySelector(`.oc__celda[data-tipo="${tipo}"][data-fecha="${fecha}"]`);
+      const b = raiz.querySelector(`.oc__celda[data-fecha="${fecha}"]`);
       b?.focus();
     }
 
     function pintar() {
-      const scroll = raiz.querySelector(".oc__scroll")?.scrollLeft ?? 0;
       raiz.replaceChildren(
-        leyenda(),
-        ui.panel({ titulo: "Ocupación de los próximos 14 días", hijos: [rejilla(), el("div", { class: "oc__detalle-caja", aria: { live: "polite" } }, detalle())] }),
+        ui.panel({ hijos: [calendario(), el("div", { class: "oc__detalle-caja", aria: { live: "polite" } }, detalle())] }),
         el("div", { class: "oc__doble" }, panelPeticiones(), panelCierres()));
-      const nuevo = raiz.querySelector(".oc__scroll");
-      if (nuevo) nuevo.scrollLeft = scroll;
     }
 
     function pintarError(e) {
@@ -249,7 +238,7 @@ export default {
     async function cargar(conEsqueleto = false) {
       if (!datos || conEsqueleto) raiz.replaceChildren(ui.esqueleto({ lineas: 6, alto: 28 }));
       try {
-        const [oc, pr] = await Promise.all([ctx.api("/api/ocupacion?dias=14"), ctx.api("/api/propuestas?estado=pendiente")]);
+        const [oc, pr] = await Promise.all([ctx.api("/api/ocupacion?dias=30"), ctx.api("/api/propuestas?estado=pendiente")]);
         datos = oc;
         propuestas = Array.isArray(pr) ? pr : (pr?.propuestas ?? []);
         pintar();
