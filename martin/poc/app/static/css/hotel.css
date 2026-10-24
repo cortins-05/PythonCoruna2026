@@ -37,8 +37,8 @@
   background: var(--c-surface-2); border-bottom: 1px solid var(--c-borde); font-size: var(--t-sm); color: var(--c-texto-2);
 }
 .escalera__cabecera strong { color: var(--c-texto); }
-.escalera__grupo--firme { border-color: var(--c-acento-borde); }
-.escalera__grupo--firme .escalera__cabecera { background: var(--c-acento-suave); border-bottom-color: var(--c-acento-borde); }
+.escalera__grupo--firme { border-color: var(--c-borde-fuerte); }
+.escalera__grupo--firme .escalera__cabecera { background: var(--c-acento-suave); border-bottom-color: var(--c-borde-fuerte); }
 .escalera__lista { list-style: none; margin: 0; padding: 0; }
 .escalera__fila { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: var(--s-3); padding: 10px 14px; }
 .escalera__fila + .escalera__fila { border-top: 1px solid var(--c-borde); }
