@@ -30,11 +30,11 @@
 .ui-btn--texto { background: transparent; border-color: transparent; color: var(--c-texto); }
 .ui-btn--texto:hover:not(:disabled) { background: var(--c-surface-3); }
 .ui-btn--peligro { background: var(--c-critico-bg); border-color: var(--c-critico-borde); color: var(--c-critico-texto); }
-.ui-btn--peligro:hover:not(:disabled) { border-color: var(--c-critico-punto); }
+.ui-btn--peligro:hover:not(:disabled) { border-color: var(--c-borde-control); }
 
 .ui-split { display: inline-flex; }
 .ui-split__principal { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-.ui-split__flecha { width: 40px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-radius: 0 var(--r-ctl) var(--r-ctl) 0; border-left: 1px solid rgba(0, 0, 0, 0.18); }
+.ui-split__flecha { width: 40px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-radius: 0 var(--r-ctl) var(--r-ctl) 0; border-left: 1px solid var(--c-borde-fuerte); }
 
 /* ---------- Chips e insignias ---------- */
 .ui-chip {
@@ -60,6 +60,9 @@
 }
 .ui-insignia--aviso { background: var(--c-aviso-bg); color: var(--c-aviso-texto); border-color: var(--c-aviso-borde); }
 .ui-insignia--critico { background: var(--c-critico-bg); color: var(--c-critico-texto); border-color: var(--c-critico-borde); }
+.ui-insignia--aviso::before, .ui-insignia--critico::before { content: ""; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; flex: none; }
+.ui-insignia--aviso::before { background: var(--c-aviso-punto); }
+.ui-insignia--critico::before { background: var(--c-critico-punto); }
 .ui-insignia--acento { background: var(--c-acento); color: var(--c-acento-texto); border-color: transparent; }
 
 /* ---------- Pastillas (filtros en fila) ---------- */
@@ -110,7 +113,7 @@
 .ui-tarjeta--menta, .ui-tarjeta.is-seleccionada { background: var(--c-menta); border-color: var(--c-menta-borde); }
 .ui-tarjeta.es-interactiva { cursor: pointer; }
 .ui-tarjeta.es-interactiva:hover { border-color: var(--c-borde-fuerte); box-shadow: var(--sombra-2); }
-.ui-tarjeta.is-seleccionada.es-interactiva:hover { border-color: var(--c-ok-punto); }
+.ui-tarjeta.is-seleccionada.es-interactiva:hover { border-color: var(--c-borde-control); }
 .ui-tarjeta__icono { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--c-surface-3); flex: none; }
 .ui-tarjeta__texto { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
 .ui-tarjeta__titulo { font-size: var(--t-lg); font-weight: var(--p-fuerte); line-height: 1.3; }
@@ -183,9 +186,9 @@
 textarea.ui-entrada { height: auto; padding: var(--s-2) var(--s-3); resize: vertical; line-height: 1.5; }
 .ui-entrada::placeholder { color: var(--c-texto-3); }
 .ui-entrada:focus-visible { outline: none; border-color: var(--c-enlace); box-shadow: 0 0 0 3px var(--c-acento-suave); }
-.ui-entrada[aria-invalid="true"] { border-color: var(--c-critico-punto); }
+.ui-entrada[aria-invalid="true"] { background: var(--c-critico-bg); color: var(--c-critico-texto); font-weight: var(--p-fuerte); }
 .ui-entrada:disabled { background: var(--c-surface-3); color: var(--c-texto-2); }
-.ui-entrada--dudoso { background: var(--c-aviso-bg); border-color: var(--c-aviso-punto); }
+.ui-entrada--dudoso { background: var(--c-aviso-bg); color: var(--c-aviso-texto); font-weight: var(--p-fuerte); }
 .ui-select { position: relative; }
 .ui-entrada--select { appearance: none; -webkit-appearance: none; padding-right: 36px; }
 .ui-select__flecha { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--c-texto-2); }
