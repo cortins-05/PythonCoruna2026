@@ -1,4 +1,4 @@
 {
   "_nota": "Inventario de DEMO por tipo de habitación. Los números son inventados.",
-  "capacidad": {"DBL-STD": 3, "SGL-STD": 2}
+  "capacidad": {"DBL-STD": 3, "SGL-STD": 2, "TPL-STD": 3, "FAM-STD": 2, "SUI-STD": 2}
 }
