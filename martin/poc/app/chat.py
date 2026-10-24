@@ -28,10 +28,10 @@ def _sistema(store) -> str:
     ahora = store.ahora()
     return f"""Eres el asistente de Uniroom, la plataforma de recepción de un hotel familiar de Galicia. Hoy es {DIAS[ahora.weekday()]} {ahora.day} de {MESES[ahora.month - 1]} de {ahora.year}, son las {ahora:%H:%M}.
 
-La aplicación bebe de cinco fuentes y las unifica en una sola plataforma, que hace de fuente única de verdad: RoomCloud (reservas de Booking, Expedia y la web, prioridad 1), OfiHotel (el programa del hotel, solo lectura y con los datos de ayer, prioridad 2), recepción (walk-ins y peticiones que ya ha confirmado, prioridad 3), correo (petición sin confirmar, prioridad 4) y WhatsApp (petición sin confirmar, prioridad 5). Lo firme (niveles 1 a 3) bloquea la habitación y una petición nunca lo desplaza. Entre peticiones gana el nivel más alto y, a igual nivel, la que llegó antes. Si entra una reserva de RoomCloud que ocupa el hueco de una petición, esa petición pasa a no disponible. El check-out se hace en OfiHotel y no en esta aplicación. No hay facturas ni albaranes en esta versión.
+La aplicación bebe de cinco fuentes y las unifica en una sola: RoomCloud (Booking, Expedia y la web, prioridad 1), OfiHotel (el programa del hotel, solo lectura y con los datos de ayer, prioridad 2), recepción (walk-ins y peticiones confirmadas, prioridad 3), correo (petición sin confirmar, prioridad 4) y WhatsApp (petición sin confirmar, prioridad 5). Lo firme, niveles 1 a 3, bloquea la habitación y una petición nunca lo desplaza. Entre peticiones gana el nivel más alto y, a igual nivel, la que llegó antes. Si RoomCloud ocupa el hueco de una petición, esa petición pasa a no disponible. El check-out se hace en OfiHotel. No hay facturas ni albaranes.
 
 Cómo trabajas:
-- Para cualquier dato usa una herramienta y no inventes cifras ni nombres. Las herramientas dibujan tarjetas en la pantalla, así que no repitas su contenido: contesta en una o dos frases con el veredicto primero y la razón detrás, y di qué puede hacer la persona a continuación. Pega la razón con "porque" solo cuando haya una razón real y no la fuerces.
+- Para cualquier dato usa una herramienta y no inventes cifras ni nombres. Las herramientas dibujan tarjetas, así que no repitas su contenido: contesta en una o dos frases con el veredicto primero y la razón detrás, y di qué puede hacer la persona a continuación. Pega la razón con "porque" solo cuando haya una razón real.
 - Trata a la persona de tú, con frases directas y sin fórmulas de cortesía como "si quiere" o "puede revisar". Habla con quien trabaja en recepción.
 - Si preguntan por qué una petición, una reserva o una estancia está como está, llama a comunicacion o a estancia con el nombre de la persona y explica con lo que devuelven (bloqueada_por, tiene_prioridad, motivo, conflictos). Nunca contestes un por qué con prioridades en general cuando se refieren a un caso concreto.
 - Para enseñar cómo funciona algo, llama a mostrar_proceso. Para llevar a la persona a una pantalla, llama a abrir_pantalla, que solo enseña los accesos: di "aquí tienes el acceso a ..." y no afirmes que la has llevado. Si pregunta de dónde sale la información o quién gana cuando dos fuentes compiten en general, usa fuentes o prioridades.
@@ -392,44 +392,43 @@ def _ruta_simulada(store, mensaje: str) -> list[tuple[str, dict]]:
 
 def _texto_simulado(ejecutadas: list[tuple[str, dict]]) -> str:
     if not ejecutadas:
-        return ("Puedo contarte de dónde bebe la aplicación, quién gana cuando dos fuentes compiten, qué comunicaciones faltan por confirmar, "
-                "qué conflictos hay entre fuentes, cómo está la ocupación o enseñarte un proceso paso a paso. Prueba con una de esas preguntas.")
+        return ("Pregúntame de dónde bebe la aplicación, quién gana cuando dos fuentes compiten, qué comunicaciones faltan por confirmar, "
+                "qué conflictos hay, cómo está la ocupación o cómo funciona un proceso.")
     nombre, r = ejecutadas[0]
     if "error" in r:
         return r["error"]
     if nombre == "resumen_dia":
-        return (f"Hoy hay {r['llegadas_hoy']} llegadas y {r['en_casa']} estancias en casa, con {r['peticiones_por_confirmar']} peticiones por confirmar "
-                f"y {r['conflictos']} conflictos entre fuentes. Lo más urgente está en la cola de trabajo.")
+        return (f"Hoy hay {r['llegadas_hoy']} llegadas, {r['en_casa']} estancias en casa, {r['peticiones_por_confirmar']} peticiones por confirmar "
+                f"y {r['conflictos']} conflictos entre fuentes.")
     if nombre == "estancias":
         colores = ", ".join(f"{n} {c}" for c, n in r["contadores"].items() if n)
-        return f"Hay {r['total']} estancias en esta lista ({colores or 'todas cuadradas'}). El color resume lo más urgente de cada una."
+        return f"Hay {r['total']} estancias en la lista: {colores or 'todas cuadradas'}."
     if nombre == "estancia":
         e = r["estancia"]
         return f"{e['huesped']} está en {e['color']} porque {e['motivo'][0].lower() + e['motivo'][1:]}." if e["motivo"] else f"{e['huesped']}: todo cuadrado."
     if nombre == "comunicaciones":
         peticiones = sum(1 for c in r["comunicaciones"] if c["tipo"] == "peticion_habitacion")
-        return (f"Hay {r['total']} comunicaciones, {peticiones} de ellas peticiones de habitación, ya contrastadas con RoomCloud, OfiHotel y recepción. "
-                "Pulsa Confirmar en la tarjeta de la que quieras responder y la respuesta sale por el mismo canal por el que llegó.")
+        return (f"Hay {r['total']} comunicaciones, {peticiones} peticiones de habitación, ya contrastadas con las fuentes. "
+                "Confirma en la tarjeta y la respuesta sale por el mismo canal por el que llegó.")
     if nombre == "comunicacion":
-        return f"{r['de']}: {r['motivo'] or 'no es una petición de habitación'}. Revisa el borrador y confirma desde la tarjeta."
+        return f"{r['de']}: {r['motivo'] or 'no pide habitación'}. Revisa el borrador y confirma en la tarjeta."
     if nombre == "fuentes":
-        return ("La aplicación bebe de cinco fuentes y las unifica en una sola plataforma. Cuando dos compiten por la misma habitación "
-                "gana la de mayor prioridad, y abajo tienes la escalera.")
+        return "La aplicación bebe de cinco fuentes. Cuando dos compiten por la misma habitación gana la de mayor prioridad."
     if nombre == "prioridades":
         return ("Gana la fuente de mayor prioridad porque lo firme (RoomCloud, OfiHotel y recepción) bloquea la habitación "
                 "y una petición por correo o WhatsApp nunca la desplaza.")
     if nombre == "cola":
-        return f"Hay {r['total']} cosas por atender, ordenadas por la prioridad de la fuente y después por urgencia."
+        return f"Hay {r['total']} cosas por atender, ordenadas por prioridad de la fuente y después por urgencia."
     if nombre == "conflictos":
-        return f"Hay {r['total']} conflictos entre RoomCloud, OfiHotel y la ocupación." if r["total"] else "No hay conflictos entre las fuentes ahora mismo."
+        return f"Hay {r['total']} conflictos entre RoomCloud, OfiHotel y la ocupación." if r["total"] else "No hay conflictos entre fuentes."
     if nombre == "ocupacion":
-        return f"Te dejo la ocupación de los próximos {r['dias']} días por tipo de habitación y por fuente."
+        return f"Ocupación de los próximos {r['dias']} días por tipo de habitación y fuente."
     if nombre == "mostrar_proceso":
-        return f"Te enseño paso a paso: {r['titulo'][0].lower() + r['titulo'][1:]}."
+        return f"Paso a paso: {r['titulo'][0].lower() + r['titulo'][1:]}."
     if nombre == "abrir_pantalla":
         return "Aquí tienes los accesos."
     if nombre == "mostrar_formulario":
-        return "Te dejo el formulario de walk-in. Si no queda habitación libre del tipo elegido, la aplicación avisa antes de crear la reserva."
+        return "Aquí tienes el formulario de walk-in."
     if nombre == "propuestas_pendientes":
         return f"Hay {r['total']} propuestas pendientes de aprobar."
     return "Hecho."
@@ -513,7 +512,7 @@ def eventos(store, mensaje: str, historial: list[dict] | None = None):
         except llm.ErrorLLM as error:
             modo = "simulado (falló la API)"
             if estado["texto"] or estado["bloques"]:
-                aviso = f"\n\nSe ha cortado la conexión con el asistente ({error}), pero lo que ya ves es correcto."
+                aviso = f"\n\nSe cortó la conexión con el asistente: {error}. Lo que ves arriba es correcto."
                 estado["texto"].append(aviso)
                 yield ("texto", {"delta": aviso})
             else:

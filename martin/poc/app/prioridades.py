@@ -14,20 +14,20 @@ dos peticiones gana la de nivel más alto y, a igual nivel, la que llegó antes.
 
 NIVELES = [
     {"nivel": 1, "id": "roomcloud", "nombre": "RoomCloud", "tipo": "firme", "icono": "refresh",
-     "descripcion": "Reservas de Booking, Expedia y la web: confirmadas y con garantía de pago. Bloquean la habitación siempre."},
+     "descripcion": "Booking, Expedia y la web, con garantía de pago"},
     {"nivel": 2, "id": "ofihotel", "nombre": "OfiHotel", "tipo": "firme", "icono": "building",
-     "descripcion": "Lo que ya está registrado en el programa del hotel, con los datos de ayer."},
+     "descripcion": "El programa del hotel, con los datos de ayer"},
     {"nivel": 3, "id": "recepcion", "nombre": "Recepción", "tipo": "firme", "icono": "door",
-     "descripcion": "Reservas físicas y peticiones que recepción ya ha confirmado desde la aplicación."},
+     "descripcion": "Walk-ins y peticiones ya confirmadas"},
     {"nivel": 4, "id": "correo", "nombre": "Correo", "tipo": "peticion", "icono": "mail",
-     "descripcion": "Petición de fechas por correo, sin confirmar. Suele traer los datos completos."},
+     "descripcion": "Petición sin confirmar"},
     {"nivel": 5, "id": "whatsapp", "nombre": "WhatsApp", "tipo": "peticion", "icono": "message",
-     "descripcion": "Petición de fechas por WhatsApp, sin confirmar. Va la última de la cola."},
+     "descripcion": "Petición sin confirmar"},
 ]
 REGLAS = [
-    "Gana la fuente de mayor prioridad: lo firme (niveles 1 a 3) bloquea la habitación y una petición (niveles 4 y 5) nunca la desplaza.",
-    "Entre dos peticiones por la misma habitación gana la de nivel más alto, y a igual nivel la que llegó antes.",
-    "Si entra una reserva de RoomCloud que ocupa el hueco de una petición, la petición pasa a «no disponible» y se avisa.",
+    "Gana la fuente de mayor prioridad: lo firme bloquea la habitación y una petición nunca la desplaza.",
+    "Entre dos peticiones gana el nivel más alto y, a igual nivel, la que llegó antes.",
+    "Si RoomCloud ocupa el hueco de una petición, la petición pasa a no disponible y se avisa.",
 ]
 _POR_ID = {n["id"]: n for n in NIVELES}
 _GRUPO_DE_ORIGEN = {"roomcloud": "roomcloud", "ofihotel": "ofihotel"}

@@ -61,7 +61,7 @@ def test_pregunta_por_una_persona_abre_su_comunicacion_o_su_estancia(cliente):
 
 def test_una_frase_sin_sentido_sugiere_preguntas_en_vez_de_inventar(cliente):
     r = cliente.post("/api/chat", json={"mensaje": "xyzzy plugh"}).json()
-    assert tipos(r) == ["sugerencias"] and "Prueba con una de esas preguntas" in r["respuesta"]
+    assert tipos(r) == ["sugerencias"] and "Pregúntame de dónde bebe la aplicación" in r["respuesta"]
     assert cliente.post("/api/chat", json={"mensaje": "   "}).json()["respuesta"] == "Escribe una pregunta"
 
 
