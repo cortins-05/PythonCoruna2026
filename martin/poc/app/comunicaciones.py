@@ -527,13 +527,16 @@ def fuentes(store) -> list[dict]:
     lectura = estados.lectura_ofihotel(db)
     hoy = store.ahora().date().isoformat()
 
+    def hora_o_ayer(ts: str) -> str:
+        return ts[11:16] if ts[:10] == hoy else f"{ts[8:10]}/{ts[5:7]} {ts[11:16]}"
+
     def ultima(fuente: str) -> str | None:
         marcas = [e["ts"] for e in ev if e["fuente"] == fuente]
-        return max(marcas)[11:16] if marcas else None
+        return hora_o_ayer(max(marcas)) if marcas else None
 
     def ultima_com(canal: str) -> str | None:
         marcas = [c["ts"] for c in comms if c["canal"] == canal]
-        return max(marcas)[11:16] if marcas else None
+        return hora_o_ayer(max(marcas)) if marcas else None
 
     rc = [e for e in ev if e["fuente"] == "roomcloud" and e["tipo"] in ("reserva_nueva", "reserva_modificada", "reserva_cancelada")]
     rc_vivas = sum(1 for e in db["expedientes"].values() if e["origen"] == "roomcloud")
