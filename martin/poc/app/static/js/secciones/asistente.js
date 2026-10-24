@@ -99,7 +99,7 @@ export default {
     const botonDetener = ui.boton({ texto: "Detener", icono: "x", variante: "secundario", clase: "asi__detener", onclick: () => detener() });
     botonDetener.hidden = true;
     const caja = el("div", { class: "asi__caja" }, irAlFinal, el("div", { class: "asi__caja-interior" }, entrada, botonDetener, botonEnviar),
-      el("p", { class: "asi__ayuda u-texto-3" }, "Intro envía, Mayús e Intro añade una línea."));
+      );
 
     /* ---------- scroll */
     const distanciaAlFinal = () => document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
@@ -189,12 +189,9 @@ export default {
           herramientas.forEach((l) => l.remove());
           nodo.removeAttribute("aria-busy");
           nodo.querySelector(".asi__pie")?.remove();
-          if (modo) {
-            cuerpo.append(el("div", { class: "asi__pie" }, ui.chip({ texto: modo === "real" ? "Modo real" : "Modo simulado", tono: modo === "real" ? "ok" : "neutro", icono: modo === "real" ? "zap" : "info" })));
-          }
         },
         aviso(texto, tono = "aviso") {
-          cuerpo.append(el("div", { class: "asi__aviso" }, ui.chip({ texto, tono, icono: "info" })));
+          cuerpo.append(el("p", { class: `asi__aviso${tono === "critico" ? " is-critico" : ""}` }, texto));
         },
         iniciar() { nodo.setAttribute("aria-busy", "true"); },
         pintarModelo() {
@@ -288,8 +285,7 @@ export default {
           if (e.deEvento && modelo.partes.length) { msg.aviso(e.message, "critico"); }
           else if (!modelo.partes.length) {
             const r = await ctx.api("/api/chat", "POST", cuerpoPeticion);
-            msg.aviso("Respuesta recibida sin streaming", "neutro");
-            (r.bloques ?? []).forEach(anadirBloque);
+                        (r.bloques ?? []).forEach(anadirBloque);
             if (r.respuesta) anadirTexto(r.respuesta);
             modelo.modo = r.modo ?? null;
             bajar();
@@ -329,14 +325,14 @@ export default {
         ], { columnas: 2 }),
         r.asunto && ui.kv([{ etiqueta: "Asunto", valor: r.asunto }], { columnas: 1 }),
         el("div", { class: "asi__confirmar-texto", tabindex: 0, role: "group", aria: { label: "Texto que se enviará" } }, r.texto ?? ""),
-        el("p", { class: "asi__confirmar-nota u-texto-2" }, "El envío es simulado: no sale ningún mensaje real."));
+        el("p", { class: "asi__confirmar-nota u-texto-2" }, "Envío simulado."));
     }
 
     async function confirmarComunicacion(accion) {
       const com = await ctx.api(`/api/comunicaciones/${encodeURIComponent(accion.id)}`);
       const canal = com.respuesta?.canal ?? com.canal;
       const ok = await ctx.confirmar({
-        titulo: "Confirmar y enviar la respuesta", texto: "Se va a enviar esto por el mismo canal por el que llegó la petición.",
+        titulo: "Enviar la respuesta", texto: "Sale por el mismo canal por el que llegó la petición.",
         confirmar: canal === "whatsapp" ? "Sí, enviar por WhatsApp" : "Sí, enviar por correo", contenido: contenidoComunicacion(com),
       });
       if (!ok) return resultado(false, "No se ha enviado nada", "cancelado");
@@ -347,22 +343,22 @@ export default {
       const medio = res.canal ?? canal;
       const nombreCanal = medio === "whatsapp" ? "WhatsApp" : "correo";
       const dest = res.destinatario ?? com.respuesta?.destinatario ?? "";
-      const extra = res.accion === "reservada" ? " y habitación reservada" : res.accion === "en_espera" ? " y petición en espera" : res.accion === "sin_hueco" ? " sin hueco disponible" : "";
-      return resultado(true, `Enviado por ${nombreCanal} a ${dest} (simulado)${extra}`, res.accion ?? "respondida", r);
+      const extra = res.accion === "reservada" ? " y reserva creada" : res.accion === "en_espera" ? " y petición en espera" : res.accion === "sin_hueco" ? " sin hueco disponible" : "";
+      return resultado(true, `Enviado por ${nombreCanal} a ${dest}${extra}`, res.accion ?? "respondida", r);
     }
 
     async function descartarComunicacion(accion) {
-      const ok = await ctx.confirmar({ titulo: "Descartar la petición", texto: "La petición se marca como descartada y no se envía respuesta.", confirmar: "Sí, descartar", tono: "critico", contenido: el("span") });
+      const ok = await ctx.confirmar({ titulo: "Descartar la petición", texto: "No se envía ninguna respuesta.", confirmar: "Sí, descartar", tono: "critico", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha descartado nada", "cancelado");
       const r = await ctx.api(`/api/comunicaciones/${encodeURIComponent(accion.id)}/descartar`, "POST", { actor: ACTOR });
       return resultado(true, "Petición descartada", "descartada", r);
     }
 
     async function aprobarPropuesta(accion) {
-      const ok = await ctx.confirmar({ titulo: "Aprobar la propuesta", texto: "Se ejecuta la propuesta tal como está escrita. Los envíos y los cierres de RoomCloud son simulados.", confirmar: "Sí, aprobar", contenido: el("span") });
+      const ok = await ctx.confirmar({ titulo: "Aprobar la propuesta", texto: "Se ejecuta tal como está escrita, de forma simulada.", confirmar: "Sí, aprobar", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha aprobado nada", "cancelado");
       const r = await ctx.api(`/api/propuestas/${encodeURIComponent(accion.id)}/aprobar`, "POST", { actor: ACTOR });
-      return resultado(true, "Propuesta aprobada (simulado)", "aprobada", r);
+      return resultado(true, "Propuesta aprobada", "aprobada", r);
     }
 
     async function rechazarPropuesta(accion) {
@@ -378,10 +374,10 @@ export default {
         tipo: String(v.tipo ?? ""), checkin: String(v.checkin ?? ""), checkout: String(v.checkout ?? ""),
         personas: Number(v.personas) || 1, viaja_por_trabajo: v.viaja_por_trabajo === true || v.viaja_por_trabajo === "true" || v.viaja_por_trabajo === "Sí",
       };
-      if (!cuerpo.nombre || !cuerpo.tipo || !cuerpo.checkin || !cuerpo.checkout) return resultado(false, "Faltan el nombre, el tipo de habitación o las fechas", "error");
+      if (!cuerpo.nombre || !cuerpo.tipo || !cuerpo.checkin || !cuerpo.checkout) return resultado(false, "Faltan nombre, tipo de habitación o fechas", "error");
       try {
         const r = await ctx.api("/api/walkin", "POST", cuerpo);
-        return resultado(true, `Reserva física añadida (${r.id})`, "creada", r);
+        return resultado(true, `Walk-in añadido (${r.id})`, "creada", r);
       } catch (e) {
         if (e.status !== 409 || !e.detalle?.conflicto) throw e;
         const lista = e.message;
@@ -390,24 +386,24 @@ export default {
         });
         if (!forzar) return resultado(false, "No se ha añadido la reserva", "cancelado", e.detalle);
         const r = await ctx.api("/api/walkin", "POST", { ...cuerpo, forzar: true });
-        return resultado(true, `Reserva física añadida con overbooking (${r.id})`, "creada_forzada", r);
+        return resultado(true, `Walk-in añadido con overbooking (${r.id})`, "creada_forzada", r);
       }
     }
 
     async function sincronizar(accion) {
       const fuente = accion.fuente === "ofihotel" ? "ofihotel" : "roomcloud";
       const r = await ctx.api(`/api/sync/${fuente}`, "POST");
-      if (fuente === "roomcloud") return resultado(true, `RoomCloud leído: ${r?.nuevas ?? 0} reservas nuevas (simulado)`, "sincronizado", r);
-      return resultado(true, "OfiHotel leído en solo lectura, con los datos de ayer", "sincronizado", r);
+      if (fuente === "roomcloud") return resultado(true, `RoomCloud leído: ${r?.nuevas ?? 0} reservas nuevas`, "sincronizado", r);
+      return resultado(true, "OfiHotel leído con los datos de ayer", "sincronizado", r);
     }
 
     async function simularRoomcloud(accion) {
       const r = await ctx.api("/api/demo/reserva-roomcloud", "POST", { tipo: accion.tipo || "SGL-STD" });
-      return resultado(true, "Entró una reserva de Booking (simulado)", "simulada", r);
+      return resultado(true, "Entró una reserva de Booking", "simulada", r);
     }
 
     async function marcarOfihotel(accion) {
-      const ok = await ctx.confirmar({ titulo: "Marcar como pasada a OfiHotel", texto: "Se anota que recepción ya ha dado de alta esta estancia en OfiHotel. Aquí no se escribe nada en OfiHotel.", confirmar: "Sí, marcar como pasada", contenido: el("span") });
+      const ok = await ctx.confirmar({ titulo: "Marcar como pasada a OfiHotel", texto: "Solo se anota. Aquí no se escribe en OfiHotel.", confirmar: "Sí, marcar como pasada", contenido: el("span") });
       if (!ok) return resultado(false, "No se ha marcado nada", "cancelado");
       const r = await ctx.api(`/api/expedientes/${encodeURIComponent(accion.id)}/tramites/ofihotel_alta`, "POST", { actor: ACTOR, nota: "Marcado desde el asistente" });
       return resultado(true, "Estancia marcada como pasada a OfiHotel", "pasada", r);
@@ -442,29 +438,7 @@ export default {
 
     /* ---------- bienvenida */
     function pintarBienvenida(datos) {
-      const categorias = datos?.categorias ?? [];
-      const flujos = datos?.flujos ?? [];
-      const preguntas = el("div", { class: "asi__preguntas" });
-      const pintarPreguntas = (id) => {
-        const cat = categorias.find((c) => c.id === id);
-        preguntas.replaceChildren(...(cat?.preguntas ?? []).map((p) => ui.pastilla({ texto: p, onclick: () => enviar(p) })));
-      };
-      const partes = [];
-      if (categorias.length) {
-        const tiles = ui.tileTabs({
-          items: categorias.map((c) => ({ id: c.id, texto: c.titulo, icono: c.icono })), activo: categorias[0].id, onchange: pintarPreguntas, etiqueta: "Qué quieres hacer",
-        });
-        pintarPreguntas(categorias[0].id);
-        partes.push(tiles.el, preguntas);
-      }
-      if (flujos.length) {
-        partes.push(el("div", { class: "asi__flujos" },
-          el("h3", { class: "asi__subtitulo" }, "Procesos que te enseño paso a paso"),
-          ui.carrusel({ ancho: 250, etiqueta: "Procesos guiados", items: flujos.map((f) => ui.tarjeta({
-            icono: f.icono, titulo: f.titulo, subtitulo: f.descripcion, onclick: () => enviar(f.pregunta),
-          })) })));
-      }
-      return partes;
+      return (datos?.preguntas ?? []).map((p) => el("button", { type: "button", class: "asi__pregunta", onclick: () => enviar(p) }, p));
     }
 
     const zonaSugerencias = el("div", { class: "asi__sugerencias" }, ui.esqueleto({ lineas: 3, alto: 16 }));
@@ -477,7 +451,7 @@ export default {
       } catch (e) {
         if (destruido) return;
         zonaSugerencias.replaceChildren(ui.vacio({
-          icono: "alert", titulo: "No se pudieron cargar las sugerencias", texto: e.message,
+          icono: "alert", titulo: "No se han cargado las preguntas", texto: e.message,
           accion: { texto: "Reintentar", icono: "refresh", onclick: cargarSugerencias },
         }));
       }
@@ -485,10 +459,9 @@ export default {
 
     bienvenida.append(
       el("div", { class: "asi__saludo" },
-        el("h2", null, "Hola, Flor"),
-        el("p", null, "Puedes pedirme cualquier cosa del hotel, y te enseño cómo funciona cada proceso mientras lo ejecuto.")),
+        el("h2", null, "Hola, Flor")),
       zonaSugerencias);
-    const panelBienvenida = ui.panel({ variante: "punteada", clase: "asi__panel-bienvenida", hijos: [bienvenida] });
+    const panelBienvenida = ui.panel({ clase: "asi__panel-bienvenida", hijos: [bienvenida] });
     raiz.append(panelBienvenida, log);
 
     /* ---------- barra y arranque */
@@ -503,7 +476,7 @@ export default {
       entrada.focus({ preventScroll: true });
     }
     ctx.barra({
-      titulo: "Asistente", subtitulo: "Habla con la información del hotel",
+      titulo: "Asistente",
       acciones: [{ icono: "plus", texto: "Nueva conversación", onclick: nuevaConversacion }],
     });
 

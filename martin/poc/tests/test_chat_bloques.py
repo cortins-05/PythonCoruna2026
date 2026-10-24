@@ -77,7 +77,7 @@ def test_resumen_kpi_trae_los_cinco_indicadores_del_dia(store):
 
 def test_lista_de_estancias_filtra_y_cuenta_los_colores(store):
     lista = b.bloque_lista_estancias(store)
-    assert lista["titulo"] == "Estancias con algo pendiente"
+    assert lista["titulo"] == "Estancias pendientes"
     assert all(e["semaforo"]["color"] != "verde" for e in lista["estancias"])
     assert lista["contadores"]["rojo"] == 1
     rojas = b.bloque_lista_estancias(store, "todas", "rojo")["estancias"]
@@ -146,7 +146,7 @@ def test_los_seis_procesos_existen_con_pasos_y_fuente_valida():
     assert set(b.PROCESOS) == {"peticion_mensaje", "reserva_canal", "checkin_parte", "overbooking_cierre", "fuente_unica", "prioridades"}
     for pid in b.PROCESOS:
         p = b.bloque_proceso(pid)
-        assert p["id"] == pid and 5 <= len(p["pasos"]) <= 8 and p["acciones"]
+        assert p["id"] == pid and 3 <= len(p["pasos"]) <= 6 and p["acciones"]
         assert len({s["id"] for s in p["pasos"]}) == len(p["pasos"])
         for paso in p["pasos"]:
             assert paso["fuente"] in FUENTES_VALIDAS and paso["titulo"] and paso["detalle"]
@@ -218,10 +218,7 @@ def test_una_frase_sin_sentido_recibe_la_respuesta_por_defecto_con_sugerencias(s
     assert bloques[1]["items"] and len(bloques[1]["items"]) <= 3
 
 
-def test_sugerencias_de_bienvenida_tienen_cinco_categorias_y_seis_procesos():
+def test_sugerencias_de_bienvenida_son_cuatro_preguntas():
     s = b.sugerencias_bienvenida()
-    assert [c["titulo"] for c in s["categorias"]] == ["Hoy", "Comunicaciones", "Estancias", "Ocupación", "Procesos"]
-    assert all(len(c["preguntas"]) == 3 and c["icono"] for c in s["categorias"])
-    assert [f["id"] for f in s["flujos"]] == b.PROCESOS
-    assert "Enséñame cómo entra una petición por WhatsApp" in {f["pregunta"] for f in s["flujos"]}
-    assert all({"id", "titulo", "icono", "pregunta", "descripcion"} <= f.keys() for f in s["flujos"])
+    assert len(s["preguntas"]) == 4 and "Enséñame cómo entra una petición por WhatsApp" in s["preguntas"]
+    assert "categorias" not in s and "flujos" not in s
