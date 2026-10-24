@@ -3,7 +3,7 @@
   Solo tokens. Los demás colores del semáforo reutilizan los tonos de tokens.css (rojo=critico, amarillo=aviso, azul=info, gris=neutro, verde=ok).
 */
 :root {
-  --c-naranja-bg: #FFE8D2; --c-naranja-borde: #F5C79B; --c-naranja-texto: #8A3A00; --c-naranja-punto: #E8710A;
+  --c-naranja-bg: #FFE8D2; --c-naranja-borde: #F5C79B; --c-naranja-texto: #8A3A00; --c-naranja-punto: #C45A00;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
