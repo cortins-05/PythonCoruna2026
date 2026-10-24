@@ -49,7 +49,7 @@ def test_sync_es_idempotente_y_no_guarda_tarjetas(cliente):
     assert segunda["nuevas"] == 0 and segunda["sin_cambios"] >= 3
     guardado = main.store.ruta.read_text(encoding="utf-8")
     assert "4111111111111111" not in guardado and "ccData" not in guardado
-    assert len(cliente.get("/api/expedientes").json()) == 3  # la cancelada no crea expediente
+    assert len(cliente.get("/api/expedientes").json()) == 4  # las tres vivas y la que ya llegó cancelada
 
 
 def test_la_aplicacion_ya_no_tiene_ocr_ni_check_out(cliente):

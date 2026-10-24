@@ -96,10 +96,11 @@ def test_la_semilla_vacia_deja_todo_a_cero_con_el_reloj_en_su_sitio(cliente):
 
 def test_la_semilla_basica_trae_las_reservas_y_la_lectura_de_ofihotel_y_nada_mas(cliente):
     r = cliente.post("/api/demo/semilla", params={"nivel": "basica"})
-    assert r.status_code == 200 and r.json()["expedientes"] == 3 and r.json()["documentos"] == 0
+    assert r.status_code == 200 and r.json()["expedientes"] == 4 and r.json()["documentos"] == 0  # la cancelada también se guarda
     db = main.store.db
-    assert set(db["expedientes"]) == {ANA, MARCOS, CLAIRE}  # la reserva cancelada de Luis no crea expediente
-    assert all(e["estado"] == "pendiente_llegada" for e in db["expedientes"].values())
+    assert set(db["expedientes"]) == {ANA, MARCOS, CLAIRE, "1-BK-4488003"}  # la reserva de Luis llegó ya cancelada y se guarda
+    assert db["expedientes"]["1-BK-4488003"]["estado"] == "cancelada"
+    assert all(e["estado"] == "pendiente_llegada" for i, e in db["expedientes"].items() if i != "1-BK-4488003")
     assert db["ofihotel"]["ocupaciones"] and any(p["plantilla"] == "cerrar_disponibilidad" for p in db["propuestas"])
     assert not any(e["fuente"] in ("whatsapp", "correo") for e in db["eventos"]) and not db["outbox"]
 

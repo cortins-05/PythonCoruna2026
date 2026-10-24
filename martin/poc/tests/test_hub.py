@@ -114,7 +114,7 @@ def test_walkin_avisa_de_overbooking_y_cerrar_disponibilidad_pasa_por_aprobacion
     cuerpo = {"nombre": "Pedro", "apellidos": "Souto", "tipo": "DBL-STD", "checkin": "2026-10-24", "checkout": "2026-10-25"}
     rechazado = cliente.post("/api/walkin", json=cuerpo)
     assert rechazado.status_code == 409 and rechazado.json()["detail"]["conflicto"][0]["ocupadas"] == 4
-    assert len(cliente.get("/api/expedientes").json()) == 3  # no se creó nada
+    assert len(cliente.get("/api/expedientes").json()) == 4  # no se creó nada (las tres vivas y la cancelada)
 
     forzado = cliente.post("/api/walkin", json={**cuerpo, "forzar": True})
     assert forzado.status_code == 200

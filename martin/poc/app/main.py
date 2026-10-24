@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import chat, disponibilidad, hub, lector, plantillas
+from . import chat, conversaciones, disponibilidad, estados, hub, lector, plantillas
 from .adapters import ofihotel, ofihotel_lectura, roomcloud, ses, whatsapp
 from .deps import http_de
 from .store import Store
@@ -149,13 +149,16 @@ def alertas() -> list[dict]:
     return salida
 
 
-def resumen(exp: dict) -> dict:
-    h = exp["huesped"]
+def resumen(exp: dict, lista_conflictos: list[dict] | None = None) -> dict:
+    """Resumen de una estancia para listas y tarjetas, con su estado por sistema y su color (ver estados.py)."""
+    h, ahora = exp["huesped"], store.ahora()
+    sistemas = estados.sistemas_de(store.db, exp, ahora)
     return {"id": exp["id"], "huesped": f"{h['nombre']} {h['apellido1']}".strip() or f"{exp['reserva']['nombre']} {exp['reserva']['apellidos']}",
             "estado": exp["estado"], "checkin": exp["checkin_prevista"], "checkout": exp["checkout_prevista"],
             "pendientes": pendientes(exp) if exp["estado"] != "cancelada" else [],
             "parte": exp["tramites"]["parte"]["estado"], "parte_restante_h": parte_restante_h(exp),
-            "viaja_por_trabajo": exp["viaja_por_trabajo"]}
+            "viaja_por_trabajo": exp["viaja_por_trabajo"], "tipo": estados.tipo_de(exp), "origen": exp["origen"], "personas": exp["personas"],
+            "sistemas": sistemas, "semaforo": estados.semaforo_de(store.db, exp, ahora, sistemas, lista_conflictos)}
 
 
 app.mount("/static", StaticFiles(directory=ESTATICO), name="static")
@@ -204,6 +207,11 @@ def sincronizar():
                 existente["estado"], existente["dlm"] = "cancelada", r["dlm"]
                 anotar(existente, "Reserva cancelada en RoomCloud", "Sistema")
                 hub.registrar_evento(store, "roomcloud", "reserva_cancelada", nombre, f"Reserva {ref} cancelada", ref)
+            else:  # ya llegó cancelada: se guarda sin aviso, para poder detectar si OfiHotel todavía la tiene viva
+                nueva = nuevo_expediente(r)
+                nueva["estado"] = "cancelada"
+                anotar(nueva, "Reserva ya cancelada en RoomCloud al leerla", "Sistema")
+                store.db["expedientes"][ref] = nueva
             cuenta["canceladas"] += 1
             continue
         if existente:
@@ -244,7 +252,42 @@ def listar():
 @app.get("/api/expedientes/{exp_id}")
 def detalle(exp_id: str):
     exp = obtener(exp_id)
-    return {**exp, "pendientes": pendientes(exp), "parte_restante_h": parte_restante_h(exp)}
+    lista = estados.conflictos(store.db, store.ahora())
+    sistemas = estados.sistemas_de(store.db, exp, store.ahora())
+    return {**exp, "pendientes": pendientes(exp), "parte_restante_h": parte_restante_h(exp), "tipo": estados.tipo_de(exp),
+            "sistemas": sistemas, "semaforo": estados.semaforo_de(store.db, exp, store.ahora(), sistemas, lista),
+            "conflictos": [c for c in lista if c["expediente_id"] == exp["id"]]}
+
+
+@app.get("/api/estancias")
+def estancias(filtro: str = "todas", color: str | None = None):
+    """Todas las estancias con su estado por sistema y su color, más los conflictos y las entradas sin enlazar."""
+    db, ahora = store.db, store.ahora()
+    hoy = ahora.date().isoformat()
+    lista = estados.conflictos(db, ahora)
+    todas = [resumen(e, lista) for e in db["expedientes"].values()]
+    filtros = {"hoy": lambda r: r["checkin"] == hoy and r["estado"] != "cancelada",
+               "en_casa": lambda r: r["estado"] == "en_curso",
+               "salidas": lambda r: r["checkout"] == hoy and r["estado"] != "cancelada",
+               "todas": lambda r: True}
+    if filtro not in filtros:
+        raise HTTPException(422, {"problemas": [f"El filtro tiene que ser uno de: {', '.join(filtros)}"]})
+    if color is not None and color not in estados.COLORES:
+        raise HTTPException(422, {"problemas": [f"El color tiene que ser uno de: {', '.join(estados.COLORES)}"]})
+    elegidas = [r for r in todas if filtros[filtro](r) and (color is None or r["semaforo"]["color"] == color)]
+    elegidas.sort(key=lambda r: (estados.COLORES.index(r["semaforo"]["color"]), r["checkin"], r["huesped"]))
+    lectura = estados.lectura_ofihotel(db)
+    return {"reloj": ahora.isoformat(timespec="minutes"),
+            "datos_ofihotel": {"disponible": bool(lectura), "datos_hasta": lectura.get("datos_hasta"), "leido_el": lectura.get("leido_el"),
+                               "fuente": lectura.get("fuente")},
+            "leyenda": estados.LEYENDA, "estancias": elegidas, "conflictos": lista,
+            "entradas": [c for c in conversaciones.listar(store) if not c["expediente_id"] and c["sin_responder"]],
+            "contadores": estados.contadores(todas)}
+
+
+@app.get("/api/conflictos")
+def ver_conflictos():
+    return {"conflictos": estados.conflictos(store.db, store.ahora())}
 
 
 @app.put("/api/expedientes/{exp_id}/huesped")
@@ -355,13 +398,14 @@ def ver_disponibilidad(dias: int = 7):
 @app.post("/api/sync/ofihotel")
 def sincronizar_ofihotel():
     """Lectura SOLO LECTURA de OfiHotel (instantánea de ejemplo): nunca se escribe en OfiHotel."""
-    instantanea = ofihotel_lectura.leer_instantanea()
+    instantanea = ofihotel_lectura.leer_instantanea(ahora=store.ahora())
     store.db["ofihotel"] = instantanea
     hub.registrar_evento(store, "ofihotel", "instantanea_lectura",
-                         contenido=f"{len(instantanea['ocupaciones'])} ocupaciones leídas (solo lectura)")
+                         contenido=f"{len(instantanea['estancias'])} estancias leídas, con datos hasta {instantanea['datos_hasta']} (solo lectura)")
     hub.revisar_ocupacion(store)
     store.guardar()
-    return {"ocupaciones": len(instantanea["ocupaciones"])}
+    return {"ocupaciones": len(instantanea["ocupaciones"]), "estancias": len(instantanea["estancias"]),
+            "datos_hasta": instantanea["datos_hasta"], "fuente": instantanea["fuente"]}
 
 
 @app.post("/api/walkin")
