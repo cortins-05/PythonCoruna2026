@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Del folio a una sola fuente de verdad</title>
+
+<!-- Tipografías: Bricolage Grotesque (títulos), Instrument Sans (texto), Caveat (letra a mano del folio) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@500;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================
+   TEMA
+   Tinta azul marino para el problema, latón de recepción para la acción,
+   blanco de folio para la solución. Cambia las variables para cambiar todo.
+   =========================================== */
+:root {
+  --tinta: #0E1B33;
+  --tinta-2: #17294B;
+  --tinta-3: #22386300;
+  --linea: rgba(255, 255, 255, 0.16);
+  --linea-fuerte: rgba(255, 255, 255, 0.34);
+  --folio: #F3F5F9;
+  --folio-2: #FFFFFF;
+  --texto: #F3F5F9;
+  --texto-2: #B4C0D8;
+  --texto-oscuro: #0E1B33;
+  --texto-oscuro-2: #4A5878;
+  --laton: #F2B632;
+  --laton-fuerte: #FFC845;
+  --boli: #7FA2FF;
+  --boli-oscuro: #2B4FD0;
+  --rojo: #FF6B5B;
+  --rojo-oscuro: #B3261E;
+  --verde: #1C8A5B;
+  --menta: #CDEFDD;
+  --menta-borde: #8FD0AE;
+
+  --f-titulo: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-texto: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mano: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --stage-bg: var(--tinta);
+  --slide-bg: var(--tinta);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   BASE DEL LIENZO FIJO 16:9 (viewport-base.css de la skill)
+   =========================================== */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: var(--slide-bg, #fff); }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: block; visibility: hidden; opacity: 0; pointer-events: none; background: var(--slide-bg, #fff); }
+.slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+@media print {
+  html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+  .deck-viewport { position: static; overflow: visible; background: #fff; }
+  .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+  .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+  .slide:last-child { break-after: auto; page-break-after: auto; }
+  .progreso, .edit-hotzone, .edit-toggle { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+}
+
+/* ===========================================
+   TIPOGRAFÍA Y PIEZAS COMUNES (medidas del lienzo 1920x1080)
+   =========================================== */
+.slide { color: var(--texto); font-family: var(--f-texto); font-size: 34px; line-height: 1.4; padding: 96px 120px; display: flex; flex-direction: column; justify-content: center; gap: 44px; }
+.slide::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.07) 1.5px, transparent 2px) 0 0 / 28px 28px; pointer-events: none; }
+.slide > * { position: relative; }
+h1, h2, h3 { font-family: var(--f-titulo); font-weight: 800; letter-spacing: -0.012em; line-height: 1.02; }
+h1 { font-size: 132px; }
+h2 { font-size: 92px; max-width: 1680px; }
+h3 { font-size: 44px; line-height: 1.1; letter-spacing: -0.015em; font-weight: 700; }
+.sub { font-size: 40px; color: var(--texto-2); max-width: 1200px; }
+.etiqueta { display: inline-flex; align-items: center; gap: 20px; align-self: flex-start; font-size: 32px; font-weight: 600; }
+.etiqueta::before { content: ""; width: 56px; height: 5px; border-radius: 3px; background: currentColor; }
+.etiqueta i { display: none; }
+.e-laton { color: var(--laton); }
+.e-rojo { color: var(--rojo); }
+.e-boli { color: var(--boli); }
+.e-claro { color: var(--texto-2); }
+.e-verde { color: var(--menta); }
+.cabecera { display: flex; flex-direction: column; gap: 26px; align-items: flex-start; }
+.foto { margin: 0; border-radius: 28px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.45); border: 2px solid var(--linea-fuerte); }
+.foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tarjeta { background: var(--tinta-2); border: 2px solid var(--linea); border-radius: 24px; padding: 36px 40px; display: flex; flex-direction: column; gap: 10px; }
+.tarjeta b { font-family: var(--f-titulo); font-size: 48px; line-height: 1.1; }
+.tarjeta span { color: var(--texto-2); font-size: 32px; }
+
+/* ===========================================
+   TRANSICIÓN: fundido cruzado con un deslizamiento corto en la dirección del avance,
+   y el contenido de la diapositiva nueva entra escalonado
+   =========================================== */
+.slide { transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.7s; }
+.slide.active { transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s; }
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.9s var(--ease), transform 1.1s var(--ease); transition-delay: 0s; }
+.slide.visible .reveal { opacity: 1; transform: none; transition-delay: calc(0.18s + var(--i, 0) * 0.07s); }
+
+/* ===========================================
+   1. PORTADA
+   =========================================== */
+.s-portada { flex-direction: row; align-items: center; gap: 100px; }
+.s-portada .cuerpo { flex: 1.3; display: flex; flex-direction: column; gap: 40px; align-items: flex-start; }
+.s-portada h1 { max-width: 920px; }
+.s-portada .lado { flex: 0.7; display: grid; place-items: center; }
+.llave { position: relative; transform: rotate(9deg); margin-top: 120px; }
+.aro { position: absolute; left: 50%; top: -250px; width: 200px; height: 200px; margin-left: -100px; border-radius: 50%; border: 18px solid var(--texto-2); }
+.cadena { position: absolute; left: 50%; top: -66px; width: 18px; height: 110px; margin-left: -9px; background: var(--texto-2); border-radius: 9px; }
+.chapa { position: relative; width: 440px; height: 600px; background: var(--laton); color: var(--tinta); border-radius: 90px 90px 220px 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 50px 90px rgba(0,0,0,0.5), inset 0 -14px 0 rgba(0,0,0,0.12); }
+.chapa::before { content: ""; position: absolute; top: 44px; left: 50%; width: 64px; height: 64px; margin-left: -32px; border-radius: 50%; background: var(--tinta); }
+.chapa small { font-size: 34px; font-weight: 600; margin-top: 40px; }
+.chapa b { font-family: var(--f-titulo); font-weight: 800; font-size: 210px; line-height: 0.95; letter-spacing: -0.03em; }
+.chapa span { font-family: var(--f-titulo); font-weight: 700; font-size: 44px; }
+
+/* ===========================================
+   2. EL HOTEL
+   =========================================== */
+.s-hotel { flex-direction: row; align-items: center; gap: 90px; }
+.s-hotel .foto { flex: 1.25; height: 760px; }
+.s-hotel .texto { flex: 1; display: flex; flex-direction: column; gap: 36px; align-items: flex-start; }
+.libro { list-style: none; width: 100%; }
+.libro li { font-size: 38px; padding: 26px 0; border-bottom: 2px dashed var(--linea-fuerte); display: flex; gap: 24px; align-items: baseline; }
+.libro li::before { content: ""; flex: none; width: 16px; height: 16px; background: var(--laton); border-radius: 4px; transform: translateY(-4px); }
+
+/* ===========================================
+   3. EL FOLIO (la escena cómica)
+   =========================================== */
+.s-folio { gap: 36px; }
+.escena { display: grid; grid-template-columns: 1.35fr 1fr; gap: 60px; align-items: center; }
+.mesa { position: relative; border-radius: 28px; overflow: hidden; border: 2px solid var(--linea-fuerte); aspect-ratio: 597 / 335; box-shadow: 0 40px 80px rgba(0,0,0,0.45); }
+.mesa > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.folio { position: absolute; left: 27%; top: 9%; width: 40%; height: 82%; transform: rotate(-11deg); transform-origin: 0 0; font-family: var(--f-mano); font-weight: 700; font-size: 30px; line-height: 1.05; color: var(--boli-oscuro); padding: 3% 3.5%; overflow: hidden; }
+.folio-tit { font-family: var(--f-texto); font-weight: 600; font-size: 20px; color: var(--texto-oscuro); text-align: center; border-bottom: 2px solid var(--texto-oscuro-2); padding-bottom: 8px; margin-bottom: 14px; letter-spacing: 0.04em; }
+.folio ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.folio li { display: flex; flex-wrap: wrap; gap: 14px; align-items: baseline; border-bottom: 2px dashed rgba(14,27,51,0.22); }
+.folio li span:first-child { font-family: var(--f-texto); font-weight: 600; font-size: 22px; color: var(--texto-oscuro); }
+.folio s { color: var(--texto-oscuro-2); text-decoration-color: var(--rojo-oscuro); text-decoration-thickness: 3px; }
+.folio .rojo { color: var(--rojo-oscuro); display: inline-block; transform: rotate(-3deg); }
+.mancha { position: absolute; right: 8%; bottom: 12%; width: 18%; aspect-ratio: 1; border-radius: 50%; border: 6px solid rgba(179,120,40,0.45); background: rgba(179,120,40,0.18); }
+.sello { position: absolute; left: 4%; bottom: 2%; font-family: var(--f-texto); font-weight: 500; font-size: 20px; color: var(--texto-oscuro-2); border: 2px solid var(--texto-oscuro-2); padding: 2px 12px; border-radius: 8px; }
+.nota { position: absolute; background: var(--laton); color: var(--tinta); border-radius: 12px; padding: 12px 18px; font-family: var(--f-mano); font-weight: 700; font-size: 34px; line-height: 1.05; box-shadow: 0 10px 24px rgba(0,0,0,0.35); max-width: 34%; }
+.nota-1 { left: 2%; bottom: 6%; transform: rotate(-4deg); }
+.nota-2 { right: 2%; top: 6%; transform: rotate(3deg); }
+.comentarios { display: flex; flex-direction: column; gap: 22px; }
+.comentarios .tarjeta { box-shadow: inset 8px 0 0 var(--laton); padding-left: 48px; }
+.comentarios .tarjeta b { font-size: 40px; }
+
+/* ===========================================
+   4. RIESGO: varias reservas, una habitación
+   =========================================== */
+.s-fuentes { gap: 40px; }
+.s-fuentes h2 { font-size: 84px; }
+.choques { display: flex; gap: 20px 34px; flex-wrap: wrap; }
+.aviso { display: flex; align-items: center; gap: 16px; font-size: 34px; font-weight: 600; color: var(--rojo); }
+.aviso::before { content: ""; width: 18px; height: 18px; border-radius: 4px; background: currentColor; }
+.aviso.amar { color: var(--laton); }
+
+.colision { display: grid; grid-template-columns: 1fr 240px 560px; align-items: center; }
+.entradas { display: flex; flex-direction: column; gap: 30px; height: 480px; }
+.ticket { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 0 40px; background: var(--tinta-2); border: 2px solid var(--linea); border-left: 4px dashed var(--boli); border-radius: 22px; }
+.ticket small { font-size: 26px; color: var(--texto-2); font-weight: 500; }
+.ticket b { font-family: var(--f-titulo); font-size: 44px; line-height: 1.1; }
+.converge { width: 240px; height: 480px; overflow: visible; }
+.converge path { fill: none; stroke: var(--rojo); stroke-width: 4; stroke-dasharray: 4 12; stroke-linecap: round; }
+.converge marker path { fill: var(--rojo); stroke: none; }
+.slide.visible .converge path { animation: marcha 1.2s linear infinite; }
+.hab { height: 480px; border-radius: 40px; border: 4px solid var(--rojo); background: rgba(255,107,91,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.hab small { font-size: 34px; font-weight: 600; color: var(--texto-2); }
+.hab b { font-family: var(--f-titulo); font-weight: 800; font-size: 220px; line-height: 0.95; letter-spacing: -0.03em; }
+.hab span { margin-top: 18px; font-size: 36px; font-weight: 600; color: var(--rojo); }
+/* ===========================================
+   5. OFIHOTEL Y PROBLEMAS
+   =========================================== */
+.dos { display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: stretch; }
+.panel { background: var(--tinta-2); border: 2px solid var(--linea); border-radius: 28px; padding: 52px; display: flex; flex-direction: column; gap: 24px; align-items: flex-start; }
+.panel p { font-size: 38px; color: var(--texto-2); }
+.panel-laton { background: var(--laton); color: var(--tinta); border-color: var(--laton); }
+.panel-laton h3 { font-size: 64px; }
+.panel-laton p { color: var(--tinta); font-weight: 500; }
+.problemas { list-style: none; display: flex; flex-direction: column; gap: 22px; width: 100%; }
+.problemas li { display: flex; gap: 28px; align-items: flex-start; background: var(--tinta); border: 2px solid var(--linea); border-radius: 20px; padding: 28px 32px; }
+.problemas small { display: block; color: var(--texto-2); font-size: 30px; margin-top: 6px; }
+.problemas b { font-family: var(--f-titulo); font-size: 42px; line-height: 1.1; }
+.num { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--rojo); color: var(--tinta); display: grid; place-items: center; font-family: var(--f-titulo); font-weight: 800; font-size: 38px; }
+
+/* ===========================================
+   6 y 7. ESQUEMAS SVG
+   =========================================== */
+.s-esquema { gap: 26px; padding-top: 56px; padding-bottom: 56px; }
+.s-esquema h2 { font-size: 76px; max-width: 1700px; }
+.s-esquema .sub { font-size: 36px; }
+.esquema { width: 100%; }
+.esquema svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--f-texto); }
+.esquema .caja { fill: rgba(255,255,255,0.04); stroke: var(--linea-fuerte); stroke-width: 1.5; }
+.esquema .rotulo { fill: var(--texto-2); font-size: 18px; }
+.esquema .nd rect { fill: var(--tinta-2); stroke: var(--linea-fuerte); stroke-width: 1.5; }
+.esquema .nd text { fill: var(--texto); font-size: 22px; font-weight: 600; text-anchor: middle; }
+.esquema .nd text.gr { font-family: var(--f-titulo); font-size: 34px; font-weight: 800; }
+.esquema .nd text.t2 { font-size: 23px; font-weight: 600; }
+.esquema .nd text.peq { font-size: 17px; font-weight: 400; fill: var(--texto-2); }
+.esquema .nd-azul rect { fill: rgba(127,162,255,0.16); stroke: var(--boli); }
+.esquema .nd-azul text { fill: var(--boli); }
+.esquema .nd-aviso rect { fill: rgba(242,182,50,0.16); stroke: var(--laton); }
+.esquema .nd-aviso text, .esquema .nd-aviso text.peq { fill: var(--laton); }
+.esquema .nd-fuerte rect { fill: var(--laton); stroke: var(--laton); }
+.esquema .nd-fuerte text, .esquema .nd-fuerte text.claro { fill: var(--tinta); }
+.esquema .ico { fill: none; stroke: var(--laton); stroke-width: 2; stroke-linecap: round; }
+.esquema .lin { fill: none; stroke: var(--texto-2); stroke-width: 3.5; stroke-linecap: round; }
+.esquema .lin-azul { stroke: var(--boli); }
+.esquema .lin-rojo { stroke: var(--rojo); }
+.esquema .disc { stroke-dasharray: 3 12; }
+.esquema .div { stroke: var(--linea-fuerte); stroke-width: 1.5; stroke-dasharray: 2 8; stroke-linecap: round; }
+.esquema .p-azul { fill: var(--boli); }
+.esquema .p-rojo { fill: var(--rojo); }
+.esquema .eti { fill: var(--boli); font-size: 20px; font-weight: 600; }
+.esquema .eti-rojo { fill: var(--rojo); }
+.esquema .aviso-mid circle { fill: var(--tinta); stroke: var(--rojo); stroke-width: 2.5; }
+.esquema .aviso-mid text { fill: var(--rojo); font-size: 26px; font-weight: 700; text-anchor: middle; }
+.slide.visible .esquema .disc { animation: marcha 1.2s linear infinite; }
+@keyframes marcha { to { stroke-dashoffset: -15; } }
+#s7 .esquema { width: 1500px; align-self: flex-start; }
+
+/* ===========================================
+   8. DEMO
+   =========================================== */
+.s-demo { align-items: center; text-align: center; justify-content: center; }
+.s-demo .demo { font-size: 480px; line-height: 0.9; letter-spacing: 0.02em; font-weight: 800; }
+.s-demo .sub { color: var(--tinta); font-weight: 500; }
+
+/* ===========================================
+   9. QUÉ GANAMOS (fondo blanco de folio)
+   =========================================== */
+.s-ganamos { gap: 28px; padding-top: 56px; padding-bottom: 56px; }
+.s-ganamos h2 { font-size: 76px; }
+.ganancias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.ganancias .tarjeta { background: var(--menta); border-color: var(--menta-borde); padding: 28px 44px 32px; gap: 6px; }
+.ganancias .gran { font-family: var(--f-titulo); font-weight: 800; font-size: 200px; line-height: 0.82; letter-spacing: -0.05em; color: var(--verde); }
+.ganancias .tarjeta span { color: var(--texto-oscuro); font-family: var(--f-titulo); font-weight: 700; font-size: 44px; line-height: 1.05; }
+.caso { display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: center; background: var(--tinta-2); border: 2px solid var(--linea); color: var(--texto); border-radius: 28px; padding: 32px 48px; }
+.caso h3 { font-size: 44px; margin: 12px 0; }
+.caso p { color: var(--texto-2); font-size: 28px; }
+.caso-ab { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.caso-ab > div { border-radius: 20px; padding: 22px 28px; display: flex; flex-direction: column; gap: 8px; background: var(--tinta); border: 2px solid var(--linea); }
+.caso-ab .ahora { background: var(--menta); border-color: var(--menta-borde); color: var(--texto-oscuro); }
+.caso-ab small { font-size: 26px; font-weight: 600; color: var(--texto-2); }
+.caso-ab .ahora small { color: var(--verde); }
+.caso-ab b { font-family: var(--f-titulo); font-size: 32px; line-height: 1.12; font-weight: 700; }
+
+/* ===========================================
+   10. CIERRE
+   =========================================== */
+.s-fin { align-items: flex-start; justify-content: center; gap: 36px; }
+.s-fin h1 { font-size: 230px; line-height: 0.9; letter-spacing: -0.045em; }
+.s-fin .sub { font-size: 50px; color: var(--texto); }
+.s-fin .resumen { display: flex; margin-top: 16px; }
+.s-fin .resumen span { font-size: 40px; font-weight: 600; color: var(--menta); padding: 0 40px; border-left: 3px solid var(--linea-fuerte); }
+.s-fin .resumen span:first-child { padding-left: 0; border-left: 0; }
+.s-fin .llave { position: absolute; right: 130px; top: 340px; margin: 0; transform: rotate(-8deg) scale(0.9); }
+
+/* ===========================================
+   CROMADO DE LA PRESENTACIÓN (fuera del lienzo)
+   =========================================== */
+.progreso { position: fixed; top: 0; left: 0; right: 0; height: 8px; display: flex; gap: 4px; z-index: 40; padding: 0 4px; }
+.progreso span { flex: 1; margin-top: 4px; height: 4px; border-radius: 4px; background: rgba(127,127,127,0.35); overflow: hidden; }
+.progreso i { display: block; height: 100%; background: var(--laton-fuerte); transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.5s var(--ease); }
+
+/* Edición en línea: pulsa E o pasa el ratón por la esquina superior izquierda */
+.edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 60; }
+.edit-toggle { position: fixed; top: 16px; left: 16px; z-index: 61; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--laton); color: var(--tinta); font: 600 14px var(--f-texto); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+body.editando [contenteditable="true"] { outline: 2px dashed var(--laton); outline-offset: 6px; cursor: text; }
+
+/* Versión con el texto mínimo */
+.s-hotel .texto h2 { font-size: 96px !important; }
+.s-ofi .panel-laton { justify-content: flex-end; }
+.s-ofi .panel-laton h3 { font-size: 120px; }
+.s-ofi .panel-laton p { font-size: 40px; font-weight: 600; }
+.s-ofi .panel { justify-content: center; }
+.problemas b { font-size: 52px; }
+.problemas li { align-items: center; padding: 40px; }
+.comentarios .tarjeta { padding-top: 44px; padding-bottom: 44px; }
+.comentarios .tarjeta b { font-size: 52px; }
+.caso { grid-template-columns: 0.9fr 1.3fr; }
+.caso h3 { margin: 0; font-size: 52px; }
+</style>
+</head>
+<body>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+  <!-- === 1. PORTADA === -->
+  <section class="slide s-portada active" data-fase="Fase 1 · El problema">
+    <div class="cuerpo">
+      <span class="etiqueta e-laton reveal"><i></i>Python Coruña 2026</span>
+      <h1 class="reveal" data-ed>Un hotel en Arcade, un folio y un lápiz</h1>
+    </div>
+    <div class="lado reveal" aria-hidden="true">
+      <div class="llave"><div class="aro"></div><div class="cadena"></div>
+        <div class="chapa"><small>Habitación</small><b>101</b><span>Arcade</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === 2. EL HOTEL === -->
+  <section class="slide s-hotel" data-fase="Fase 1 · El problema">
+    <figure class="foto reveal"><img src="img/hotel.jpg" alt="Hotel en Arcade"></figure>
+    <div class="texto">
+      <h2 class="reveal" data-ed style="font-size:84px">Mi madre tiene este hotel en Arcade</h2>
+    </div>
+  </section>
+
+  <!-- === 3. EL FOLIO === -->
+  <section class="slide s-folio" data-fase="Fase 1 · El problema">
+    <div class="cabecera">
+      <h2 class="reveal" data-ed style="font-size:84px">Así se asignan las habitaciones cada día</h2>
+    </div>
+    <div class="escena">
+      <div class="mesa reveal">
+        <img src="img/papel.jpg" alt="Folio sobre una mesa de madera">
+        <div class="folio" aria-label="Folio con habitaciones tachadas y corregidas a mano">
+          <div class="folio-tit">HABITACIONES HOY</div>
+          <ul>
+            <li><span>101</span><span>Pérez</span><s>2 noches</s><em>3 noches</em></li>
+            <li><span>102</span><s>García</s><em>García ¿?</em></li>
+            <li><span>103</span><span>Martínez</span><em class="rojo">¡¡ya ocupada!!</em></li>
+            <li><span>104</span><s>libre</s><s>Sánchez</s><em>libre</em></li>
+            <li><span>105</span><span>???</span><em class="rojo">quién es</em></li>
+          </ul>
+          <div class="mancha" aria-hidden="true"></div>
+          <div class="sello">Impreso a las 08:00</div>
+        </div>
+        <span class="nota nota-1">Impresora láser, cambios con boli</span>
+        <span class="nota nota-2">Versión 14 (la 13 está en la cocina)</span>
+      </div>
+      <div class="comentarios">
+        <div class="tarjeta reveal"><b data-ed>Sobrevive a todo</b></div>
+        <div class="tarjeta reveal"><b data-ed>El viajero</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === 4. FUENTES === -->
+  <section class="slide s-fuentes" data-fase="Fase 1 · El problema">
+    <div class="cabecera">
+      <h2 class="reveal" data-ed>Las reservas llegan por muchas puertas</h2>
+    </div>
+    <div class="colision">
+      <div class="entradas">
+        <div class="ticket reveal"><small>Reserva entrante · 10:02</small><b data-ed>Doble, del 12 al 14 oct</b></div>
+        <div class="ticket reveal"><small>Reserva entrante · 10:05</small><b data-ed>Doble, del 13 al 15 oct</b></div>
+        <div class="ticket reveal"><small>Reserva entrante · 10:11</small><b data-ed>Doble, el 13 oct</b></div>
+      </div>
+      <svg class="converge reveal" viewBox="0 0 240 480" aria-hidden="true">
+        <defs><marker id="ptc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z"/></marker></defs>
+        <path d="M0 70 C120 70 120 240 228 240" marker-end="url(#ptc)"/>
+        <path d="M0 240 H228" marker-end="url(#ptc)"/>
+        <path d="M0 410 C120 410 120 240 228 240" marker-end="url(#ptc)"/>
+      </svg>
+      <div class="hab reveal">
+        <small>Habitación</small><b>103</b>
+        <span data-ed>3 reservas, 1 habitación</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- === 5. OFIHOTEL Y PROBLEMAS === -->
+  <section class="slide s-ofi" data-fase="Fase 1 · El problema">
+    <div class="cabecera">
+      <h2 class="reveal" data-ed>Ofihotel manda, pero no todo le llega</h2>
+    </div>
+    <div class="dos">
+      <div class="panel panel-laton reveal">
+        <h3 data-ed>Ofihotel</h3>
+        <p data-ed>El cerebro del hotel</p>
+      </div>
+      <div class="panel reveal">
+        <ol class="problemas">
+          <li><span class="num">1</span><div><b data-ed>Varias fuentes para migrar a Ofihotel</b></div></li>
+          <li><span class="num">2</span><div><b data-ed>El papel impreso</b></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- === 6. FLUJO DEL PROBLEMA === -->
+  <section class="slide s-esquema" id="s6" data-fase="Fase 2 · Las reglas del juego">
+    <div class="cabecera">
+      <h2 class="reveal" data-ed>El flujo del problema</h2>
+    </div>
+    <div class="esquema reveal">
+      <svg viewBox="0 0 1200 460" role="img" aria-label="Web, Booking y Expedia llegan a Roomcloud y de ahí a Ofihotel. Whatsapp, Gmail y Físico llegan directamente a Ofihotel. Todo se migra a mano.">
+        <defs>
+          <marker id="pta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="p-azul"/></marker>
+          <marker id="ptr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="p-rojo"/></marker>
+        </defs>
+        <rect class="caja" x="40" y="20" width="440" height="110" rx="18"/>
+        <text class="rotulo" x="64" y="48">Canales online</text>
+        <g class="nd"><rect x="64" y="64" width="116" height="48" rx="10"/><text x="122" y="94">Web</text></g>
+        <g class="nd"><rect x="192" y="64" width="132" height="48" rx="10"/><text x="258" y="94">Booking</text></g>
+        <g class="nd"><rect x="336" y="64" width="124" height="48" rx="10"/><text x="398" y="94">Expedia</text></g>
+        <path class="lin lin-azul" d="M260 130 V200" marker-end="url(#pta)"/>
+        <g class="nd nd-azul"><rect x="130" y="204" width="260" height="72" rx="14"/><text x="260" y="250" class="gr">Roomcloud</text></g>
+        <path class="lin lin-rojo disc" d="M260 276 C260 320 440 300 480 342" marker-end="url(#ptr)"/>
+        <text class="eti eti-rojo" x="150" y="330">a mano</text>
+
+        <rect class="caja" x="720" y="20" width="440" height="110" rx="18"/>
+        <text class="rotulo" x="744" y="48">Contacto directo</text>
+        <g class="nd"><rect x="744" y="64" width="144" height="48" rx="10"/><text x="816" y="94">Whatsapp</text></g>
+        <g class="nd"><rect x="900" y="64" width="108" height="48" rx="10"/><text x="954" y="94">Gmail</text></g>
+        <g class="nd nd-aviso"><rect x="1020" y="64" width="120" height="48" rx="10"/><text x="1080" y="94">Físico</text></g>
+        <path class="lin lin-rojo disc" d="M940 130 C940 250 880 310 740 342" marker-end="url(#ptr)"/>
+        <text class="eti eti-rojo" x="960" y="250">a mano</text>
+
+        <g class="nd nd-fuerte"><rect x="440" y="350" width="360" height="86" rx="18"/><text x="620" y="406" class="gr">Ofihotel</text></g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- === 7. RESERVAS FÍSICAS === -->
+  <section class="slide s-esquema" id="s7" data-fase="Fase 2 · Las reglas del juego">
+    <div class="cabecera">
+      <h2 class="reveal" data-ed>Las reservas físicas también se hacen en papel</h2>
+    </div>
+    <div class="esquema reveal">
+      <svg viewBox="0 0 1200 400" role="img" aria-label="Los canales online llegan a Ofihotel a mano. El cliente que entra por la puerta rellena un papel que queda en recepción y alguien lo teclea más tarde en Ofihotel.">
+        <defs>
+          <marker id="pta2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="p-azul"/></marker>
+          <marker id="ptr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="p-rojo"/></marker>
+        </defs>
+        <text class="rotulo" x="40" y="26">Canales online</text>
+        <g class="nd"><rect x="40" y="40" width="300" height="64" rx="14"/><text x="190" y="80">Web, Booking, Expedia</text></g>
+        <path class="lin lin-azul" d="M340 72 H400" marker-end="url(#pta2)"/>
+        <g class="nd nd-azul"><rect x="410" y="40" width="220" height="64" rx="14"/><text x="520" y="80">Roomcloud</text></g>
+        <path class="lin lin-rojo disc" d="M630 72 C760 72 800 130 880 130" marker-end="url(#ptr2)"/>
+        <text class="eti eti-rojo" x="700" y="54">a mano</text>
+
+        <line class="div" x1="40" y1="140" x2="800" y2="140"/>
+
+        <text class="rotulo" x="40" y="186">Entrada física</text>
+        <g class="nd"><rect x="40" y="204" width="230" height="84" rx="14"/>
+          <circle class="ico" cx="84" cy="232" r="9"/><path class="ico" d="M66 270 C66 254 102 254 102 270"/>
+          <text x="186" y="250" class="t2">Cliente</text><text x="186" y="274" class="peq">rellena un papel</text></g>
+        <path class="lin" d="M270 246 H340" marker-end="url(#pta2)"/>
+        <g class="nd nd-aviso"><rect x="350" y="204" width="270" height="84" rx="14"/>
+          <rect class="ico" x="372" y="224" width="30" height="40" rx="4"/><path class="ico" d="M380 236 H394 M380 246 H394 M380 256 H388"/>
+          <text x="500" y="250" class="t2">Papel a mano</text><text x="500" y="274" class="peq">queda en recepción</text></g>
+        <path class="lin lin-rojo disc" d="M620 246 H790" marker-end="url(#ptr2)"/>
+        <g class="aviso-mid"><circle cx="705" cy="246" r="20"/><text x="705" y="255">?</text></g>
+        <text class="eti eti-rojo" x="705" y="308" text-anchor="middle">se teclea más tarde</text>
+
+        <g class="nd nd-fuerte"><rect x="800" y="116" width="360" height="190" rx="22"/><text x="980" y="204" class="gr">Ofihotel</text><text x="980" y="242" class="peq claro">fuente de la verdad</text></g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- === 8. DEMO === -->
+  <section class="slide s-demo" data-fase="Fase 3 · La solución">
+    <h1 class="demo reveal">DEMO</h1>
+  </section>
+
+  <!-- === 9. QUÉ GANAMOS === -->
+  <section class="slide s-ganamos" data-fase="Fase 4 · Qué ganamos">
+    <div class="cabecera">
+      <h2 class="reveal" data-ed>Qué ganamos con esto</h2>
+    </div>
+    <div class="ganancias">
+      <div class="tarjeta reveal"><b class="gran">0</b><span data-ed>colisiones entre habitaciones</span></div>
+      <div class="tarjeta reveal"><b class="gran">0</b><span data-ed>overbooking</span></div>
+      <div class="tarjeta reveal"><b class="gran">1</b><span data-ed>fuente de la verdad</span></div>
+    </div>
+    <div class="caso reveal">
+      <div>
+        <h3 data-ed>Un camarero consulta la verdad sin preguntar a nadie</h3>
+      </div>
+      <div class="caso-ab">
+        <div><small>Antes</small><b data-ed>Busca a recepción y lee un papel que puede estar desfasado</b></div>
+        <div class="ahora"><small>Ahora</small><b data-ed>Abre la pantalla y ve la fuente de la verdad</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === 10. CIERRE === -->
+  <section class="slide s-fin" data-fase="Fin">
+    <div class="llave reveal" aria-hidden="true"><div class="aro"></div><div class="cadena"></div><div class="chapa"><small>Habitación</small><b>101</b><span>Arcade</span></div></div>
+    <span class="etiqueta e-laton reveal"><i></i>Gracias</span>
+    <h1 class="reveal" data-ed>¿Preguntas?</h1>
+  </section>
+
+</main>
+</div>
+
+<div class="progreso" id="progreso" aria-hidden="true"></div>
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Editar textos (E)">Editar</button>
+
+<script>
+/* ===========================================
+   CONTROLADOR DE LA PRESENTACIÓN
+   Escala del lienzo, navegación, transición, progreso y edición en línea
+   =========================================== */
+class Presentacion {
+  constructor() {
+    this.slides = Array.from(document.querySelectorAll(".slide"));
+    this.stage = document.getElementById("deckStage");
+    this.actual = -1;
+    this.reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.escalar();
+    addEventListener("resize", () => this.escalar());
+    this.indexarRevelados();
+    this.montarProgreso();
+    this.montarMandos();
+    this.ir((parseInt(location.hash.slice(1), 10) || 1) - 1);
+  }
+
+  // El lienzo de 1920x1080 se escala entero y se centra
+  escalar() {
+    const f = Math.min(innerWidth / 1920, innerHeight / 1080);
+    const x = (innerWidth - 1920 * f) / 2, y = (innerHeight - 1080 * f) / 2;
+    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+  }
+
+  // Cada bloque con .reveal entra con su propio retardo
+  indexarRevelados() {
+    this.slides.forEach(s => s.querySelectorAll(".reveal").forEach((el, i) => el.style.setProperty("--i", i)));
+  }
+
+  montarProgreso() {
+    const cont = document.getElementById("progreso");
+    this.grupos = [];
+    this.slides.forEach((s, i) => {
+      const f = s.dataset.fase.split(" · ")[0];
+      const g = this.grupos[this.grupos.length - 1];
+      if (g && g.f === f) g.idx.push(i); else this.grupos.push({ f, idx: [i] });
+    });
+    this.grupos.forEach(g => {
+      const t = document.createElement("span"), r = document.createElement("i");
+      t.style.flex = g.idx.length; t.appendChild(r); cont.appendChild(t); g.relleno = r;
+    });
+  }
+
+  montarMandos() {
+    addEventListener("keydown", e => {
+      if (e.target.isContentEditable) return;
+      if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); this.paso(1); }
+      else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); this.paso(-1); }
+      else if (e.key === "Home") this.ir(0);
+      else if (e.key === "End") this.ir(this.slides.length - 1);
+      else if (e.key === "f") document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    });
+    let x0 = null;
+    addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+    addEventListener("touchend", e => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 50) this.paso(dx < 0 ? 1 : -1);
+    });
+    let rueda = 0;
+    addEventListener("wheel", e => {
+      if (Date.now() - rueda < 900 || Math.abs(e.deltaY) < 30) return;
+      rueda = Date.now(); this.paso(e.deltaY > 0 ? 1 : -1);
+    }, { passive: true });
+  }
+
+  paso(d) { this.ir(this.actual + d); }
+
+  pintar(n) {
+    this.slides.forEach((s, i) => { s.classList.toggle("active", i === n); s.classList.toggle("visible", i === n); });
+    this.grupos.forEach(g => {
+      const hechas = g.idx.filter(i => i <= n).length;
+      g.relleno.style.transform = `scaleX(${hechas / g.idx.length})`;
+    });
+    try { history.replaceState(null, "", "#" + (n + 1)); } catch (e) { /* sin historial */ }
+  }
+
+  ir(n) {
+    n = Math.max(0, Math.min(this.slides.length - 1, n));
+    if (n === this.actual) return;
+    const antes = this.slides[this.actual], nueva = this.slides[n];
+    const dir = n < this.actual ? -1 : 1, d = 56;
+    if (antes && !this.reducir) {
+      // La nueva parte desplazada desde el lado del avance, sin transición, y luego se asienta
+      nueva.style.transition = "none";
+      nueva.style.transform = `translateX(${dir * d}px)`;
+      void nueva.offsetWidth;
+      nueva.style.transition = ""; nueva.style.transform = "";
+      // La saliente se aleja hacia el lado contrario mientras se funde
+      antes.style.transform = `translateX(${-dir * d}px)`;
+      setTimeout(() => { if (!antes.classList.contains("active")) antes.style.transform = ""; }, 900);
+    }
+    this.actual = n;
+    this.pintar(n);
+  }
+}
+const deck = new Presentacion();
+
+/* ===========================================
+   EDICIÓN EN LÍNEA (E o esquina superior izquierda, Ctrl+S guarda el HTML)
+   =========================================== */
+const editor = {
+  activo: false,
+  alternar() {
+    this.activo = !this.activo;
+    document.body.classList.toggle("editando", this.activo);
+    document.querySelectorAll("[data-ed]").forEach(el => el.contentEditable = this.activo);
+    const b = document.getElementById("editToggle");
+    b.classList.toggle("active", this.activo);
+    b.textContent = this.activo ? "Salir de edición" : "Editar";
+  },
+  guardar() {
+    const copia = document.documentElement.cloneNode(true);
+    copia.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
+    copia.querySelector("body").classList.remove("editando");
+    const blob = new Blob(["<!DOCTYPE html>\n" + copia.outerHTML], { type: "text/html" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "index.html"; a.click();
+  }
+};
+const toggle = document.getElementById("editToggle"), zona = document.querySelector(".edit-hotzone");
+let oculta = null;
+const mostrar = () => { clearTimeout(oculta); toggle.classList.add("show"); };
+const ocultar = () => { oculta = setTimeout(() => { if (!editor.activo) toggle.classList.remove("show"); }, 400); };
+zona.addEventListener("mouseenter", mostrar); zona.addEventListener("mouseleave", ocultar);
+toggle.addEventListener("mouseenter", mostrar); toggle.addEventListener("mouseleave", ocultar);
+toggle.addEventListener("click", () => editor.alternar());
+zona.addEventListener("click", () => editor.alternar());
+addEventListener("keydown", e => {
+  if ((e.key === "e" || e.key === "E") && !e.target.isContentEditable) editor.alternar();
+  if ((e.ctrlKey || e.metaKey) && e.key === "s" && editor.activo) { e.preventDefault(); editor.guardar(); }
+});
+</script>
+</body>
+</html>
